@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-06-18T15:49:48.302Z",
+  "environment": "Supabase real database + local backend HTTP server",
+  "endpoint": "POST /api/pagos",
+  "setup": {
+    "ciudadano": {
+      "id": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+      "email": "evidencia.pagos@sicose.test"
+    },
+    "servicio": {
+      "id": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
+      "nombre": "Agua potable"
+    },
+    "adeudo": {
+      "id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
+      "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+      "monto": 45.5,
+      "pagado": false,
+      "estado": "pendiente"
+    }
+  },
+  "request": {
+    "metodo": "efectivo",
+    "ciudadano_id": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+    "adeudo_id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
+    "monto": 45.5
+  },
+  "login": {
+    "status": 200,
+    "user": {
+      "id": "9adc08cc-516d-40d0-af83-38f082e12961",
+      "email": "gertrudis@sicose.test",
+      "nombre": "Gertrudis",
+      "rol": "tesorero"
+    }
+  },
+  "payment": {
+    "status": 201,
+    "folio": "SCS-2026-716340",
+    "body": {
+      "data": {
+        "id": "643589e8-831c-4558-9817-c91213716ab7",
+        "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+        "adeudoId": "1719ee26-b923-4da0-a68a-251e81cbae3b",
+        "monto": 45.5,
+        "fecha": "2026-06-18T15:49:45.258Z",
+        "metodo": "efectivo",
+        "folio": "SCS-2026-716340",
+        "recibo": "SCS-2026-716340",
+        "creado_por": "9adc08cc-516d-40d0-af83-38f082e12961",
+        "created_at": "2026-06-18T15:49:45.258Z",
+        "updated_at": "2026-06-18T15:49:45.258Z",
+        "ciudadano": {
+          "id": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+          "nombre": "Evidencia",
+          "apellido": "Pagos",
+          "email": "evidencia.pagos@sicose.test",
+          "telefono": "5500000000",
+          "direccion": "Calle Evidencia #1",
+          "clave_catastral": "EVID-1781797560623",
+          "created_at": "2026-06-18T15:46:00.625Z",
+          "updated_at": "2026-06-18T15:46:00.625Z"
+        },
+        "adeudo": {
+          "id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
+          "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+          "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
+          "monto": 45.5,
+          "periodo": "EVID-1781797781665",
+          "vencimiento": "2026-06-30T00:00:00.000Z",
+          "pagado": false,
+          "estado": "pendiente",
+          "created_at": "2026-06-18T15:49:41.668Z",
+          "updated_at": "2026-06-18T15:49:41.668Z"
+        }
+      }
+    }
+  },
+  "duplicateAttempt": {
+    "status": 409,
+    "body": {
+      "error": "Debt is already paid",
+      "code": 409
+    }
+  },
+  "databaseVerification": {
+    "adeudo": {
+      "id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
+      "monto": 45.5,
+      "pagado": true,
+      "estado": "pagado",
+      "updated_at": "2026-06-18T15:49:45.820Z"
+    },
+    "auditoria": {
+      "id": "0190ede4-7be6-4aa4-adfa-70ca450f65d3",
+      "usuarioId": "9adc08cc-516d-40d0-af83-38f082e12961",
+      "accion": "REGISTRO_PAGO_EFECTIVO",
+      "entidad": "Pago",
+      "entidad_id": "643589e8-831c-4558-9817-c91213716ab7",
+      "ip": "::ffff:127.0.0.1",
+      "timestamp": "2026-06-18T15:49:45.966Z",
+      "detalles": "{\"folio\":\"SCS-2026-716340\",\"ciudadanoId\":\"10a9239b-fef8-47e2-8ea7-7c885ffc30ba\",\"adeudoId\":\"1719ee26-b923-4da0-a68a-251e81cbae3b\",\"monto\":45.5,\"estadoAnterior\":\"pendiente\",\"estadoNuevo\":\"pagado\"}",
+      "created_at": "2026-06-18T15:49:45.968Z"
+    }
+  },
+  "server": {
+    "stdout": "SiCoSe backend running on http://localhost:3105\n\u001b[0mGET /api/health \u001b[32m200\u001b[0m 2.214 ms - 81\u001b[0m\n\u001b[0mPOST /api/auth/login \u001b[32m200\u001b[0m 1143.647 ms - 430\u001b[0m\n\u001b[0mPOST /api/pagos \u001b[32m201\u001b[0m 1878.569 ms - 1083\u001b[0m\n\u001b[0mPOST /api/pagos \u001b[33m409\u001b[0m 694.862 ms - 43\u001b[0m\n",
+    "stderr": ""
+  }
+}

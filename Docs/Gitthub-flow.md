@@ -292,11 +292,11 @@ git status
 ```
 
 Dentro del archivo en conflicto apareceran marcadores como estos:
-<<<<<<< HEAD
+< < < < < < < HEAD
 <h1>Bienvenido a SiCoSe</h1>
-=======
+= = = = = = =
 <h1>Sistema de Cobro y Seguimiento</h1>
->>>>>>> develop
+> > > > > > > develop
 ````
 Paso 3 — Editar el archivo manualmente
 Elegir la version correcta o combinar ambas segun corresponda.

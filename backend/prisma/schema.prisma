@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Usuario {
+  id          String      @id @default(uuid())
+  email       String      @unique
+  passwordHash String      @map("password_hash")
+  nombre      String
+  rol         String
+  activo      Boolean     @default(true)
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  auditorias  Auditoria[]
+}
+
+model Ciudadano {
+  id              String        @id @default(uuid())
+  nombre          String
+  apellido        String
+  email           String        @unique
+  telefono        String?
+  direccion       String?
+  zona            String?
+  clave_catastral String        @unique
+  activo          Boolean       @default(true)
+  adeudos         Adeudo[]
+  pagos           Pago[]
+  comprobantes    Comprobante[]
+  reportes        Reporte[]
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
+  @@index([email])
+  @@index([zona])
+  @@index([clave_catastral])
+}
+
+model Servicio {
+  id          String   @id @default(uuid())
+  nombre      String
+  descripcion String?
+  tarifa      Float
+  adeudos     Adeudo[]
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+model Adeudo {
+  id           String        @id @default(uuid())
+  ciudadano    Ciudadano     @relation(fields: [ciudadanoId], references: [id])
+  ciudadanoId  String
+  servicio     Servicio      @relation(fields: [servicioId], references: [id])
+  servicioId   String
+  monto        Float
+  periodo      String
+  vencimiento  DateTime
+  pagado       Boolean       @default(false)
+  estado       String        @default("pendiente")
+  pagos        Pago[]
+  comprobantes Comprobante[]
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  @@index([ciudadanoId])
+  @@index([servicioId])
+  @@unique([ciudadanoId, servicioId, periodo])
+}
+
+model Pago {
+  id          String    @id @default(uuid())
+  ciudadano   Ciudadano @relation(fields: [ciudadanoId], references: [id])
+  ciudadanoId String
+  adeudo      Adeudo    @relation(fields: [adeudoId], references: [id])
+  adeudoId    String
+  monto       Float
+  fecha       DateTime  @default(now())
+  metodo      String
+  folio       String?   @unique
+  recibo      String?
+  creado_por  String?
+  comprobantes Comprobante[]
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@index([ciudadanoId])
+  @@index([adeudoId])
+}
+
+model Comprobante {
+  id          String    @id @default(uuid())
+  ciudadano   Ciudadano @relation(fields: [ciudadanoId], references: [id])
+  ciudadanoId String
+  adeudo      Adeudo    @relation(fields: [adeudoId], references: [id])
+  adeudoId    String
+  pago        Pago?     @relation(fields: [pagoId], references: [id])
+  pagoId      String?
+  tipo        String
+  url         String
+  hash_sha256 String?
+  nombre_archivo String?
+  mime_type   String?
+  tamano_bytes Int?
+  storage_path String?
+  fecha       DateTime  @default(now())
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@index([ciudadanoId])
+  @@index([adeudoId])
+  @@index([pagoId])
+  @@index([hash_sha256])
+}
+
+model Auditoria {
+  id          String   @id @default(uuid())
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId   String
+  accion      String
+  entidad     String
+  entidad_id  String
+  detalles    String?
+  ip          String?
+  timestamp   DateTime @default(now())
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([usuarioId])
+}
+
+model Reporte {
+  id           String     @id @default(uuid())
+  ciudadano    Ciudadano? @relation(fields: [ciudadanoId], references: [id], onDelete: SetNull)
+  ciudadanoId  String?
+  titulo       String
+  descripcion  String?
+  tipo         String
+  estado       String     @default("GENERADO")
+  periodo      String
+  archivo_url  String
+  archivo_path String
+  generado_por String?
+  resumen_json Json?
+  fecha        DateTime   @default(now())
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+
+  @@index([ciudadanoId])
+  @@index([periodo])
+  @@index([tipo])
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 // ============================================================
 // SiCoSe — Sistema de Cobros de Servicios
@@ -24,7 +24,16 @@ function Navbar() {
         {/* Logo */}
         <a href="#" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-md bg-[#f97316] flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
@@ -66,12 +75,28 @@ function Navbar() {
           aria-label="Abrir menú"
         >
           {isOpen ? (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="18" x2="21" y2="18" />
@@ -157,8 +182,12 @@ function Hero() {
             { val: "24/7", label: "Disponible en móvil" },
           ].map(({ val, label }) => (
             <div key={label} className="text-center">
-              <div className="text-2xl sm:text-3xl font-extrabold text-[#f97316]">{val}</div>
-              <div className="text-slate-400 text-xs mt-1 leading-tight">{label}</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-[#f97316]">
+                {val}
+              </div>
+              <div className="text-slate-400 text-xs mt-1 leading-tight">
+                {label}
+              </div>
             </div>
           ))}
         </div>
@@ -242,9 +271,19 @@ function Modulos() {
   const modulos = [
     {
       icon: (
-        <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-          <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+        <svg
+          className="w-7 h-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
         </svg>
       ),
       nombre: "Dashboard Principal",
@@ -253,7 +292,15 @@ function Modulos() {
     },
     {
       icon: (
-        <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          className="w-7 h-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
       ),
@@ -263,7 +310,15 @@ function Modulos() {
     },
     {
       icon: (
-        <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          className="w-7 h-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -276,7 +331,15 @@ function Modulos() {
     },
     {
       icon: (
-        <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          className="w-7 h-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
           <line x1="16" y1="13" x2="8" y2="13" />
@@ -318,7 +381,9 @@ function Modulos() {
               <span className="text-[#f97316] text-xs font-bold uppercase tracking-widest mb-2 block">
                 {tag}
               </span>
-              <h3 className="text-[#0f3042] font-extrabold text-lg mb-2">{nombre}</h3>
+              <h3 className="text-[#0f3042] font-extrabold text-lg mb-2">
+                {nombre}
+              </h3>
               <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
             </div>
           ))}
@@ -330,11 +395,51 @@ function Modulos() {
 
 // ------ Simulación de Interfaz / Vista Previa ------
 const PREVIEW_DATA = [
-  { id: "SDC-001", nombre: "Ma. Guadalupe Reyes Torres", zona: "Centro",     calle: "Av. Hidalgo 14",   cp: "72810", pagados: 6, adeudados: 2 },
-  { id: "SDC-002", nombre: "José Ramírez Hernández",     zona: "Barrio Alto", calle: "Calle Morelos 7",  cp: "72811", pagados: 8, adeudados: 0 },
-  { id: "SDC-003", nombre: "Esperanza López Méndez",     zona: "Lomas",       calle: "Cda. Juárez 3",    cp: "72812", pagados: 2, adeudados: 6 },
-  { id: "SDC-004", nombre: "Roberto Cruz Salazar",       zona: "Centro",      calle: "Calle Allende 22", cp: "72810", pagados: 5, adeudados: 3 },
-  { id: "SDC-005", nombre: "Ana Patricia Flores Díaz",   zona: "Barrio Bajo", calle: "Av. Reforma 88",   cp: "72813", pagados: 8, adeudados: 0 },
+  {
+    id: "SDC-001",
+    nombre: "Ma. Guadalupe Reyes Torres",
+    zona: "Centro",
+    calle: "Av. Hidalgo 14",
+    cp: "72810",
+    pagados: 6,
+    adeudados: 2,
+  },
+  {
+    id: "SDC-002",
+    nombre: "José Ramírez Hernández",
+    zona: "Barrio Alto",
+    calle: "Calle Morelos 7",
+    cp: "72811",
+    pagados: 8,
+    adeudados: 0,
+  },
+  {
+    id: "SDC-003",
+    nombre: "Esperanza López Méndez",
+    zona: "Lomas",
+    calle: "Cda. Juárez 3",
+    cp: "72812",
+    pagados: 2,
+    adeudados: 6,
+  },
+  {
+    id: "SDC-004",
+    nombre: "Roberto Cruz Salazar",
+    zona: "Centro",
+    calle: "Calle Allende 22",
+    cp: "72810",
+    pagados: 5,
+    adeudados: 3,
+  },
+  {
+    id: "SDC-005",
+    nombre: "Ana Patricia Flores Díaz",
+    zona: "Barrio Bajo",
+    calle: "Av. Reforma 88",
+    cp: "72813",
+    pagados: 8,
+    adeudados: 0,
+  },
 ];
 
 function InterfacePreview() {
@@ -344,7 +449,7 @@ function InterfacePreview() {
     (u) =>
       u.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       u.id.toLowerCase().includes(busqueda.toLowerCase()) ||
-      u.zona.toLowerCase().includes(busqueda.toLowerCase())
+      u.zona.toLowerCase().includes(busqueda.toLowerCase()),
   );
 
   return (
@@ -358,8 +463,8 @@ function InterfacePreview() {
             Así se ve el Padrón Digital
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto text-base">
-            Interactúa con esta simulación. Busca por nombre, ID o zona para
-            ver cómo funciona el buscador en tiempo real.
+            Interactúa con esta simulación. Busca por nombre, ID o zona para ver
+            cómo funciona el buscador en tiempo real.
           </p>
         </div>
 
@@ -370,12 +475,21 @@ function InterfacePreview() {
               <div className="w-3 h-3 rounded-full bg-yellow-500" />
               <div className="w-3 h-3 rounded-full bg-green-500" />
             </div>
-            <span className="text-slate-500 text-xs font-mono">sicose.app / padron-digital</span>
+            <span className="text-slate-500 text-xs font-mono">
+              sicose.app / padron-digital
+            </span>
           </div>
 
           <div className="px-4 sm:px-6 py-4 border-b border-white/10 flex items-center gap-3">
-            <svg className="w-5 h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <svg
+              className="w-5 h-5 text-slate-400 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               type="text"
@@ -393,8 +507,17 @@ function InterfacePreview() {
             <table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr className="border-b border-white/10 text-slate-400 text-xs uppercase tracking-wider">
-                  {["ID", "Nombre", "Zona", "Calle / CP", "Períodos Pagados", "Períodos Adeudados"].map((h) => (
-                    <th key={h} className="text-left px-5 py-3 font-semibold">{h}</th>
+                  {[
+                    "ID",
+                    "Nombre",
+                    "Zona",
+                    "Calle / CP",
+                    "Períodos Pagados",
+                    "Períodos Adeudados",
+                  ].map((h) => (
+                    <th key={h} className="text-left px-5 py-3 font-semibold">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -406,19 +529,30 @@ function InterfacePreview() {
                       i % 2 === 0 ? "bg-transparent" : "bg-white/[0.02]"
                     }`}
                   >
-                    <td className="px-5 py-3.5 font-mono text-[#f97316] font-medium">{u.id}</td>
-                    <td className="px-5 py-3.5 text-white font-medium">{u.nombre}</td>
+                    <td className="px-5 py-3.5 font-mono text-[#f97316] font-medium">
+                      {u.id}
+                    </td>
+                    <td className="px-5 py-3.5 text-white font-medium">
+                      {u.nombre}
+                    </td>
                     <td className="px-5 py-3.5 text-slate-300">{u.zona}</td>
                     <td className="px-5 py-3.5 text-slate-300">
                       {u.calle}
-                      <span className="text-slate-500 text-xs ml-1">C.P. {u.cp}</span>
+                      <span className="text-slate-500 text-xs ml-1">
+                        C.P. {u.cp}
+                      </span>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-1.5 rounded-full bg-slate-700 overflow-hidden">
-                          <div className="h-full rounded-full bg-green-500" style={{ width: `${(u.pagados / 8) * 100}%` }} />
+                          <div
+                            className="h-full rounded-full bg-green-500"
+                            style={{ width: `${(u.pagados / 8) * 100}%` }}
+                          />
                         </div>
-                        <span className="text-green-400 font-bold">{u.pagados}</span>
+                        <span className="text-green-400 font-bold">
+                          {u.pagados}
+                        </span>
                       </div>
                     </td>
                     <td className="px-5 py-3.5">
@@ -436,7 +570,10 @@ function InterfacePreview() {
                 ))}
                 {filtrados.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center text-slate-500 py-10">
+                    <td
+                      colSpan={6}
+                      className="text-center text-slate-500 py-10"
+                    >
                       No se encontraron resultados para "{busqueda}"
                     </td>
                   </tr>
@@ -458,17 +595,13 @@ function InterfacePreview() {
 // ------ Formulario de Captura ------
 const INITIAL_FORM = { nombre: "", comite: "", contacto: "" };
 
-// ============================================================
-// CONFIGURACIÓN APPS SCRIPT — solo cambia esta URL si redesplegas
-// ============================================================
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzozzAcSL_UBHs_w6RtnaNgjkiA8nRHDp8ZN4lT7i_yNo8nGOQSbUymVcBoXvJQsmRT/exec";
-// ============================================================
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
 
 function FormularioContacto() {
   const [formData, setFormData] = useState(INITIAL_FORM);
-  const [enviado, setEnviado]   = useState(false);
+  const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
-  const [error, setError]       = useState(false);
+  const [error, setError] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -483,16 +616,14 @@ function FormularioContacto() {
     setError(false);
 
     try {
-      const res = await fetch(APPS_SCRIPT_URL, {
+      const response = await fetch(`${API_BASE_URL}/api/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
-        // Apps Script redirige a una URL de google.com al responder,
-        // lo que dispara un error CORS en el cliente — es esperado.
-        // El dato YA fue escrito en Sheets antes de la redirección.
-        mode: "no-cors",
       });
-      // Con no-cors la respuesta es opaca pero el POST llegó correctamente.
+      if (!response.ok) {
+        throw new Error("Lead submission failed");
+      }
       setEnviado(true);
       setFormData(INITIAL_FORM);
     } catch (_) {
@@ -532,7 +663,10 @@ function FormularioContacto() {
                 demostración.
               </p>
               <button
-                onClick={() => { setEnviado(false); setError(false); }}
+                onClick={() => {
+                  setEnviado(false);
+                  setError(false);
+                }}
                 className="mt-6 text-[#f97316] text-sm font-semibold hover:underline"
               >
                 Enviar otra solicitud
@@ -541,7 +675,6 @@ function FormularioContacto() {
           ) : (
             /* ── Formulario ── */
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-
               {/* Nombre */}
               <div>
                 <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
@@ -561,7 +694,8 @@ function FormularioContacto() {
               {/* Comité */}
               <div>
                 <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
-                  Comité / Junta Auxiliar <span className="text-[#f97316]">*</span>
+                  Comité / Junta Auxiliar{" "}
+                  <span className="text-[#f97316]">*</span>
                 </label>
                 <input
                   type="text"
@@ -577,7 +711,8 @@ function FormularioContacto() {
               {/* Contacto */}
               <div>
                 <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
-                  Teléfono o Correo electrónico <span className="text-[#f97316]">*</span>
+                  Teléfono o Correo electrónico{" "}
+                  <span className="text-[#f97316]">*</span>
                 </label>
                 <input
                   type="text"
@@ -623,7 +758,15 @@ function Footer() {
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex items-center justify-center gap-2 mb-3">
           <div className="w-6 h-6 rounded bg-[#f97316] flex items-center justify-center">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+            >
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
@@ -632,10 +775,13 @@ function Footer() {
         </div>
         <p className="text-xs">
           Sistema de Cobro de Servicios •{" "}
-          <span className="text-slate-400">Junta Auxiliar San Diego Chalma, Puebla</span>
+          <span className="text-slate-400">
+            Junta Auxiliar San Diego Chalma, Puebla
+          </span>
         </p>
         <p className="text-xs mt-2 text-slate-600">
-          © {new Date().getFullYear()} — Bloque 1: Landing Page. Versión de validación.
+          © {new Date().getFullYear()} — Bloque 1: Landing Page. Versión de
+          validación.
         </p>
       </div>
     </footer>

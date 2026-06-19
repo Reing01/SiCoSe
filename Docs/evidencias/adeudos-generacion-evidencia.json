@@ -1,0 +1,233 @@
+{
+  "generatedAt": "2026-06-18T18:00:48.472Z",
+  "environment": "Supabase real database + local backend HTTP server",
+  "endpoint": "POST /api/adeudos/generar",
+  "request": {
+    "periodo": "2026-07"
+  },
+  "login": {
+    "status": 200,
+    "user": {
+      "id": "9adc08cc-516d-40d0-af83-38f082e12961",
+      "email": "gertrudis@sicose.test",
+      "nombre": "Gertrudis",
+      "rol": "tesorero"
+    }
+  },
+  "firstRun": {
+    "status": 201,
+    "headers": {
+      "access-control-allow-credentials": "true",
+      "access-control-allow-origin": "http://localhost:5173",
+      "connection": "keep-alive",
+      "content-length": "207",
+      "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+      "content-type": "application/json; charset=utf-8",
+      "cross-origin-opener-policy": "same-origin",
+      "cross-origin-resource-policy": "same-origin",
+      "date": "Thu, 18 Jun 2026 18:00:46 GMT",
+      "etag": "W/\"cf-1z/pyUdnJSy9NxSQ/uik9BqLSjc\"",
+      "keep-alive": "timeout=5",
+      "origin-agent-cluster": "?1",
+      "referrer-policy": "no-referrer",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "vary": "Origin",
+      "x-content-type-options": "nosniff",
+      "x-dns-prefetch-control": "off",
+      "x-download-options": "noopen",
+      "x-frame-options": "SAMEORIGIN",
+      "x-permitted-cross-domain-policies": "none",
+      "x-xss-protection": "0"
+    },
+    "body": {
+      "message": "Monthly debts generated",
+      "data": {
+        "periodo": "2026-07",
+        "vencimiento": "2026-07-31T23:59:59.999Z",
+        "ciudadanosActivos": 7,
+        "serviciosActivos": 3,
+        "candidatos": 21,
+        "existentes": 0,
+        "creados": 21,
+        "omitidos": 0
+      }
+    }
+  },
+  "secondRun": {
+    "status": 201,
+    "headers": {
+      "access-control-allow-credentials": "true",
+      "access-control-allow-origin": "http://localhost:5173",
+      "connection": "keep-alive",
+      "content-length": "208",
+      "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+      "content-type": "application/json; charset=utf-8",
+      "cross-origin-opener-policy": "same-origin",
+      "cross-origin-resource-policy": "same-origin",
+      "date": "Thu, 18 Jun 2026 18:00:47 GMT",
+      "etag": "W/\"d0-kBAAFstrcpM97mt0y0aaylX0WxY\"",
+      "keep-alive": "timeout=5",
+      "origin-agent-cluster": "?1",
+      "referrer-policy": "no-referrer",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "vary": "Origin",
+      "x-content-type-options": "nosniff",
+      "x-dns-prefetch-control": "off",
+      "x-download-options": "noopen",
+      "x-frame-options": "SAMEORIGIN",
+      "x-permitted-cross-domain-policies": "none",
+      "x-xss-protection": "0"
+    },
+    "body": {
+      "message": "Monthly debts generated",
+      "data": {
+        "periodo": "2026-07",
+        "vencimiento": "2026-07-31T23:59:59.999Z",
+        "ciudadanosActivos": 7,
+        "serviciosActivos": 3,
+        "candidatos": 21,
+        "existentes": 21,
+        "creados": 0,
+        "omitidos": 21
+      }
+    }
+  },
+  "databaseVerification": {
+    "periodDebtsCount": 21,
+    "periodDebts": [
+      {
+        "id": "fad0db14-d8e5-44a8-87bc-77169591f909",
+        "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+        "servicioId": "0243e068-4227-442b-bd83-3676b003e107",
+        "monto": 25,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "d41544c2-7e51-4e89-a74d-de4b21d45acb",
+        "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+        "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
+        "monto": 45.5,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "656157e1-bb2b-4ac1-a70b-fbf69ad6cd71",
+        "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
+        "servicioId": "ed568ec2-4d5c-4586-9f4c-21f864948d13",
+        "monto": 32,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "b1eb2b00-2cb6-4f02-945b-12b2f65f8e11",
+        "ciudadanoId": "26ed8e68-f7f8-4ce6-b527-b00697a1cdf9",
+        "servicioId": "0243e068-4227-442b-bd83-3676b003e107",
+        "monto": 25,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "830903a3-0506-40e8-a37b-52051a81a4bc",
+        "ciudadanoId": "26ed8e68-f7f8-4ce6-b527-b00697a1cdf9",
+        "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
+        "monto": 45.5,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "1f247973-0cf6-4f78-b8d5-a717613c63ec",
+        "ciudadanoId": "26ed8e68-f7f8-4ce6-b527-b00697a1cdf9",
+        "servicioId": "ed568ec2-4d5c-4586-9f4c-21f864948d13",
+        "monto": 32,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "5267aca9-f9f6-47c3-a560-4624e6ba647b",
+        "ciudadanoId": "4f1417c9-194e-4ae0-ae22-8ae034d5d126",
+        "servicioId": "0243e068-4227-442b-bd83-3676b003e107",
+        "monto": 25,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "28926d55-2c38-466e-9658-722996c49d9a",
+        "ciudadanoId": "4f1417c9-194e-4ae0-ae22-8ae034d5d126",
+        "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
+        "monto": 45.5,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "a71c8a11-5ae1-41b9-9c04-ca5c2c9c2080",
+        "ciudadanoId": "4f1417c9-194e-4ae0-ae22-8ae034d5d126",
+        "servicioId": "ed568ec2-4d5c-4586-9f4c-21f864948d13",
+        "monto": 32,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      },
+      {
+        "id": "6ce05edc-f02a-4952-9a0c-237398419b0f",
+        "ciudadanoId": "57e3d71a-767e-459a-907c-36d0ec964c8e",
+        "servicioId": "0243e068-4227-442b-bd83-3676b003e107",
+        "monto": 25,
+        "periodo": "2026-07",
+        "estado": "pendiente",
+        "pagado": false
+      }
+    ],
+    "duplicateGroups": [],
+    "rlsStatus": [
+      {
+        "tablename": "Adeudo",
+        "rls_enabled": true
+      },
+      {
+        "tablename": "Auditoria",
+        "rls_enabled": true
+      },
+      {
+        "tablename": "Ciudadano",
+        "rls_enabled": true
+      },
+      {
+        "tablename": "Comprobante",
+        "rls_enabled": true
+      },
+      {
+        "tablename": "Pago",
+        "rls_enabled": true
+      },
+      {
+        "tablename": "Reporte",
+        "rls_enabled": true
+      },
+      {
+        "tablename": "Servicio",
+        "rls_enabled": true
+      },
+      {
+        "tablename": "Usuario",
+        "rls_enabled": true
+      },
+      {
+        "tablename": "_prisma_migrations",
+        "rls_enabled": true
+      }
+    ]
+  },
+  "server": {
+    "stdout": "SiCoSe backend running on http://localhost:3107\n\u001b[0mGET /api/health \u001b[32m200\u001b[0m 3.621 ms - 81\u001b[0m\n\u001b[0mPOST /api/auth/login \u001b[32m200\u001b[0m 1304.595 ms - 430\u001b[0m\n\u001b[0mPOST /api/adeudos/generar \u001b[32m201\u001b[0m 1139.342 ms - 207\u001b[0m\n\u001b[0mPOST /api/adeudos/generar \u001b[32m201\u001b[0m 960.474 ms - 208\u001b[0m\n",
+    "stderr": ""
+  }
+}

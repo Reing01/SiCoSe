@@ -1,0 +1,187 @@
+{
+  "info": {
+    "name": "SiCoSe - Pagos",
+    "description": "Endpoint para registrar pagos en efectivo y verificar auditoria.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login tesorero",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"gertrudis@sicose.test\",\n  \"password\": \"SiCoSe2026!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Registrar pago en efectivo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metodo\": \"efectivo\",\n  \"ciudadano_id\": \"{{ciudadano_id}}\",\n  \"adeudo_id\": \"{{adeudo_id}}\",\n  \"monto\": 45.5\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/pagos",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pagos"]
+        },
+        "description": "Registra un pago, genera folio SCS-YYYY-XXXXXX, marca el adeudo como pagado y crea auditoria."
+      }
+    },
+    {
+      "name": "Registrar pago duplicado - espera 409",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metodo\": \"efectivo\",\n  \"ciudadano_id\": \"{{ciudadano_id}}\",\n  \"adeudo_id\": \"{{adeudo_id}}\",\n  \"monto\": 45.5\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/pagos",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pagos"]
+        },
+        "description": "Reutiliza el mismo adeudo_id de un pago ya registrado para validar el error 409."
+      }
+    },
+    {
+      "name": "Registrar pago por transferencia con comprobante",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "metodo",
+              "value": "transferencia",
+              "type": "text"
+            },
+            {
+              "key": "ciudadano_id",
+              "value": "{{ciudadano_id}}",
+              "type": "text"
+            },
+            {
+              "key": "adeudo_id",
+              "value": "{{adeudo_id}}",
+              "type": "text"
+            },
+            {
+              "key": "monto",
+              "value": "45.5",
+              "type": "text"
+            },
+            {
+              "key": "referencia_bancaria",
+              "value": "SPEI-{{referencia_bancaria}}",
+              "type": "text"
+            },
+            {
+              "key": "comprobante",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/pagos",
+          "host": ["{{base_url}}"],
+          "path": ["api", "pagos"]
+        },
+        "description": "Registra pago por transferencia. El archivo debe ser jpg, png o pdf real y pesar maximo 5MB."
+      }
+    },
+    {
+      "name": "Generar adeudos del mes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"periodo\": \"{{periodo}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/adeudos/generar",
+          "host": ["{{base_url}}"],
+          "path": ["api", "adeudos", "generar"]
+        },
+        "description": "Genera adeudos mensuales para cada ciudadano activo y servicio existente. Es idempotente por ciudadano, servicio y periodo."
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "auth_token",
+      "value": ""
+    },
+    {
+      "key": "ciudadano_id",
+      "value": ""
+    },
+    {
+      "key": "adeudo_id",
+      "value": ""
+    },
+    {
+      "key": "referencia_bancaria",
+      "value": "123456"
+    },
+    {
+      "key": "periodo",
+      "value": "2026-06"
+    }
+  ]
+}

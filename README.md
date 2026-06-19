@@ -1,5 +1,7 @@
 # SiCoSe — Sistema de Cobro y Seguimiento
 
+![CI](https://github.com/Reing01/SiCoSe/actions/workflows/ci.yml/badge.svg)
+
 Sistema web para la digitalización y gestión de pagos de servicios públicos
 en Juntas Auxiliares gubernamentales del estado de Puebla.
 
@@ -97,22 +99,20 @@ SiCoSe/
 
 ### Pasos
 
-```bash
-# 1. Clonar el repositorio
-git clone https://github.com/Reing01/SiCoSe.git
+# SiCoSe - Sistema de Cobro de Servicios
 
-# 2. Entrar al directorio
-cd SiCoSe
+Repositorio principal (Monorepo) para el Sistema de Cobro de Servicios.El sistema utiliza una arquitectura monolito modular con comunicación REST[cite: 2, 3].
 
-# 3. Instalar dependencias
-npm install
+## Requisitos Previos
+* Node.js (v20 o superior)
 
-# 4. Copiar variables de entorno
-cp .env.example .env
+## Instalación
+1. `npm install` (en la raíz para instalar dependencias del monorepo)
+2. `cd frontend && npm install`
+3. `cd ../backend && npm install`
 
-# 5. Iniciar el servidor de desarrollo
-npm run dev
-```
+## Ejecución Local
+Ejecuta `npm run dev` en la raíz del proyecto para levantar el Frontend (React/Vite) y el Backend (Express) simultáneamente.
 
 El servidor quedara disponible en `http://localhost:4000`.
 
