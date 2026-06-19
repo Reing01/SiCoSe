@@ -6,7 +6,7 @@ import { authenticate, requireRole } from '../middleware/require-role.js'
 
 const listQuerySchema = z.object({
   pagina: z.coerce.number().int().min(1).default(1),
-  limite: z.coerce.number().int().min(1).max(100).default(10),
+  limite: z.coerce.number().int().min(1).max(100).default(20),
   zona: z.string().trim().min(1).optional(),
   nombre: z.string().trim().min(1).optional(),
 })
@@ -73,6 +73,9 @@ ciudadanosRouter.get('/', async (request, response, next) => {
             mode: 'insensitive',
           },
         },
+        {
+          clave_catastral: nombre,
+        },
       ]
     }
 
@@ -94,6 +97,64 @@ ciudadanosRouter.get('/', async (request, response, next) => {
         limite,
         totalPaginas: Math.ceil(total / limite),
       },
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+ciudadanosRouter.get('/:id', async (request, response, next) => {
+  try {
+    const ciudadanoId = getParamId(request.params.id)
+
+    if (!ciudadanoId) {
+      return response.status(400).json({
+        error: 'Missing ciudadano id',
+        code: 400,
+      })
+    }
+
+    const ciudadano = await prisma.ciudadano.findFirst({
+      where: {
+        id: ciudadanoId,
+        activo: true,
+      },
+      include: {
+        adeudos: {
+          include: {
+            servicio: true,
+          },
+          orderBy: {
+            vencimiento: 'desc',
+          },
+        },
+        pagos: {
+          orderBy: {
+            fecha: 'desc',
+          },
+        },
+        comprobantes: {
+          orderBy: {
+            fecha: 'desc',
+          },
+        },
+        reportes: {
+          orderBy: {
+            fecha: 'desc',
+          },
+        },
+      },
+    })
+
+    if (!ciudadano) {
+      return response.status(404).json({
+        error: 'Ciudadano not found',
+        code: 404,
+      })
+    }
+
+    return response.json({
+      data: ciudadano,
     })
   } catch (error) {
     next(error)

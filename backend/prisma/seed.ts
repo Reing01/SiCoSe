@@ -142,6 +142,24 @@ async function main() {
         estado: "pendiente",
         pagado: false,
       },
+      {
+        ciudadanoId: ana.id,
+        servicioId: alcantarillado.id,
+        monto: 88,
+        periodo: "2026-05",
+        vencimiento: new Date("2026-05-31T00:00:00.000Z"),
+        estado: "vencido",
+        pagado: false,
+      },
+      {
+        ciudadanoId: jose.id,
+        servicioId: aguaPotable.id,
+        monto: 63.5,
+        periodo: "2026-05",
+        vencimiento: new Date("2026-05-31T00:00:00.000Z"),
+        estado: "vencido",
+        pagado: false,
+      },
     ],
   });
 

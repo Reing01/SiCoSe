@@ -1,0 +1,122 @@
+{
+  "info": {
+    "name": "SiCoSe - Ciudadanos Issue 008",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "ciudadanoId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Listar ciudadanos",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/ciudadanos?pagina=1&zona=Centro",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "ciudadanos"
+          ],
+          "query": [
+            {
+              "key": "pagina",
+              "value": "1"
+            },
+            {
+              "key": "zona",
+              "value": "Centro"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Detalle ciudadano",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/ciudadanos/{{ciudadanoId}}"
+      }
+    },
+    {
+      "name": "Crear ciudadano",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Pedro\",\n  \"apellido\": \"Lopez\",\n  \"email\": \"pedro.lopez@test.com\",\n  \"telefono\": \"5511111111\",\n  \"direccion\": \"Calle Nueva #123\",\n  \"zona\": \"Centro\",\n  \"clave_catastral\": \"CAT-0099\"\n}"
+        },
+        "url": "{{baseUrl}}/api/ciudadanos"
+      }
+    },
+    {
+      "name": "Actualizar ciudadano",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"telefono\": \"5522222222\",\n  \"zona\": \"Norte\"\n}"
+        },
+        "url": "{{baseUrl}}/api/ciudadanos/{{ciudadanoId}}"
+      }
+    },
+    {
+      "name": "Desactivar ciudadano",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/ciudadanos/{{ciudadanoId}}/desactivar"
+      }
+    }
+  ]
+}

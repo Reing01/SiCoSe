@@ -24,7 +24,9 @@ function getStorageConfig() {
   }
 }
 
-export async function uploadPrivateReceipt(input: UploadStorageInput): Promise<UploadStorageResult> {
+export async function uploadPrivateStorageObject(
+  input: UploadStorageInput,
+): Promise<UploadStorageResult> {
   const { supabaseUrl, serviceKey, bucket } = getStorageConfig()
   const objectPath = input.path.replace(/^\/+/, '')
   const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`
@@ -51,3 +53,5 @@ export async function uploadPrivateReceipt(input: UploadStorageInput): Promise<U
     url: `${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`,
   }
 }
+
+export const uploadPrivateReceipt = uploadPrivateStorageObject

@@ -135,16 +135,23 @@ model Auditoria {
 }
 
 model Reporte {
-  id          String    @id @default(uuid())
-  ciudadano   Ciudadano @relation(fields: [ciudadanoId], references: [id])
-  ciudadanoId String
-  titulo      String
-  descripcion String?
-  tipo        String
-  estado      String    @default("PENDIENTE")
-  fecha       DateTime  @default(now())
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
+  id           String     @id @default(uuid())
+  ciudadano    Ciudadano? @relation(fields: [ciudadanoId], references: [id], onDelete: SetNull)
+  ciudadanoId  String?
+  titulo       String
+  descripcion  String?
+  tipo         String
+  estado       String     @default("GENERADO")
+  periodo      String
+  archivo_url  String
+  archivo_path String
+  generado_por String?
+  resumen_json Json?
+  fecha        DateTime   @default(now())
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
 
   @@index([ciudadanoId])
+  @@index([periodo])
+  @@index([tipo])
 }
