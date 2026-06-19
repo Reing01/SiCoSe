@@ -64,9 +64,9 @@ export default function LoginPage() {
       <div className="relative mx-auto grid min-h-screen max-w-7xl gap-10 px-4 pb-10 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-12">
         <section className="flex flex-col justify-center gap-8">
           <div className="max-w-2xl space-y-6">
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#f97316] backdrop-blur">
+            {/* <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#f97316] backdrop-blur">
               ACT-7 · Issue #007
-            </span>
+            </span> */}
 
             <div className="space-y-4">
               <p className="text-sm font-medium uppercase tracking-[0.35em] text-sky-200/80">

@@ -1,6 +1,7 @@
 import LandingPage from './LandingPage.jsx'
 import LoginPage from './pages/auth/LoginPage'
 import CitizenManagementPage from './pages/citizens/CitizenManagementPage'
+import { ToastProvider } from './components/ui/toast'
 
 export default function App() {
   const pathname =
@@ -8,13 +9,15 @@ export default function App() {
       ? window.location.pathname.replace(/\/+$/, '') || '/'
       : '/'
 
+  let page = <LandingPage />
+
   if (pathname === '/login') {
-    return <LoginPage />
+    page = <LoginPage />
   }
 
   if (pathname === '/ciudadanos') {
-    return <CitizenManagementPage />
+    page = <CitizenManagementPage />
   }
 
-  return <LandingPage />
+  return <ToastProvider>{page}</ToastProvider>
 }

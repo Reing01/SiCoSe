@@ -54,7 +54,7 @@ function Navbar() {
             <li key={l.href}>
               <a
                 href={l.href}
-                className="text-slate-300 hover:text-[#f97316] text-sm font-medium transition-colors"
+                className="inline-flex min-h-11 items-center text-slate-300 hover:text-[#f97316] text-sm font-medium transition-colors"
               >
                 {l.label}
               </a>
@@ -66,7 +66,7 @@ function Navbar() {
           <li>
             <a
               href="#contacto"
-              className="bg-[#f97316] hover:bg-orange-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              className="inline-flex min-h-11 items-center bg-[#f97316] hover:bg-orange-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
             >
               Demo Gratis
             </a>
@@ -76,7 +76,7 @@ function Navbar() {
         {/* Hamburguesa — mobile */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden text-white p-2 rounded-md hover:bg-white/10 transition-colors"
+          className="md:hidden text-white h-11 w-11 rounded-md hover:bg-white/10 transition-colors"
           aria-label="Abrir menú"
         >
           {isOpen ? (
@@ -123,7 +123,7 @@ function Navbar() {
               key={l.href}
               href={l.href}
               onClick={() => setIsOpen(false)}
-              className="text-slate-300 hover:text-[#f97316] text-base font-medium py-1 transition-colors"
+              className="inline-flex min-h-11 items-center text-slate-300 hover:text-[#f97316] text-base font-medium transition-colors"
             >
               {l.label}
             </a>
@@ -131,7 +131,7 @@ function Navbar() {
           <a
             href="#contacto"
             onClick={() => setIsOpen(false)}
-            className="mt-2 bg-[#f97316] hover:bg-orange-500 text-white font-semibold py-3 rounded-lg text-center transition-colors"
+            className="mt-2 inline-flex min-h-11 items-center justify-center bg-[#f97316] hover:bg-orange-500 text-white font-semibold py-3 rounded-lg text-center transition-colors"
           >
             Solicitar Demostración Gratis
           </a>
@@ -506,7 +506,7 @@ function InterfacePreview() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por nombre, ID o zona…"
-              className="bg-transparent text-white placeholder-slate-500 text-sm flex-1 outline-none"
+              className="bg-transparent text-white placeholder-slate-500 text-base sm:text-sm flex-1 outline-none"
             />
             <span className="text-slate-500 text-xs hidden sm:block">
               {filtrados.length} resultado{filtrados.length !== 1 && "s"}
@@ -677,7 +677,7 @@ function FormularioContacto() {
                   setEnviado(false);
                   setError(false);
                 }}
-                className="mt-6 text-[#f97316] text-sm font-semibold hover:underline"
+                className="mt-6 inline-flex min-h-11 items-center justify-center text-[#f97316] text-sm font-semibold hover:underline"
               >
                 Enviar otra solicitud
               </button>
@@ -697,7 +697,7 @@ function FormularioContacto() {
                   onChange={handleChange}
                   placeholder="Ej. Juan Carlos Martínez"
                   required
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-sm transition"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
               </div>
 
@@ -714,7 +714,7 @@ function FormularioContacto() {
                   onChange={handleChange}
                   placeholder="Ej. Junta Auxiliar San Diego Chalma"
                   required
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-sm transition"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
               </div>
 
@@ -731,7 +731,7 @@ function FormularioContacto() {
                   onChange={handleChange}
                   placeholder="Ej. 222 123 4567 o correo@ejemplo.com"
                   required
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-sm transition"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
               </div>
 

@@ -11,6 +11,7 @@ import {
 } from '../../components/ui/card'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
+import { useToast } from '../../components/ui/toast'
 import { cn } from '../../lib/utils'
 import { citizenSeed } from './citizen.seed'
 import type {
@@ -219,6 +220,7 @@ export default function CitizenManagementPanel() {
   const direccionId = useId()
   const claveCatastralId = useId()
   const statusId = useId()
+  const { addToast } = useToast()
 
   const [citizens, setCitizens] = useState<CitizenRecord[]>(() =>
     citizenSeed.map((record) => ({ ...record })),
@@ -315,14 +317,22 @@ export default function CitizenManagementPanel() {
   const handleDeleteCitizen = (id: string) => {
     setCitizens((current) => current.filter((record) => record.id !== id))
 
+    const message = 'Ciudadano eliminado correctamente.'
+
     if (selectedCitizenId === id) {
-      resetForm('Ciudadano eliminado correctamente.')
+      resetForm(message)
     } else {
       setSubmissionState({
         kind: 'success',
-        message: 'Ciudadano eliminado correctamente.',
+        message,
       })
     }
+
+    addToast({
+      tone: 'success',
+      title: 'Ciudadano eliminado',
+      message,
+    })
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -346,6 +356,11 @@ export default function CitizenManagementPanel() {
       setSubmissionState({
         kind: 'error',
         message: 'Corrige los campos marcados para continuar.',
+      })
+      addToast({
+        tone: 'warning',
+        title: 'Formulario con pendientes',
+        message: 'Completa los campos obligatorios antes de guardar.',
       })
       return
     }
@@ -380,11 +395,18 @@ export default function CitizenManagementPanel() {
     setSelectedCitizenId(nextCitizen.id)
     setValues(recordToFormValues(nextCitizen))
     setTouched(DEFAULT_TOUCHED)
+    const successMessage = isEditing
+      ? 'Ciudadano actualizado correctamente.'
+      : 'Ciudadano creado correctamente.'
+
     setSubmissionState({
       kind: 'success',
-      message: isEditing
-        ? 'Ciudadano actualizado correctamente.'
-        : 'Ciudadano creado correctamente.',
+      message: successMessage,
+    })
+    addToast({
+      tone: 'success',
+      title: isEditing ? 'Ciudadano actualizado' : 'Ciudadano creado',
+      message: successMessage,
     })
   }
 
@@ -498,7 +520,7 @@ export default function CitizenManagementPanel() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
+              <table className="min-w-[760px] text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-500">
                   <tr>
                     <th scope="col" className="px-5 py-3 font-semibold">
