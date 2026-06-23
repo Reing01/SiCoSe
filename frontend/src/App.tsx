@@ -23,5 +23,9 @@ export default function App() {
     return <DashboardPage />
   }
 
+  if (pathname === '/dashboard') {
+    return <DashboardPage />
+  }
+
   return <LandingPage />
 }
