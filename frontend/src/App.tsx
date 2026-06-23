@@ -1,7 +1,7 @@
 import LandingPage from './LandingPage.jsx'
 import LoginPage from './pages/auth/LoginPage'
 import CitizenManagementPage from './pages/citizens/CitizenManagementPage'
-import { ToastProvider } from './components/ui/toast'
+import DashboardPage from './pages/dashboard/DashboardPage'
 
 export default function App() {
   const pathname =
@@ -19,5 +19,9 @@ export default function App() {
     page = <CitizenManagementPage />
   }
 
-  return <ToastProvider>{page}</ToastProvider>
+  if (pathname === '/dashboard') {
+    return <DashboardPage />
+  }
+
+  return <LandingPage />
 }

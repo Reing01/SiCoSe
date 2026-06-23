@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-06-19T02:54:07.180Z",
+  "environment": "Supabase real database + local backend HTTP server",
+  "redisUrlTarget": "localhost:6379 (no secret)",
+  "endpoint": "GET /api/dashboard/metricas",
+  "login": {
+    "status": 200,
+    "user": {
+      "id": "526c9766-9032-42c3-94c9-1c4aed26f9bb",
+      "email": "cristian@sicose.test",
+      "nombre": "Cristian",
+      "rol": "admin"
+    }
+  },
+  "firstCall": {
+    "status": 200,
+    "durationMs": 1210.14,
+    "headers": {
+      "access-control-allow-credentials": "true",
+      "access-control-allow-origin": "http://localhost:5173",
+      "connection": "keep-alive",
+      "content-length": "329",
+      "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+      "content-type": "application/json; charset=utf-8",
+      "cross-origin-opener-policy": "same-origin",
+      "cross-origin-resource-policy": "same-origin",
+      "date": "Fri, 19 Jun 2026 02:54:06 GMT",
+      "etag": "W/\"149-u0n2mssf1mz6rs5qpsZKKbap3CA\"",
+      "keep-alive": "timeout=5",
+      "origin-agent-cluster": "?1",
+      "referrer-policy": "no-referrer",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "vary": "Origin",
+      "x-content-type-options": "nosniff",
+      "x-dns-prefetch-control": "off",
+      "x-download-options": "noopen",
+      "x-frame-options": "SAMEORIGIN",
+      "x-permitted-cross-domain-policies": "none",
+      "x-xss-protection": "0"
+    },
+    "body": {
+      "data": {
+        "periodo": "2026-06",
+        "totalRecaudadoMes": 91,
+        "porcentajeCobertura": 0,
+        "numeroMorosos": 0,
+        "comparativoMesAnterior": 100,
+        "totalAdeudosMes": 0,
+        "pagosRegistradosMes": 2,
+        "variacion": {
+          "direccion": "mejora",
+          "color": "verde",
+          "montoMesAnterior": 0
+        },
+        "ultimaActualizacion": "2026-06-19T02:54:06.418Z",
+        "cache": {
+          "hit": false,
+          "ttlSegundos": 300
+        }
+      }
+    }
+  },
+  "secondCall": {
+    "status": 200,
+    "durationMs": 739.48,
+    "headers": {
+      "access-control-allow-credentials": "true",
+      "access-control-allow-origin": "http://localhost:5173",
+      "connection": "keep-alive",
+      "content-length": "329",
+      "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+      "content-type": "application/json; charset=utf-8",
+      "cross-origin-opener-policy": "same-origin",
+      "cross-origin-resource-policy": "same-origin",
+      "date": "Fri, 19 Jun 2026 02:54:07 GMT",
+      "etag": "W/\"149-FIUEJlcFDDa6h71GL0wT/RSAQr8\"",
+      "keep-alive": "timeout=5",
+      "origin-agent-cluster": "?1",
+      "referrer-policy": "no-referrer",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "vary": "Origin",
+      "x-content-type-options": "nosniff",
+      "x-dns-prefetch-control": "off",
+      "x-download-options": "noopen",
+      "x-frame-options": "SAMEORIGIN",
+      "x-permitted-cross-domain-policies": "none",
+      "x-xss-protection": "0"
+    },
+    "body": {
+      "data": {
+        "periodo": "2026-06",
+        "totalRecaudadoMes": 91,
+        "porcentajeCobertura": 0,
+        "numeroMorosos": 0,
+        "comparativoMesAnterior": 100,
+        "totalAdeudosMes": 0,
+        "pagosRegistradosMes": 2,
+        "variacion": {
+          "direccion": "mejora",
+          "color": "verde",
+          "montoMesAnterior": 0
+        },
+        "ultimaActualizacion": "2026-06-19T02:54:07.158Z",
+        "cache": {
+          "hit": false,
+          "ttlSegundos": 300
+        }
+      }
+    }
+  },
+  "redis": {
+    "available": false,
+    "reason": "Connection is closed."
+  },
+  "server": {
+    "stdout": "SiCoSe backend running on http://localhost:3108\n\u001b[0mGET /api/health \u001b[32m200\u001b[0m 2.859 ms - 81\u001b[0m\n\u001b[0mPOST /api/auth/login \u001b[32m200\u001b[0m 1313.056 ms - 420\u001b[0m\n\u001b[0mGET /api/dashboard/metricas \u001b[32m200\u001b[0m 1206.599 ms - 329\u001b[0m\n\u001b[0mGET /api/dashboard/metricas \u001b[32m200\u001b[0m 736.192 ms - 329\u001b[0m\n",
+    "stderr": ""
+  }
+}

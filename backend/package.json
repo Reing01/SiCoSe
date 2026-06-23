@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/index.js",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node --test dist/test/require-role.test.js dist/test/rate-limit.test.js dist/test/pagos.test.js dist/test/ciudadanos.test.js dist/test/adeudos.test.js dist/test/reportes.test.js",
+"test": "npm run build && node --test dist/test/require-role.test.js dist/test/rate-limit.test.js dist/test/pagos.test.js dist/test/ciudadanos.test.js dist/test/adeudos.test.js dist/test/dashboard.test.js dist/test/reportes.test.js",
     "seed": "tsx prisma/seed.ts",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:status": "prisma migrate status",
