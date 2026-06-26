@@ -9,22 +9,12 @@ export default function App() {
       ? window.location.pathname.replace(/\/+$/, '') || '/'
       : '/'
 
-  let page = <LandingPage />
-
   if (pathname === '/login') {
-    page = <LoginPage />
+    return <LoginPage />
   }
 
   if (pathname === '/ciudadanos') {
-    page = <CitizenManagementPage />
-  }
-
-  if (pathname === '/dashboard') {
-    return <DashboardPage />
-  }
-
-  if (pathname === '/dashboard') {
-    return <DashboardPage />
+    return <CitizenManagementPage />
   }
 
   if (pathname === '/dashboard') {
