@@ -8,6 +8,7 @@ import { adeudosRouter } from './routes/adeudos.js'
 import { authRouter } from './routes/auth.js'
 import { auditoriasRouter } from './routes/auditorias.js'
 import { ciudadanosRouter } from './routes/ciudadanos.js'
+import { docsRouter } from './routes/docs.js'
 import { dashboardRouter } from './routes/dashboard.js'
 import { healthRouter } from './routes/health.js'
 import { leadsRouter } from './routes/leads.js'
@@ -36,6 +37,7 @@ export function createApp() {
   app.use('/api/auditorias', auditoriasRouter)
   app.use('/api/ciudadanos', ciudadanosRouter)
   app.use('/api/dashboard', dashboardRouter)
+  app.use('/api/docs', docsRouter)
   app.use('/api/pagos', pagosRouter)
   app.use('/api/reportes', reportesRouter)
 
