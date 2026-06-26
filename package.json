@@ -12,8 +12,7 @@
     "lint": "npm run lint --prefix frontend && npm run lint --prefix backend",
     "test": "npm run test --prefix frontend && npm run test --prefix backend",
     "test:e2e": "npm run test:e2e --prefix frontend",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
-    "prepare": "husky"
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\""
   },
   "repository": {
     "type": "git",
