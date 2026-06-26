@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../../components/ui/card'
-import { readAuthSession } from '../../features/auth/auth.session'
+import { clearAuthSession, readAuthSession } from '../../features/auth/auth.session'
 import { fetchDashboardMetrics } from '../../features/dashboard/dashboard.api'
 import type { DashboardMetrics } from '../../features/dashboard/dashboard.types'
 import { cn } from '../../lib/utils'
@@ -230,6 +230,11 @@ function DashboardContent({ metrics }: { metrics: DashboardMetrics }) {
 export default function DashboardPage() {
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
 
+  const handleLogout = () => {
+    clearAuthSession()
+    window.location.assign('/login')
+  }
+
   useEffect(() => {
     const session = readAuthSession()
 
@@ -257,7 +262,7 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef4f8_100%)] text-slate-900">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef4f8_100%)] text-slate-900 animate-fade-in">
       <header className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <a
           href="/"
@@ -274,10 +279,19 @@ export default function DashboardPage() {
           </div>
         </a>
 
-        <RoutePills variant="dark" />
+        <div className="flex flex-wrap items-center gap-3">
+          <RoutePills variant="dark" />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-rose-200 hover:text-rose-700"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </header>
 
-      <section className="border-b border-slate-200/80 bg-white/75 backdrop-blur">
+      <section className="border-b border-slate-200/80 bg-white/75 backdrop-blur animate-fade-up">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <span className="inline-flex items-center rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[#0f3042]">
             Dashboard
@@ -294,9 +308,9 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
         {state.kind === 'loading' ? (
-          <Card className="border-slate-200/80 bg-white/95 shadow-sm">
+          <Card className="border-slate-200/80 bg-white/95 shadow-sm animate-scale-in">
             <CardContent className="p-6 text-sm text-slate-600">
               Cargando metricas...
             </CardContent>
@@ -304,9 +318,16 @@ export default function DashboardPage() {
         ) : null}
 
         {state.kind === 'error' ? (
-          <Card className="border-rose-200 bg-rose-50 shadow-sm">
-            <CardContent className="p-6 text-sm font-medium text-rose-800">
-              {state.message}
+          <Card className="border-rose-200 bg-rose-50 shadow-sm animate-scale-in">
+            <CardContent className="flex flex-col gap-4 p-6 text-sm font-medium text-rose-800">
+              <p>{state.message}</p>
+              <button
+                type="button"
+                onClick={() => window.location.assign('/login')}
+                className="inline-flex min-h-11 w-fit items-center rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-700"
+              >
+                Ir al login
+              </button>
             </CardContent>
           </Card>
         ) : null}
