@@ -3,6 +3,7 @@ import { createHash, randomInt } from 'node:crypto'
 import { detectReceiptFileSignature } from '../lib/file-signature.js'
 import { prisma } from '../lib/prisma.js'
 import { uploadPrivateReceipt } from '../lib/supabase-storage.js'
+import { auditLogger } from './audit.js'
 
 const CASH_PAYMENT_METHOD = 'efectivo'
 const TRANSFER_PAYMENT_METHOD = 'transferencia'
@@ -134,22 +135,19 @@ export async function registerCashPayment(
       },
     })
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: input.usuarioId,
-        accion: 'REGISTRO_PAGO_EFECTIVO',
-        entidad: 'Pago',
-        entidad_id: payment.id,
-        ip: input.ip,
-        timestamp: new Date(),
-        detalles: JSON.stringify({
-          folio,
-          ciudadanoId: input.ciudadanoId,
-          adeudoId: input.adeudoId,
-          monto: input.monto,
-          estadoAnterior: adeudo.estado || PENDING_STATUS,
-          estadoNuevo: PAID_STATUS,
-        }),
+    await auditLogger(tx, {
+      usuarioId: input.usuarioId,
+      accion: 'REGISTRO_PAGO_EFECTIVO',
+      entidad: 'Pago',
+      entidadId: payment.id,
+      ip: input.ip,
+      detalles: {
+        folio,
+        ciudadanoId: input.ciudadanoId,
+        adeudoId: input.adeudoId,
+        monto: input.monto,
+        estadoAnterior: adeudo.estado || PENDING_STATUS,
+        estadoNuevo: PAID_STATUS,
       },
     })
 
@@ -275,25 +273,22 @@ export async function registerTransferPayment(
       },
     })
 
-    await tx.auditoria.create({
-      data: {
-        usuarioId: input.usuarioId,
-        accion: 'REGISTRO_PAGO_TRANSFERENCIA',
-        entidad: 'Pago',
-        entidad_id: payment.id,
-        ip: input.ip,
-        timestamp: new Date(),
-        detalles: JSON.stringify({
-          folio,
-          referenciaBancaria: input.referenciaBancaria.trim(),
-          ciudadanoId: input.ciudadanoId,
-          adeudoId: input.adeudoId,
-          monto: input.monto,
-          comprobanteUrl: storage.url,
-          hashSha256,
-          estadoAnterior: adeudo.estado || PENDING_STATUS,
-          estadoNuevo: PAID_STATUS,
-        }),
+    await auditLogger(tx, {
+      usuarioId: input.usuarioId,
+      accion: 'REGISTRO_PAGO_TRANSFERENCIA',
+      entidad: 'Pago',
+      entidadId: payment.id,
+      ip: input.ip,
+      detalles: {
+        folio,
+        referenciaBancaria: input.referenciaBancaria.trim(),
+        ciudadanoId: input.ciudadanoId,
+        adeudoId: input.adeudoId,
+        monto: input.monto,
+        comprobanteUrl: storage.url,
+        hashSha256,
+        estadoAnterior: adeudo.estado || PENDING_STATUS,
+        estadoNuevo: PAID_STATUS,
       },
     })
 

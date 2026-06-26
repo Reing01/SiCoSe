@@ -26,6 +26,7 @@ type SubmissionState =
 
 export type LoginSubmissionResult = {
   message?: string
+  redirectTo?: string
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -173,6 +174,16 @@ export default function LoginForm({
         title: 'Sesion iniciada',
         message: successMessage,
       })
+
+      if (result && typeof result === 'object' && 'redirectTo' in result) {
+        const redirectTo = result.redirectTo
+
+        if (typeof redirectTo === 'string' && redirectTo.trim()) {
+          window.setTimeout(() => {
+            window.location.assign(redirectTo)
+          }, 900)
+        }
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error

@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict'
 import { before, describe, it } from 'node:test'
-import type { generateMonthlyReport as generateMonthlyReportType } from '../src/services/reportes.js'
+import type {
+  exportMonthlyReport as exportMonthlyReportType,
+  generateMonthlyReport as generateMonthlyReportType,
+} from '../src/services/reportes.js'
 
 let generateMonthlyReport: typeof generateMonthlyReportType
+let exportMonthlyReport: typeof exportMonthlyReportType
 
 before(async () => {
   process.env.DATABASE_URL ??= 'postgresql://user:pass@localhost:5432/sicose_test'
@@ -10,7 +14,7 @@ before(async () => {
   process.env.REDIS_URL ??= 'redis://localhost:6379'
   process.env.JWT_SECRET ??= 'test-secret-with-at-least-sixteen-chars'
 
-  ;({ generateMonthlyReport } = await import('../src/services/reportes.js'))
+  ;({ generateMonthlyReport, exportMonthlyReport } = await import('../src/services/reportes.js'))
 })
 
 function createReportClient() {
@@ -206,5 +210,34 @@ describe('generateMonthlyReport', () => {
         message: 'Invalid period format. Expected YYYY-MM',
       },
     )
+  })
+
+  it('exports the monthly report as an Excel workbook', async () => {
+    const { client, storageUploader, calls } = createReportClient()
+
+    const result = await exportMonthlyReport(
+      {
+        periodo: '2026-06',
+        usuarioId: 'user-1',
+      },
+      client as never,
+      storageUploader,
+      'xlsx',
+    )
+
+    assert.equal(result.format, 'xlsx')
+    assert.equal(result.fileName.endsWith('.xlsx'), true)
+    assert.match(
+      result.report.archivo_url,
+      /^https:\/\/storage\.example\/reportes\/2026-06\/\d+-reporte-mensual-2026-06\.xlsx$/,
+    )
+
+    const uploadArgs = calls.upload as { path: string; buffer: Buffer; contentType: string }
+    assert.match(uploadArgs.path, /^reportes\/2026-06\/\d+-reporte-mensual-2026-06\.xlsx$/)
+    assert.equal(
+      uploadArgs.contentType,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    assert.equal(uploadArgs.buffer.length > 0, true)
   })
 })

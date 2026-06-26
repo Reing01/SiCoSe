@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: light;
+  --app-background: #f8fafc;
+  --app-foreground: #0f172a;
+  --app-border: #e2e8f0;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --app-background: #020617;
+  --app-foreground: #e2e8f0;
+  --app-border: #1e293b;
+}
+
 html,
 body,
 #root {
@@ -9,4 +23,75 @@ body,
 
 body {
   overflow-x: hidden;
+  background: var(--app-background);
+  color: var(--app-foreground);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.45s ease-out both;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.45s ease-out both;
+}
+
+.animate-float-soft {
+  animation: float-soft 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-fade-up,
+  .animate-scale-in,
+  .animate-float-soft {
+    animation: none;
+  }
 }
