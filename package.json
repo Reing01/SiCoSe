@@ -5,10 +5,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "build": "npm run build --prefix frontend && npm run build --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",
     "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "lint": "npm run lint --prefix frontend && npm run lint --prefix backend",
+    "test": "npm run test --prefix frontend && npm run test --prefix backend",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "husky"
   },
