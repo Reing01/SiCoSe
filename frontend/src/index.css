@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: light;
+  --app-background: #f8fafc;
+  --app-foreground: #0f172a;
+  --app-border: #e2e8f0;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --app-background: #020617;
+  --app-foreground: #e2e8f0;
+  --app-border: #1e293b;
+}
+
 html,
 body,
 #root {
@@ -9,6 +23,11 @@ body,
 
 body {
   overflow-x: hidden;
+  background: var(--app-background);
+  color: var(--app-foreground);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 @keyframes fade-in {

@@ -124,6 +124,13 @@ export const openApiDocument = {
           archivo_path: { type: 'string' },
         },
       },
+      ReportExportRequest: {
+        type: 'object',
+        properties: {
+          periodo: { type: 'string', example: '2026-06' },
+          formato: { type: 'string', enum: ['pdf', 'xlsx'], example: 'xlsx' },
+        },
+      },
       Auditoria: {
         type: 'object',
         properties: {
@@ -380,6 +387,25 @@ export const openApiDocument = {
         summary: 'Generate a monthly PDF report',
         responses: {
           201: { description: 'Report generated' },
+          400: { description: 'Invalid payload' },
+          403: { description: 'Forbidden role' },
+        },
+      },
+    },
+    '/api/reportes/exportar': {
+      post: {
+        tags: ['Reportes'],
+        summary: 'Export a monthly report as PDF or Excel',
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ReportExportRequest' },
+            },
+          },
+        },
+        responses: {
+          201: { description: 'Report export generated' },
           400: { description: 'Invalid payload' },
           403: { description: 'Forbidden role' },
         },
