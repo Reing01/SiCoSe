@@ -8,5 +8,7 @@ RUN npm install
 COPY . .
 
 EXPOSE 3000
+# POR SI DA ERROR ESTO ESTAVA ASI
+# CMD ["npm", "run", "dev"]
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]
