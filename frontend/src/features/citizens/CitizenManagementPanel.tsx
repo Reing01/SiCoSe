@@ -505,7 +505,7 @@ export default function CitizenManagementPanel() {
             Mostrando {visibleCitizens.length} de {citizens.length} registros
           </span>
           <span className="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-flex" />
-          <span>Issue #009 - UI de gestion de ciudadanos</span>
+
         </div>
       </div>
 
