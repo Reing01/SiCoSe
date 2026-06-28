@@ -11,8 +11,9 @@
     "dev:backend": "npm run dev --prefix backend",
     "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "lint": "npm run lint --prefix frontend && npm run lint --prefix backend",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
-    "prepare": "husky"
+    "test": "npm run test --prefix frontend && npm run test --prefix backend",
+    "test:e2e": "npm run test:e2e --prefix frontend",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\""
   },
   "repository": {
     "type": "git",

@@ -1,4 +1,4 @@
-import type { AuthSession, AuthUser } from './auth.types'
+import type { AuthRole, AuthSession, AuthUser } from './auth.types'
 
 const AUTH_TOKEN_KEY = 'sicose.auth.token'
 const AUTH_USER_KEY = 'sicose.auth.user'
@@ -60,3 +60,6 @@ export function readAuthSession(): AuthSession | null {
   }
 }
 
+export function getHomeRouteForRole(role: AuthRole) {
+  return role === 'secretaria' ? '/ciudadanos' : '/dashboard'
+}

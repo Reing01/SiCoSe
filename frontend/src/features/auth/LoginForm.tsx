@@ -11,6 +11,7 @@ import {
 } from '../../components/ui/card'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
+import { useToast } from '../../components/ui/toast'
 import { cn } from '../../lib/utils'
 import type { LoginRequest } from './auth.types'
 
@@ -25,6 +26,7 @@ type SubmissionState =
 
 export type LoginSubmissionResult = {
   message?: string
+  redirectTo?: string
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -78,6 +80,7 @@ export default function LoginForm({
   const emailHintId = `${emailId}-hint`
   const passwordHintId = `${passwordId}-hint`
   const statusId = useId()
+  const { addToast } = useToast()
 
   const [values, setValues] = useState<LoginRequest>({
     email: initialValues?.email ?? DEFAULT_VALUES.email,
@@ -140,6 +143,11 @@ export default function LoginForm({
         kind: 'error',
         message: 'Corrige los campos marcados para continuar.',
       })
+      addToast({
+        tone: 'warning',
+        title: 'Campos incompletos',
+        message: 'Revisa el correo y la contrasena antes de continuar.',
+      })
       return
     }
 
@@ -149,23 +157,47 @@ export default function LoginForm({
       const result = await Promise.resolve(onSubmit?.(normalizedValues))
 
       setValues(normalizedValues)
+      const successMessage =
+        typeof result === 'object' &&
+        result !== null &&
+        typeof result.message === 'string' &&
+        result.message.trim().length > 0
+          ? result.message
+          : 'Sesion iniciada correctamente. El backend respondio con exito.'
+
       setSubmissionState({
         kind: 'success',
-        message:
-          typeof result === 'object' &&
-          result !== null &&
-          typeof result.message === 'string' &&
-          result.message.trim().length > 0
-            ? result.message
-            : 'Sesion iniciada correctamente. El backend respondio con exito.',
+        message: successMessage,
       })
+      addToast({
+        tone: 'success',
+        title: 'Sesion iniciada',
+        message: successMessage,
+      })
+
+      if (result && typeof result === 'object' && 'redirectTo' in result) {
+        const redirectTo = result.redirectTo
+
+        if (typeof redirectTo === 'string' && redirectTo.trim()) {
+          window.setTimeout(() => {
+            window.location.assign(redirectTo)
+          }, 900)
+        }
+      }
     } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'No se pudo procesar el acceso. Intenta de nuevo.'
+
       setSubmissionState({
         kind: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'No se pudo procesar el acceso. Intenta de nuevo.',
+        message: errorMessage,
+      })
+      addToast({
+        tone: 'error',
+        title: 'No se pudo iniciar sesion',
+        message: errorMessage,
       })
     } finally {
       setIsSubmitting(false)
@@ -264,7 +296,7 @@ export default function LoginForm({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1/2 h-9 -translate-y-1/2 rounded-lg px-3 text-slate-500 hover:text-slate-900"
+                className="absolute right-1 top-1/2 h-11 -translate-y-1/2 rounded-lg px-3 text-slate-500 hover:text-slate-900"
                 onClick={() => setShowPassword((current) => !current)}
                 aria-label={
                   showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
@@ -323,4 +355,3 @@ export default function LoginForm({
     </form>
   )
 }
-

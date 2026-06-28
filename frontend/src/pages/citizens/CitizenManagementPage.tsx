@@ -1,9 +1,15 @@
 import CitizenManagementPanel from '../../features/citizens/CitizenManagementPanel'
 import RoutePills from '../../components/RoutePills'
+import { clearAuthSession } from '../../features/auth/auth.session'
 
 export default function CitizenManagementPage() {
+  const handleLogout = () => {
+    clearAuthSession()
+    window.location.assign('/login')
+  }
+
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(15,48,66,0.12),_transparent_42%),linear-gradient(180deg,#f8fafc_0%,#eef4f8_100%)] text-slate-900">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(15,48,66,0.12),_transparent_42%),linear-gradient(180deg,#f8fafc_0%,#eef4f8_100%)] text-slate-900 animate-fade-in">
       <header className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <a
           href="/"
@@ -20,10 +26,19 @@ export default function CitizenManagementPage() {
           </div>
         </a>
 
-        <RoutePills variant="dark" />
+        <div className="flex flex-wrap items-center gap-3">
+          <RoutePills variant="dark" />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-rose-200 hover:text-rose-700"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </header>
 
-      <section className="border-b border-slate-200/80 bg-white/75 backdrop-blur">
+      <section className="border-b border-slate-200/80 bg-white/75 backdrop-blur animate-fade-up">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <span className="inline-flex items-center rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[#0f3042]">
             ACT-7 - Issue #009
@@ -58,7 +73,7 @@ export default function CitizenManagementPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
         <CitizenManagementPanel />
       </section>
     </main>

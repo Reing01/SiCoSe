@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module'
 import type { Reporte, Prisma } from '@prisma/client'
+import * as XLSX from 'xlsx'
 import { prisma } from '../lib/prisma.js'
 import { uploadPrivateStorageObject } from '../lib/supabase-storage.js'
 
@@ -81,6 +82,28 @@ type ServiceRevenueRow = {
   pagos: number
   recaudado: number
   promedio: number
+}
+
+type MonthlyReportSnapshot = {
+  periodo: string
+  previousPeriodo: string
+  generatedAt: Date
+  currentPayments: PaymentRow[]
+  previousPayments: PaymentRow[]
+  serviceRevenue: ServiceRevenueRow[]
+  topMorosos: OverdueDebtRow[]
+  totalMorosos: number
+  carteraVencida: number
+}
+
+type ReportArtifactFormat = 'pdf' | 'xlsx'
+
+type ReportArtifact = {
+  buffer: Buffer
+  fileName: string
+  contentType: string
+  descripcion: string
+  tipo: string
 }
 
 export class ReportError extends Error {
@@ -311,6 +334,194 @@ function createServiceRevenue(rows: PaymentRow[]): ServiceRevenueRow[] {
     .sort((left, right) => right.recaudado - left.recaudado)
 }
 
+async function buildMonthlyReportSnapshot(
+  input: GenerateMonthlyReportInput,
+  client: PrismaClientLike,
+) {
+  const periodo = normalizePeriod(input.periodo)
+  const previousPeriodo = getPreviousPeriod(periodo)
+  const currentRange = getPeriodRange(periodo)
+  const previousRange = getPeriodRange(previousPeriodo)
+
+  return client.$transaction(async (tx) => {
+    const [currentPayments, previousPayments, topMorososResult] = await Promise.all([
+      tx.pago.findMany({
+        where: {
+          fecha: {
+            gte: currentRange.start,
+            lte: currentRange.end,
+          },
+        },
+        include: {
+          adeudo: {
+            include: {
+              servicio: true,
+            },
+          },
+        },
+        orderBy: {
+          fecha: 'asc',
+        },
+      }) as Promise<PaymentRow[]>,
+      tx.pago.findMany({
+        where: {
+          fecha: {
+            gte: previousRange.start,
+            lte: previousRange.end,
+          },
+        },
+        include: {
+          adeudo: {
+            include: {
+              servicio: true,
+            },
+          },
+        },
+        orderBy: {
+          fecha: 'asc',
+        },
+      }) as Promise<PaymentRow[]>,
+      (async () => {
+        const { end } = getPeriodRange(periodo)
+        const where: Prisma.AdeudoWhereInput = {
+          pagado: false,
+          OR: [
+            {
+              estado: 'vencido',
+            },
+            {
+              vencimiento: {
+                lt: end,
+              },
+            },
+          ],
+        }
+
+        const [total, cartera] = await Promise.all([
+          tx.adeudo.count({ where }),
+          tx.adeudo.aggregate({
+            where,
+            _sum: {
+              monto: true,
+            },
+          }),
+        ])
+
+        const rows = await tx.adeudo.findMany({
+          where,
+          include: {
+            ciudadano: true,
+            servicio: true,
+          },
+          orderBy: {
+            monto: 'desc',
+          },
+          take: 10,
+        })
+
+        return {
+          total,
+          carteraVencida: cartera._sum.monto ?? 0,
+          rows: rows as OverdueDebtRow[],
+        }
+      })(),
+    ])
+
+    return {
+      periodo,
+      previousPeriodo,
+      generatedAt: new Date(),
+      currentPayments,
+      previousPayments,
+      serviceRevenue: createServiceRevenue(currentPayments),
+      topMorosos: topMorososResult.rows,
+      totalMorosos: topMorososResult.total,
+      carteraVencida: topMorososResult.carteraVencida,
+    } satisfies MonthlyReportSnapshot
+  })
+}
+
+function buildMonthlyReportXlsx(snapshot: MonthlyReportSnapshot) {
+  const workbook = XLSX.utils.book_new()
+  const currentTotal = snapshot.currentPayments.reduce((sum, payment) => sum + payment.monto, 0)
+  const previousTotal = snapshot.previousPayments.reduce((sum, payment) => sum + payment.monto, 0)
+
+  const summarySheet = XLSX.utils.aoa_to_sheet([
+    ['SiCoSe', 'Reporte mensual'],
+    ['Periodo', snapshot.periodo],
+    ['Periodo anterior', snapshot.previousPeriodo],
+    ['Generado el', snapshot.generatedAt.toISOString()],
+    ['Recaudado actual', currentTotal],
+    ['Recaudado anterior', previousTotal],
+    ['Cartera vencida', snapshot.carteraVencida],
+    ['Morosos', snapshot.totalMorosos],
+    ['Pagos actuales', snapshot.currentPayments.length],
+    ['Pagos periodo anterior', snapshot.previousPayments.length],
+  ])
+
+  const serviceRevenueSheet = XLSX.utils.json_to_sheet(
+    snapshot.serviceRevenue.map((row) => ({
+      Servicio: row.servicio,
+      Pagos: row.pagos,
+      Recaudado: row.recaudado,
+      Promedio: row.promedio,
+    })),
+  )
+
+  const morososSheet = XLSX.utils.json_to_sheet(
+    snapshot.topMorosos.map((row) => ({
+      Ciudadano: `${row.ciudadano.nombre} ${row.ciudadano.apellido}`,
+      ClaveCatastral: row.ciudadano.clave_catastral,
+      Zona: row.ciudadano.zona ?? 'Sin zona',
+      Servicio: row.servicio.nombre,
+      Periodo: row.periodo,
+      Monto: row.monto,
+      Vencimiento: formatDate(row.vencimiento),
+    })),
+  )
+
+  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumen')
+  XLSX.utils.book_append_sheet(workbook, serviceRevenueSheet, 'Recaudacion')
+  XLSX.utils.book_append_sheet(workbook, morososSheet, 'Morosos')
+
+  return Buffer.from(
+    XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'buffer',
+      compression: true,
+    }),
+  )
+}
+
+function buildReportArtifact(
+  snapshot: MonthlyReportSnapshot,
+  format: ReportArtifactFormat,
+): ReportArtifact {
+  const currentTotal = snapshot.currentPayments.reduce((sum, payment) => sum + payment.monto, 0)
+  const previousTotal = snapshot.previousPayments.reduce((sum, payment) => sum + payment.monto, 0)
+  const fileBaseName = `reporte-mensual-${snapshot.periodo}`
+
+  if (format === 'xlsx') {
+    return {
+      buffer: buildMonthlyReportXlsx(snapshot),
+      fileName: `${fileBaseName}.xlsx`,
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      tipo: 'MENSUAL_EXCEL',
+      descripcion:
+        'Exportacion Excel con resumen operativo, recaudacion por servicio y cartera vencida.',
+    }
+  }
+
+  return {
+    buffer: Buffer.alloc(0),
+    fileName: `${fileBaseName}.pdf`,
+    contentType: 'application/pdf',
+    tipo: 'MENSUAL_PDF',
+    descripcion:
+      'PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.',
+  }
+}
+
 async function buildMonthlyReportPdf(input: {
   periodo: string
   generatedAt: Date
@@ -531,145 +742,80 @@ async function buildMonthlyReportPdf(input: {
   })
 }
 
-export async function generateMonthlyReport(
+async function buildMonthlyReportPdfBuffer(snapshot: MonthlyReportSnapshot) {
+  return buildMonthlyReportPdf({
+    periodo: snapshot.periodo,
+    generatedAt: snapshot.generatedAt,
+    currentPayments: snapshot.currentPayments,
+    previousPayments: snapshot.previousPayments,
+    serviceRevenue: snapshot.serviceRevenue,
+    topMorosos: snapshot.topMorosos,
+    totalMorosos: snapshot.totalMorosos,
+    carteraVencida: snapshot.carteraVencida,
+  })
+}
+
+async function buildMonthlyReportFile(
+  snapshot: MonthlyReportSnapshot,
+  format: ReportArtifactFormat,
+) {
+  if (format === 'xlsx') {
+    return buildReportArtifact(snapshot, 'xlsx')
+  }
+
+  const pdfBuffer = await buildMonthlyReportPdfBuffer(snapshot)
+
+  return {
+    buffer: pdfBuffer,
+    fileName: `reporte-mensual-${snapshot.periodo}.pdf`,
+    contentType: 'application/pdf',
+    tipo: 'MENSUAL_PDF',
+    descripcion:
+      'PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.',
+  }
+}
+
+export async function exportMonthlyReport(
   input: GenerateMonthlyReportInput = { usuarioId: '' },
   client: PrismaClientLike = prisma,
   storageUploader: StorageUploader = uploadPrivateStorageObject,
+  format: ReportArtifactFormat = 'pdf',
 ) {
   if (!input.usuarioId.trim()) {
     throw new ReportError(400, 'User id is required to generate the report')
   }
 
-  const periodo = normalizePeriod(input.periodo)
-  const previousPeriodo = getPreviousPeriod(periodo)
-  const currentRange = getPeriodRange(periodo)
-  const previousRange = getPeriodRange(previousPeriodo)
+  const snapshot = await buildMonthlyReportSnapshot(input, client)
+  const artifact = await buildMonthlyReportFile(snapshot, format)
+  const storagePath = `reportes/${snapshot.periodo}/${Date.now()}-${artifact.fileName}`
 
   return client.$transaction(async (tx) => {
-    const [currentPayments, previousPayments, topMorososResult] = await Promise.all([
-      tx.pago.findMany({
-        where: {
-          fecha: {
-            gte: currentRange.start,
-            lte: currentRange.end,
-          },
-        },
-        include: {
-          adeudo: {
-            include: {
-              servicio: true,
-            },
-          },
-        },
-        orderBy: {
-          fecha: 'asc',
-        },
-      }) as Promise<PaymentRow[]>,
-      tx.pago.findMany({
-        where: {
-          fecha: {
-            gte: previousRange.start,
-            lte: previousRange.end,
-          },
-        },
-        include: {
-          adeudo: {
-            include: {
-              servicio: true,
-            },
-          },
-        },
-        orderBy: {
-          fecha: 'asc',
-        },
-      }) as Promise<PaymentRow[]>,
-      (async () => {
-        const { end } = getPeriodRange(periodo)
-        const where: Prisma.AdeudoWhereInput = {
-          pagado: false,
-          OR: [
-            {
-              estado: 'vencido',
-            },
-            {
-              vencimiento: {
-                lt: end,
-              },
-            },
-          ],
-        }
-
-        const [total, cartera] = await Promise.all([
-          tx.adeudo.count({ where }),
-          tx.adeudo.aggregate({
-            where,
-            _sum: {
-              monto: true,
-            },
-          }),
-        ])
-
-        const rows = await tx.adeudo.findMany({
-          where,
-          include: {
-            ciudadano: true,
-            servicio: true,
-          },
-          orderBy: {
-            monto: 'desc',
-          },
-          take: 10,
-        })
-
-        return {
-          total,
-          carteraVencida: cartera._sum.monto ?? 0,
-          rows: rows as OverdueDebtRow[],
-        }
-      })(),
-    ])
-
-    const serviceRevenue = createServiceRevenue(currentPayments)
-    const generatedAt = new Date()
-    const pdfBuffer = await buildMonthlyReportPdf({
-      periodo,
-      generatedAt,
-      currentPayments,
-      previousPayments,
-      serviceRevenue,
-      topMorosos: topMorososResult.rows,
-      totalMorosos: topMorososResult.total,
-      carteraVencida: topMorososResult.carteraVencida,
-    })
-
-    const fileName = `reporte-mensual-${periodo}.pdf`
-    const storagePath = `reportes/${periodo}/${Date.now()}-${fileName}`
     const storage = await storageUploader({
       path: storagePath,
-      buffer: pdfBuffer,
-      contentType: 'application/pdf',
+      buffer: artifact.buffer,
+      contentType: artifact.contentType,
     })
 
     const report = await tx.reporte.create({
       data: {
-        titulo: `Reporte mensual ${formatPeriod(periodo)}`,
-        descripcion:
-          'PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.',
-        tipo: 'MENSUAL',
+        titulo: `Reporte mensual ${formatPeriod(snapshot.periodo)}`,
+        descripcion: artifact.descripcion,
+        tipo: artifact.tipo,
         estado: 'GENERADO',
-        periodo,
+        periodo: snapshot.periodo,
         archivo_url: storage.url,
         archivo_path: storage.path,
         generado_por: input.usuarioId,
         resumen_json: {
-          periodo,
-          periodoAnterior: previousPeriodo,
-          recaudadoActual: currentPayments.reduce((sum, payment) => sum + payment.monto, 0),
-          recaudadoAnterior: previousPayments.reduce((sum, payment) => sum + payment.monto, 0),
-          carteraVencida: topMorososResult.carteraVencida,
-          morosos: topMorososResult.total,
-          recaudacionPorServicio: serviceRevenue,
-          topMorosos: topMorososResult.rows,
+          periodo: snapshot.periodo,
+          periodoAnterior: snapshot.previousPeriodo,
+          formato: format,
+          recaudadoActual: snapshot.currentPayments.reduce((sum, payment) => sum + payment.monto, 0),
+          recaudadoAnterior: snapshot.previousPayments.reduce((sum, payment) => sum + payment.monto, 0),
+          carteraVencida: snapshot.carteraVencida,
+          morosos: snapshot.totalMorosos,
+          recaudacionPorServicio: snapshot.serviceRevenue,
+          topMorosos: snapshot.topMorosos,
         },
       },
     })
@@ -677,12 +823,21 @@ export async function generateMonthlyReport(
     return {
       report: report as Reporte,
       storage,
-      periodo,
-      previousPeriodo,
-      serviceRevenue,
-      topMorosos: topMorososResult.rows,
-      carteraVencida: topMorososResult.carteraVencida,
-      pdfFilename: fileName,
+      periodo: snapshot.periodo,
+      previousPeriodo: snapshot.previousPeriodo,
+      serviceRevenue: snapshot.serviceRevenue,
+      topMorosos: snapshot.topMorosos,
+      carteraVencida: snapshot.carteraVencida,
+      fileName: artifact.fileName,
+      format,
     }
   })
+}
+
+export async function generateMonthlyReport(
+  input: GenerateMonthlyReportInput = { usuarioId: '' },
+  client: PrismaClientLike = prisma,
+  storageUploader: StorageUploader = uploadPrivateStorageObject,
+) {
+  return exportMonthlyReport(input, client, storageUploader, 'pdf')
 }
