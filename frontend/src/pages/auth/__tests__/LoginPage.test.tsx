@@ -25,7 +25,9 @@ describe('LoginPage', () => {
         name: /acceso seguro al panel operativo de la junta auxiliar/i,
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/act-7 · issue #007/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/sicose · sistema de cobro de servicios/i),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText(/correo institucional/i)).toBeInTheDocument()
   })
 
@@ -46,12 +48,9 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText(/correo institucional/i), {
       target: { value: 'ADMIN@SICOSE.TEST' },
     })
-    fireEvent.change(
-      screen.getByLabelText(/contraseña/i, { selector: 'input' }),
-      {
-        target: { value: 'SiCoSe2026!' },
-      },
-    )
+    fireEvent.change(screen.getByLabelText(/contraseña/i, { selector: 'input' }), {
+      target: { value: 'SiCoSe2026!' },
+    })
     fireEvent.click(
       screen.getByRole('button', { name: /ingresar al panel/i }),
     )
@@ -64,12 +63,10 @@ describe('LoginPage', () => {
     })
 
     expect(sessionStorage.getItem(authStorageKeys.token)).toBe('jwt-token-123')
-    expect(JSON.parse(sessionStorage.getItem(authStorageKeys.user) ?? '{}')).toEqual(
-      {
-        email: 'admin@sicose.test',
-        rol: 'admin',
-      },
-    )
+    expect(JSON.parse(sessionStorage.getItem(authStorageKeys.user) ?? '{}')).toEqual({
+      email: 'admin@sicose.test',
+      rol: 'admin',
+    })
     expect(await screen.findByRole('status')).toHaveTextContent(
       /sesion iniciada correctamente/i,
     )
