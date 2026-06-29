@@ -13,7 +13,7 @@ describe('validateLoginForm', () => {
   it('accepts valid credentials', () => {
     expect(
       validateLoginForm({
-        email: 'cristian@junta.gob.mx',
+        email: 'admin@sicose.test',
         password: 'SiCoSe2026!',
       }),
     ).toEqual({})
@@ -46,7 +46,7 @@ describe('LoginForm', () => {
       <LoginForm
         onSubmit={onSubmit}
         initialValues={{
-          email: 'ADMIN@JUNTA.GOB.MX',
+          email: 'ADMIN@SICOSE.TEST',
           password: 'SiCoSe2026!',
         }}
       />,
@@ -58,7 +58,7 @@ describe('LoginForm', () => {
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith({
-        email: 'admin@junta.gob.mx',
+        email: 'admin@sicose.test',
         password: 'SiCoSe2026!',
       })
     })
@@ -86,4 +86,3 @@ describe('LoginForm', () => {
     ).toHaveAttribute('type', 'text')
   })
 })
-

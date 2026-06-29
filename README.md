@@ -54,6 +54,22 @@ docker compose up -d
 
 Levantará PostgreSQL 16 y Redis 7 con volúmenes persistentes y variables de entorno separadas en `.env.docker`.
 
+### Credenciales de prueba
+
+Si ya corriste el seed del backend, puedes entrar con cualquiera de estas cuentas:
+
+- `admin@sicose.test`
+- `tesorero@sicose.test`
+- `secretaria@sicose.test`
+
+Contraseña para las tres: `SiCoSe2026!`
+
+Para cargar los datos de prueba en local:
+
+```bash
+npm run seed --prefix backend
+```
+
 ## Ramas
 
 - `main`: producción
@@ -70,4 +86,3 @@ El workflow de GitHub Actions valida `lint`, `test` y `build` en frontend y back
 - `Docs/Flujo del Sistema-Act5.md`
 - `Docs/Gitthub-flow.md`
 - `Docs/ModelodeDatos-Act5.md`
-

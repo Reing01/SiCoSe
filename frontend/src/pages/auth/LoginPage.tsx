@@ -74,9 +74,7 @@ export default function LoginPage() {
       <div className="relative mx-auto grid min-h-screen max-w-7xl gap-10 px-4 pb-10 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-12">
         <section className="flex flex-col justify-center gap-8 animate-fade-up">
           <div className="max-w-2xl space-y-6">
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#f97316] backdrop-blur">
-              ACT-7 · Issue #007
-            </span>
+
 
             <div className="space-y-4">
               <p className="text-sm font-medium uppercase tracking-[0.35em] text-sky-200/80">
@@ -120,33 +118,6 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10 backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
-              Backend conectado
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              Este login apunta a <span className="text-white">{API_BASE_URL}</span>{' '}
-              y está listo para validar el flujo real de autenticación.
-            </p>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              Prueba con las credenciales del seed cuando el backend esté
-              desplegado.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.25em] text-slate-300">
-              <a
-                href="/"
-                className="inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 transition-colors hover:bg-white/10"
-              >
-                Volver al inicio
-              </a>
-              <a
-                href="/#contacto"
-                className="inline-flex min-h-11 items-center rounded-full border border-[#f97316]/30 bg-[#f97316]/10 px-4 py-2 text-[#f97316] transition-colors hover:bg-[#f97316]/20"
-              >
-                Ver demo
-              </a>
-            </div>
-          </div>
         </section>
 
         <section className="flex items-center justify-center animate-scale-in">

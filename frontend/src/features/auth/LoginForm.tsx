@@ -257,7 +257,7 @@ export default function LoginForm({
               inputMode="email"
               autoComplete="email"
               autoFocus
-              placeholder="nombre@junta.gob.mx"
+              placeholder="admin@sicose.test"
               value={values.email}
               onChange={handleFieldChange('email')}
               onBlur={handleFieldBlur('email')}
@@ -342,7 +342,7 @@ export default function LoginForm({
           </Button>
 
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-            <span>Issue #007 · UI de login</span>
+
             <a
               href="#soporte"
               className="font-medium text-[#0f3042] transition-colors hover:text-[#f97316]"

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { readAuthSession } from '../features/auth/auth.session'
 import { cn } from '../lib/utils'
 
 const ROUTES = [
@@ -26,6 +27,24 @@ function getCurrentPath() {
     : '/'
 }
 
+function getVisibleRoutes() {
+  const session = readAuthSession()
+
+  if (!session) {
+    return ROUTES.filter((route) => route.href === '/' || route.href === '/login')
+  }
+
+  if (session.user.rol === 'secretaria') {
+    return ROUTES.filter((route) => route.href !== '/dashboard')
+  }
+
+  if (session.user.rol === 'tesorero') {
+    return ROUTES.filter((route) => route.href !== '/ciudadanos')
+  }
+
+  return ROUTES
+}
+
 const VARIANT_CLASSES = {
   light: {
     idle:
@@ -47,6 +66,7 @@ export default function RoutePills({
   ariaLabel = 'Navegacion de pantallas',
 }: RoutePillsProps) {
   const currentPath = getCurrentPath()
+  const routes = getVisibleRoutes()
   const styles = VARIANT_CLASSES[variant]
   const [isOpen, setIsOpen] = useState(false)
   const buttonClasses =
@@ -91,7 +111,7 @@ export default function RoutePills({
             ),
         )}
       >
-        {ROUTES.map((route) => {
+        {routes.map((route) => {
           const isActive = currentPath === route.href
 
           return (
