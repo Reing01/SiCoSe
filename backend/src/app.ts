@@ -1,6 +1,9 @@
 import cors from 'cors'
+import fs from 'node:fs'
 import express from 'express'
 import helmet from 'helmet'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import morgan from 'morgan'
 import { env } from './config/env.js'
 import { errorHandler } from './middleware/error-handler.js'
@@ -17,6 +20,9 @@ import { reportesRouter } from './routes/reportes.js'
 
 export function createApp() {
   const app = express()
+  const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
+  const frontendDistPath = path.resolve(currentDirectory, '../../../frontend/dist')
+  const frontendIndexPath = path.join(frontendDistPath, 'index.html')
 
   app.use(helmet())
   app.use(
@@ -40,6 +46,14 @@ export function createApp() {
   app.use('/api/docs', docsRouter)
   app.use('/api/pagos', pagosRouter)
   app.use('/api/reportes', reportesRouter)
+
+  if (fs.existsSync(frontendIndexPath)) {
+    app.use(express.static(frontendDistPath))
+
+    app.get(/^\/(?!api\/).*/, (_request, response) => {
+      response.sendFile(frontendIndexPath)
+    })
+  }
 
   app.use((_request, response) => {
     response.status(404).json({

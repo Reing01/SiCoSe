@@ -22,7 +22,7 @@ describe('auth.api', () => {
           data: {
             token: 'jwt-token',
             user: {
-              email: 'cristian@junta.gob.mx',
+              email: 'admin@sicose.test',
               rol: 'admin',
             },
           },
@@ -37,7 +37,7 @@ describe('auth.api', () => {
     )
 
     const response = await login({
-      email: 'cristian@junta.gob.mx',
+      email: 'admin@sicose.test',
       password: 'SiCoSe2026!',
     })
 
@@ -50,7 +50,7 @@ describe('auth.api', () => {
     expect(headers.get('Content-Type')).toBe('application/json')
     expect(init.body).toBe(
       JSON.stringify({
-        email: 'cristian@junta.gob.mx',
+        email: 'admin@sicose.test',
         password: 'SiCoSe2026!',
       }),
     )

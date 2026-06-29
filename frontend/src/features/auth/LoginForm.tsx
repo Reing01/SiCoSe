@@ -257,7 +257,7 @@ export default function LoginForm({
               inputMode="email"
               autoComplete="email"
               autoFocus
-              placeholder="nombre@junta.gob.mx"
+              placeholder="admin@sicose.test"
               value={values.email}
               onChange={handleFieldChange('email')}
               onBlur={handleFieldBlur('email')}
