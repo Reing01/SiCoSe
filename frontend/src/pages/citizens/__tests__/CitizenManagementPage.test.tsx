@@ -11,7 +11,9 @@ describe('CitizenManagementPage', () => {
         name: /gestion de ciudadanos con busqueda, edicion y validacion local/i,
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText('ACT-7 - Issue #009')).toBeInTheDocument()
+    expect(
+      screen.getByText(/sicose - padron digital/i),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /nuevo ciudadano/i }),
     ).toBeInTheDocument()

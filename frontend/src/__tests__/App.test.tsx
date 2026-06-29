@@ -10,14 +10,14 @@ afterEach(() => {
 })
 
 describe('App routing', () => {
-  it('renders the citizen management page at /ciudadanos', () => {
+  it('redirects unauthenticated access at /ciudadanos to the login page', () => {
     window.history.pushState({}, '', '/ciudadanos')
 
     render(<App />)
 
     expect(
       screen.getByRole('heading', {
-        name: /gestion de ciudadanos con busqueda, edicion y validacion local/i,
+        name: /acceso seguro al panel operativo de la junta auxiliar/i,
       }),
     ).toBeInTheDocument()
   })
@@ -41,7 +41,7 @@ describe('App routing', () => {
       authStorageKeys.user,
       JSON.stringify({
         id: 'user-1',
-        email: 'cristian@sicose.test',
+        email: 'admin@sicose.test',
         nombre: 'Cristian',
         rol: 'admin',
       }),
@@ -89,5 +89,27 @@ describe('App routing', () => {
     expect(screen.getByText('$1,250.00')).toBeInTheDocument()
     expect(screen.getByText('80%')).toBeInTheDocument()
     expect(screen.getByText('Redis activo')).toBeInTheDocument()
+  })
+
+  it('renders the citizen management page for a secretary session', () => {
+    window.history.pushState({}, '', '/ciudadanos')
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        id: 'user-2',
+        email: 'secretaria@sicose.test',
+        nombre: 'Maria Nerida',
+        rol: 'secretaria',
+      }),
+    )
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', {
+        name: /gestion de ciudadanos con busqueda, edicion y validacion local/i,
+      }),
+    ).toBeInTheDocument()
   })
 })

@@ -25,7 +25,9 @@ describe('LoginPage', () => {
         name: /acceso seguro al panel operativo de la junta auxiliar/i,
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/act-7 · issue #007/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/sicose · sistema de cobro de servicios/i),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText(/correo institucional/i)).toBeInTheDocument()
   })
 
@@ -35,7 +37,7 @@ describe('LoginPage', () => {
       data: {
         token: 'jwt-token-123',
         user: {
-          email: 'cristian@junta.gob.mx',
+          email: 'admin@sicose.test',
           rol: 'admin',
         },
       },
@@ -44,35 +46,29 @@ describe('LoginPage', () => {
     render(<LoginPage />)
 
     fireEvent.change(screen.getByLabelText(/correo institucional/i), {
-      target: { value: 'CRISTIAN@JUNTA.GOB.MX' },
+      target: { value: 'ADMIN@SICOSE.TEST' },
     })
-    fireEvent.change(
-      screen.getByLabelText(/contraseña/i, { selector: 'input' }),
-      {
-        target: { value: 'SiCoSe2026!' },
-      },
-    )
+    fireEvent.change(screen.getByLabelText(/contraseña/i, { selector: 'input' }), {
+      target: { value: 'SiCoSe2026!' },
+    })
     fireEvent.click(
       screen.getByRole('button', { name: /ingresar al panel/i }),
     )
 
     await waitFor(() => {
       expect(loginMock).toHaveBeenCalledWith({
-        email: 'cristian@junta.gob.mx',
+        email: 'admin@sicose.test',
         password: 'SiCoSe2026!',
       })
     })
 
     expect(sessionStorage.getItem(authStorageKeys.token)).toBe('jwt-token-123')
-    expect(JSON.parse(sessionStorage.getItem(authStorageKeys.user) ?? '{}')).toEqual(
-      {
-        email: 'cristian@junta.gob.mx',
-        rol: 'admin',
-      },
-    )
+    expect(JSON.parse(sessionStorage.getItem(authStorageKeys.user) ?? '{}')).toEqual({
+      email: 'admin@sicose.test',
+      rol: 'admin',
+    })
     expect(await screen.findByRole('status')).toHaveTextContent(
       /sesion iniciada correctamente/i,
     )
   })
 })
-
