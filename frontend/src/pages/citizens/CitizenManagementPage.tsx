@@ -92,7 +92,39 @@ export default function CitizenManagementPage() {
         </div>
       </header>
 
-      {/* resto igual */}
+      <section className="border-b border-slate-200/80 bg-white/75 backdrop-blur animate-fade-up">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+
+
+          <div className="mt-5 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+            <div className="max-w-3xl space-y-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-slate-500">
+                SiCoSe - Padron digital
+              </p>
+              <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+                Gestion de ciudadanos con busqueda, edicion y validacion local
+              </h1>
+              <p className="text-base leading-7 text-slate-600">
+                Esta vista centraliza el registro de ciudadanos para revisar
+                datos de contacto, editar informacion y validar formularios
+                antes de integrarlos con el backend real.
+              </p>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-5 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#0f3042]">
+                Alcance del bloque
+              </p>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+                <li>- Busqueda por nombre, correo o clave catastral</li>
+                <li>- Filtros rapidos por estado del registro</li>
+                <li>- Alta, edicion y eliminacion local con validacion</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
         <CitizenManagementPanel />
       </section>
