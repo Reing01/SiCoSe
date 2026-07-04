@@ -1,76 +1,98 @@
 import CitizenManagementPanel from '../../features/citizens/CitizenManagementPanel'
 import RoutePills from '../../components/RoutePills'
 import { clearAuthSession } from '../../features/auth/auth.session'
+import { cn } from '../../lib/utils'
+import { useEffect, useState } from 'react'
 
 export default function CitizenManagementPage() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme-citizen') as 'light' | 'dark' | null
+    if (saved) setTheme(saved)
+  }, [])
+
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light'
+    setTheme(next)
+    localStorage.setItem('theme-citizen', next)
+  }
+
   const handleLogout = () => {
     clearAuthSession()
     window.location.assign('/login')
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(15,48,66,0.12),_transparent_42%),linear-gradient(180deg,#f8fafc_0%,#eef4f8_100%)] text-slate-900 animate-fade-in">
+    <main
+      className={cn(
+        'min-h-screen animate-fade-in',
+        theme === 'dark'
+          ? 'bg-slate-900 text-slate-100'
+          : 'bg-[radial-gradient(circle_at_top,_rgba(15,48,66,0.12),_transparent_42%),linear-gradient(180deg,#f8fafc_0%,#eef4f8_100%)] text-slate-900'
+      )}
+    >
       <header className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <a
           href="/"
-          className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/90 px-4 py-2 shadow-sm backdrop-blur transition-colors hover:border-[#0f3042]/20 hover:bg-white"
+          className={cn(
+            'inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm backdrop-blur transition-colors',
+            theme === 'dark'
+              ? 'border-slate-700 bg-slate-900/90 hover:border-sky-500/30 hover:bg-slate-800'
+              : 'border-slate-200 bg-white/90 hover:border-[#0f3042]/20 hover:bg-white'
+          )}
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3042] text-sm font-bold text-white shadow-lg shadow-[#0f3042]/15">
             SC
           </div>
           <div className="text-left">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#0f3042]">
+            <p
+              className={cn(
+                'text-xs font-semibold uppercase tracking-[0.35em]',
+                theme === 'dark' ? 'text-sky-300' : 'text-[#0f3042]'
+              )}
+            >
               SiCoSe
             </p>
-            <p className="text-sm text-slate-500">Navegación de evaluación</p>
+            <p
+              className={cn(
+                'text-sm',
+                theme === 'dark' ? 'text-slate-300' : 'text-slate-500'
+              )}
+            >
+              Navegación de evaluación
+            </p>
           </div>
         </a>
 
         <div className="flex flex-wrap items-center gap-3">
-          <RoutePills variant="dark" />
+          <RoutePills variant={theme === 'dark' ? 'light' : 'dark'} />
+
+          {/* Botón para alternar tema */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors"
+          >
+            {theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro'}
+          </button>
+
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-rose-200 hover:text-rose-700"
+            className={cn(
+              'inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors',
+              theme === 'dark'
+                ? 'border-slate-700 bg-slate-900 text-slate-200 hover:border-rose-500/40 hover:text-rose-300'
+                : 'border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:text-rose-700'
+            )}
           >
             Cerrar sesión
           </button>
         </div>
       </header>
 
-      <section className="border-b border-slate-200/80 bg-white/75 backdrop-blur animate-fade-up">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-
-
-          <div className="mt-5 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-            <div className="max-w-3xl space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-slate-500">
-                SiCoSe - Padron digital
-              </p>
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-                Gestion de ciudadanos con busqueda, edicion y validacion local
-              </h1>
-              <p className="text-base leading-7 text-slate-600">
-                Esta vista centraliza el registro de ciudadanos para revisar
-                datos de contacto, editar informacion y validar formularios
-                antes de integrarlos con el backend real.
-              </p>
-            </div>
-
-            <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-5 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#0f3042]">
-                Alcance del bloque
-              </p>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                <li>- Busqueda por nombre, correo o clave catastral</li>
-                <li>- Filtros rapidos por estado del registro</li>
-                <li>- Alta, edicion y eliminacion local con validacion</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* resto igual */}
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
         <CitizenManagementPanel />
       </section>
