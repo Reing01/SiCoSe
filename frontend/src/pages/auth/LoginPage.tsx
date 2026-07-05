@@ -1,6 +1,7 @@
+import { useEffect } from 'react'
 import LoginForm from '../../features/auth/LoginForm'
 import { login } from '../../features/auth/auth.api'
-import { persistAuthSession } from '../../features/auth/auth.session'
+import { getHomeRouteForRole, persistAuthSession, readAuthSession } from '../../features/auth/auth.session'
 import type { LoginRequest } from '../../features/auth/auth.types'
 import { API_BASE_URL } from '../../lib/api'
 import RoutePills from '../../components/RoutePills'
@@ -26,6 +27,14 @@ const highlights = [
 const signals = ['JWT', 'RBAC', 'Auditoría', 'Responsive']
 
 export default function LoginPage() {
+  useEffect(() => {
+    const session = readAuthSession()
+
+    if (session) {
+      window.location.replace(getHomeRouteForRole(session.user.rol))
+    }
+  }, [])
+
   const handleLogin = async (credentials: LoginRequest) => {
     const response = await login(credentials)
 
@@ -33,11 +42,12 @@ export default function LoginPage() {
 
     return {
       message: 'Sesion iniciada correctamente. Backend conectado con exito.',
+      redirectTo: getHomeRouteForRole(response.data.user.rol),
     }
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#06131f] text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#06131f] text-white animate-fade-in">
       <div className="absolute inset-0 bg-[linear-gradient(135deg,#06131f_0%,#0f3042_45%,#081a28_100%)]" />
       <div className="absolute -left-20 top-12 h-72 w-72 rounded-full bg-[#f97316]/15 blur-3xl" />
       <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/10 blur-3xl" />
@@ -62,11 +72,9 @@ export default function LoginPage() {
       </header>
 
       <div className="relative mx-auto grid min-h-screen max-w-7xl gap-10 px-4 pb-10 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-12">
-        <section className="flex flex-col justify-center gap-8">
+        <section className="flex flex-col justify-center gap-8 animate-fade-up">
           <div className="max-w-2xl space-y-6">
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#f97316] backdrop-blur">
-              ACT-7 · Issue #007
-            </span>
+
 
             <div className="space-y-4">
               <p className="text-sm font-medium uppercase tracking-[0.35em] text-sky-200/80">
@@ -110,22 +118,9 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10 backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
-              Backend conectado
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              Este login apunta a <span className="text-white">{API_BASE_URL}</span>{' '}
-              y está listo para validar el flujo real de autenticación.
-            </p>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              Prueba con las credenciales del seed cuando el backend esté
-              desplegado.
-            </p>
-          </div>
         </section>
 
-        <section className="flex items-center justify-center">
+        <section className="flex items-center justify-center animate-scale-in">
           <div className="w-full max-w-lg">
             <LoginForm onSubmit={handleLogin} />
           </div>
