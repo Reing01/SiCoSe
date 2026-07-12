@@ -20,9 +20,41 @@ export class ApiError extends Error {
   }
 }
 
+type JsonRequestBody = Record<string, unknown> | unknown[]
+
+type ApiRequestInit = Omit<RequestInit, 'body'> & {
+  body?: BodyInit | JsonRequestBody | null
+}
+
 function buildUrl(path: string) {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return `${API_BASE_URL}${normalizedPath}`
+}
+
+function isJsonRequestBody(body: unknown): body is JsonRequestBody {
+  if (body == null || typeof body !== 'object') {
+    return false
+  }
+
+  return (
+    !(body instanceof ArrayBuffer) &&
+    !ArrayBuffer.isView(body) &&
+    !(body instanceof Blob) &&
+    !(body instanceof FormData) &&
+    !(body instanceof URLSearchParams) &&
+    !(
+      typeof ReadableStream !== 'undefined' &&
+      body instanceof ReadableStream
+    )
+  )
+}
+
+function serializeRequestBody(body: ApiRequestInit['body']) {
+  if (isJsonRequestBody(body)) {
+    return JSON.stringify(body)
+  }
+
+  return body
 }
 
 async function readErrorPayload(
@@ -43,20 +75,22 @@ async function readErrorPayload(
 
 export async function apiRequest<T>(
   path: string,
-  init: RequestInit = {},
+  init: ApiRequestInit = {},
 ): Promise<T> {
   const headers = new Headers(init.headers)
+  const body = serializeRequestBody(init.body)
 
   if (!headers.has('Accept')) {
     headers.set('Accept', 'application/json')
   }
 
-  if (init.body != null && !headers.has('Content-Type')) {
+  if (body != null && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 
   const response = await fetch(buildUrl(path), {
     ...init,
+    body,
     headers,
   })
 
@@ -82,4 +116,3 @@ export async function apiRequest<T>(
 
   return (await response.json()) as T
 }
-
