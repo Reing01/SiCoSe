@@ -14,6 +14,14 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+    networks:
+      - red-publica
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5173 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   backend:
     build:
@@ -35,6 +43,10 @@ services:
     volumes:
       - ./backend:/app
       - backend_node_modules:/app/node_modules
+    networks:
+      - red-publica
+      - red-privada
+      - red-datos
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health >/dev/null 2>&1 || exit 1"]
       interval: 10s
@@ -51,6 +63,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - red-datos
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -68,11 +82,21 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - red-privada
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+networks:
+  red-publica:
+    driver: bridge
+  red-privada:
+    driver: bridge
+  red-datos:
+    driver: bridge
 
 volumes:
   frontend_node_modules:
