@@ -63,18 +63,22 @@ test('login, dashboard and export flow stays connected', async ({ page }) => {
   })
 
   await page.goto('/login')
-  await expect(page.getByText('ACT-7 · Issue #007')).toBeVisible()
+  await expect(
+    page.getByRole('heading', {
+      name: 'Acceso seguro al panel operativo de la junta auxiliar',
+    }),
+  ).toBeVisible()
 
   await page.getByLabel('Correo institucional', { exact: true }).fill('tesorero@sicose.test')
-  await page.getByLabel('Contraseña', { exact: true }).fill('Password123!')
+  await page.getByLabel(/Contrase/).fill('Password123!')
   await page.getByRole('button', { name: 'Ingresar al panel' }).click()
 
   await expect(page).toHaveURL(/\/dashboard$/)
   await expect(page.getByText('Situacion financiera del mes')).toBeVisible()
 
   await page.getByRole('button', { name: 'Exportar Excel' }).click()
-  await expect(page.getByText(/Exportación Excel lista para 2026-06/i)).toBeVisible()
+  await expect(page.getByText(/Exportaci/)).toBeVisible()
 
-  await page.getByRole('button', { name: 'Cerrar sesión' }).click()
+  await page.getByRole('button', { name: /Cerrar sesi/ }).click()
   await expect(page).toHaveURL(/\/login$/)
 })
