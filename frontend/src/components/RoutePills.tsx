@@ -103,12 +103,13 @@ export default function RoutePills({
       <nav
         aria-label={ariaLabel}
         className={cn(
-          'hidden flex-wrap gap-2 sm:flex',
-          isOpen &&
-            cn(
-              'absolute right-0 top-12 z-30 flex min-w-48 flex-col rounded-2xl border p-2 shadow-xl sm:static sm:min-w-0 sm:flex-row sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none',
-              menuClasses,
-            ),
+          'flex-wrap gap-2 sm:flex',
+          isOpen
+            ? cn(
+                'absolute right-0 top-12 z-30 flex min-w-48 flex-col rounded-2xl border p-2 shadow-xl sm:static sm:min-w-0 sm:flex-row sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none',
+                menuClasses,
+              )
+            : 'hidden',
         )}
       >
         {routes.map((route) => {

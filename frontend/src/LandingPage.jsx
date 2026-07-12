@@ -722,10 +722,14 @@ function FormularioContacto() {
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               {/* Nombre */}
               <div>
-                <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
+                <label
+                  htmlFor="landing-contact-nombre"
+                  className="block text-[#0f3042] font-semibold text-sm mb-1.5"
+                >
                   Nombre completo <span className="text-[#f97316]">*</span>
                 </label>
                 <input
+                  id="landing-contact-nombre"
                   type="text"
                   name="nombre"
                   value={formData.nombre}
@@ -738,11 +742,15 @@ function FormularioContacto() {
 
               {/* Comité */}
               <div>
-                <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
+                <label
+                  htmlFor="landing-contact-comite"
+                  className="block text-[#0f3042] font-semibold text-sm mb-1.5"
+                >
                   Comité / Junta Auxiliar{" "}
                   <span className="text-[#f97316]">*</span>
                 </label>
                 <input
+                  id="landing-contact-comite"
                   type="text"
                   name="comite"
                   value={formData.comite}
@@ -755,11 +763,15 @@ function FormularioContacto() {
 
               {/* Contacto */}
               <div>
-                <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
+                <label
+                  htmlFor="landing-contact-contacto"
+                  className="block text-[#0f3042] font-semibold text-sm mb-1.5"
+                >
                   Teléfono o Correo electrónico{" "}
                   <span className="text-[#f97316]">*</span>
                 </label>
                 <input
+                  id="landing-contact-contacto"
                   type="text"
                   name="contacto"
                   value={formData.contacto}
