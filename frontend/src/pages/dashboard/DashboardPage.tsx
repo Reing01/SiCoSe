@@ -323,11 +323,11 @@ function DashboardContent({
                 <TrendArrow direction={metrics.variacion.direccion} />
                 {metrics.variacion.direccion}
               </span>
-              <span className="text-sm text-slate-500">
+              <span className={cn('text-sm', theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
                 {formatPercent(metrics.comparativoMesAnterior)} contra el mes anterior
               </span>
             </div>
-            <p className="text-sm leading-6 text-slate-600">
+            <p className={cn('text-sm leading-6', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
               Ultima actualizacion: {formatDateTime(metrics.ultimaActualizacion)}
             </p>
           </div>

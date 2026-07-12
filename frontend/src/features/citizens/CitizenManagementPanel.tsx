@@ -193,17 +193,17 @@ function matchesSearch(record: CitizenRecord, searchTerm: string) {
 
 function SummaryCard({ label, value, detail }: SummaryCardProps) {
   return (
-    <Card className="border-slate-200/80 bg-white/90 backdrop-blur">
+    <Card className="border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
       <CardContent className="flex items-start justify-between gap-4 p-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
             {label}
           </p>
-          <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+          <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
             {value}
           </p>
         </div>
-        <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold text-[#0f3042]">
+        <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
           {detail}
         </span>
       </CardContent>
@@ -411,8 +411,10 @@ export default function CitizenManagementPanel() {
   }
 
   const statusToneClasses: Record<StatusTone, string> = {
-    success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    warning: 'border-amber-200 bg-amber-50 text-amber-700',
+    success:
+      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200',
+    warning:
+      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-200',
   }
 
   return (
@@ -440,13 +442,13 @@ export default function CitizenManagementPanel() {
         />
       </div>
 
-      <div className="rounded-[2rem] border border-slate-200/80 bg-white/95 p-4 shadow-sm backdrop-blur sm:p-5">
+      <div className="rounded-[2rem] border border-slate-200/80 bg-white/95 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#0f3042]">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#0f3042] dark:text-sky-300">
               Busqueda y filtros
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
               Busca por nombre, apellido, correo, direccion o clave catastral y
               filtra los ciudadanos que necesitan revision.
             </p>
@@ -500,18 +502,18 @@ export default function CitizenManagementPanel() {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
           <span>
             Mostrando {visibleCitizens.length} de {citizens.length} registros
           </span>
-          <span className="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-flex" />
+          <span className="hidden h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700 sm:inline-flex" />
 
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="overflow-hidden border-slate-200/80 bg-white/95">
-          <CardHeader className="border-b border-slate-100 bg-slate-50/80">
+        <Card className="overflow-hidden border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-900/90">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
             <CardTitle>Padron de ciudadanos</CardTitle>
             <CardDescription>
               Selecciona un registro para editarlo o elimina un ciudadano cuando
@@ -521,7 +523,7 @@ export default function CitizenManagementPanel() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="min-w-[760px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-500">
+                <thead className="bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-500 dark:bg-slate-950/80 dark:text-slate-400">
                   <tr>
                     <th scope="col" className="px-5 py-3 font-semibold">
                       Ciudadano
@@ -552,37 +554,37 @@ export default function CitizenManagementPanel() {
                       <tr
                         key={record.id}
                         className={cn(
-                          'border-b border-slate-100 last:border-b-0',
-                          isSelected && 'bg-[#f97316]/5',
+                          'border-b border-slate-100 last:border-b-0 dark:border-slate-800',
+                          isSelected && 'bg-[#f97316]/5 dark:bg-[#f97316]/10',
                         )}
                       >
                         <td className="px-5 py-4 align-top">
-                          <p className="font-semibold text-slate-950">
+                          <p className="font-semibold text-slate-950 dark:text-white">
                             {record.nombre} {record.apellido}
                           </p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {record.id}
                           </p>
                           <button
                             type="button"
-                            className="mt-2 text-xs font-semibold text-[#0f3042] transition-colors hover:text-[#f97316]"
+                            className="mt-2 text-xs font-semibold text-[#0f3042] transition-colors hover:text-[#f97316] dark:text-sky-300 dark:hover:text-orange-300"
                             onClick={() => handleSelectCitizen(record)}
                           >
                             Editar registro
                           </button>
                         </td>
-                        <td className="px-5 py-4 align-top text-slate-600">
+                        <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
                           <p>{record.email}</p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {record.telefono || 'Sin telefono'}
                           </p>
                         </td>
-                        <td className="px-5 py-4 align-top text-slate-600">
+                        <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
                           {record.direccion || (
-                            <span className="text-slate-400">Sin direccion</span>
+                            <span className="text-slate-400 dark:text-slate-500">Sin direccion</span>
                           )}
                         </td>
-                        <td className="px-5 py-4 align-top font-mono text-xs font-semibold text-[#0f3042]">
+                        <td className="px-5 py-4 align-top font-mono text-xs font-semibold text-[#0f3042] dark:text-sky-300">
                           {record.claveCatastral}
                         </td>
                         <td className="px-5 py-4 align-top">
@@ -594,7 +596,7 @@ export default function CitizenManagementPanel() {
                           >
                             {status.label}
                           </span>
-                          <p className="mt-2 text-xs leading-5 text-slate-500">
+                          <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
                             {status.detail}
                           </p>
                         </td>
@@ -628,7 +630,7 @@ export default function CitizenManagementPanel() {
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-5 py-16 text-center text-sm text-slate-500"
+                        className="px-5 py-16 text-center text-sm text-slate-500 dark:text-slate-400"
                       >
                         No se encontraron ciudadanos con los filtros actuales.
                       </td>
@@ -640,9 +642,9 @@ export default function CitizenManagementPanel() {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden border-slate-200/80 bg-white/95">
+        <Card className="overflow-hidden border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-900/90">
           <form onSubmit={handleSubmit} noValidate className="flex h-full flex-col">
-            <CardHeader className="border-b border-slate-100 bg-slate-50/80">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle>
@@ -654,7 +656,7 @@ export default function CitizenManagementPanel() {
                       : 'Llena el formulario para registrar un nuevo ciudadano en el padron.'}
                   </CardDescription>
                 </div>
-                <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3042]">
+                <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
                   {selectedCitizen ? selectedCitizen.id : 'Modo alta'}
                 </span>
               </div>
@@ -669,15 +671,15 @@ export default function CitizenManagementPanel() {
                   className={cn(
                     'rounded-2xl border px-4 py-3 text-sm leading-6',
                     submissionState.kind === 'success'
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                      : 'border-rose-200 bg-rose-50 text-rose-900',
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-100'
+                      : 'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/60 dark:text-rose-100',
                   )}
                 >
                   {submissionState.message}
                 </div>
               ) : null}
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
                 Los campos marcados con * son obligatorios. Los demas se pueden
                 dejar vacios, pero conviene completarlos para tener un padron
                 mas util.
@@ -700,7 +702,7 @@ export default function CitizenManagementPanel() {
                     }
                   />
                   {touched.nombre && fieldErrors.nombre ? (
-                    <p id={`${nombreId}-error`} className="text-sm text-rose-600">
+                    <p id={`${nombreId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
                       {fieldErrors.nombre}
                     </p>
                   ) : null}
@@ -724,7 +726,7 @@ export default function CitizenManagementPanel() {
                     }
                   />
                   {touched.apellido && fieldErrors.apellido ? (
-                    <p id={`${apellidoId}-error`} className="text-sm text-rose-600">
+                    <p id={`${apellidoId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
                       {fieldErrors.apellido}
                     </p>
                   ) : null}
@@ -749,7 +751,7 @@ export default function CitizenManagementPanel() {
                     }
                   />
                   {touched.email && fieldErrors.email ? (
-                    <p id={`${emailId}-error`} className="text-sm text-rose-600">
+                    <p id={`${emailId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
                       {fieldErrors.email}
                     </p>
                   ) : null}
@@ -776,7 +778,7 @@ export default function CitizenManagementPanel() {
                   {touched.telefono && fieldErrors.telefono ? (
                     <p
                       id={`${telefonoId}-error`}
-                      className="text-sm text-rose-600"
+                      className="text-sm text-rose-600 dark:text-rose-300"
                     >
                       {fieldErrors.telefono}
                     </p>
@@ -805,7 +807,7 @@ export default function CitizenManagementPanel() {
                   {touched.claveCatastral && fieldErrors.claveCatastral ? (
                     <p
                       id={`${claveCatastralId}-error`}
-                      className="text-sm text-rose-600"
+                      className="text-sm text-rose-600 dark:text-rose-300"
                     >
                       {fieldErrors.claveCatastral}
                     </p>
@@ -832,7 +834,7 @@ export default function CitizenManagementPanel() {
                   {touched.direccion && fieldErrors.direccion ? (
                     <p
                       id={`${direccionId}-error`}
-                      className="text-sm text-rose-600"
+                      className="text-sm text-rose-600 dark:text-rose-300"
                     >
                       {fieldErrors.direccion}
                     </p>
@@ -844,16 +846,16 @@ export default function CitizenManagementPanel() {
                 className={cn(
                   'rounded-2xl border px-4 py-4',
                   hasVisibleErrors
-                    ? 'border-amber-200 bg-amber-50'
-                    : 'border-slate-200 bg-slate-50',
+                    ? 'border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/60'
+                    : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/60',
                 )}
               >
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {selectedCitizen
                     ? 'Registro listo para ser actualizado'
                     : 'Formulario preparado para crear un ciudadano'}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                   La validacion corre en el navegador para evitar guardar datos
                   incompletos y mantener el padron limpio antes de conectarlo al
                   backend.
@@ -861,7 +863,7 @@ export default function CitizenManagementPanel() {
               </div>
             </CardContent>
 
-            <CardFooter className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80">
+            <CardFooter className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
               <Button type="submit" size="lg" className="w-full">
                 {selectedCitizen ? 'Guardar cambios' : 'Crear ciudadano'}
               </Button>
