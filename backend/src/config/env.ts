@@ -11,6 +11,8 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(16),
   JWT_ISSUER: z.string().default('sicose'),
   JWT_EXPIRES_IN: z.string().default('8h'),
+  REFRESH_TOKEN_EXPIRES: z.string().default('7d'),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
   RATE_LIMIT_EMAIL_WINDOW_MS: z.coerce.number().int().positive().default(300000),
