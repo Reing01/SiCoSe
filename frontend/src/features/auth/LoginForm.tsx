@@ -215,7 +215,7 @@ export default function LoginForm({
   return (
     <form onSubmit={handleSubmit} noValidate className={cn('w-full', className)}>
       <Card className="overflow-hidden">
-        <CardHeader className="border-b border-slate-100 bg-slate-50/80">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0f3042] text-base font-bold text-white shadow-lg shadow-[#0f3042]/25">
               SC
@@ -242,6 +242,10 @@ export default function LoginForm({
               className={cn(
                 'rounded-2xl border px-4 py-3 text-sm leading-6',
                 statusTone,
+                submissionState.kind === 'success' &&
+                  'dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-100',
+                submissionState.kind === 'error' &&
+                  'dark:border-rose-900/60 dark:bg-rose-950/60 dark:text-rose-100',
               )}
             >
               {submissionState.message}
@@ -264,11 +268,11 @@ export default function LoginForm({
               aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? `${emailId}-error` : emailHintId}
             />
-            <p id={emailHintId} className="text-xs leading-5 text-slate-500">
+            <p id={emailHintId} className="text-xs leading-5 text-slate-500 dark:text-slate-400">
               Usa la cuenta registrada en el seed o en tu entorno de producción.
             </p>
             {emailError ? (
-              <p id={`${emailId}-error`} className="text-sm text-rose-600">
+              <p id={`${emailId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
                 {emailError}
               </p>
             ) : null}
@@ -296,7 +300,7 @@ export default function LoginForm({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1/2 h-11 -translate-y-1/2 rounded-lg px-3 text-slate-500 hover:text-slate-900"
+                className="absolute right-1 top-1/2 h-11 -translate-y-1/2 rounded-lg px-3 text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                 onClick={() => setShowPassword((current) => !current)}
                 aria-label={
                   showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
@@ -305,11 +309,11 @@ export default function LoginForm({
                 {showPassword ? 'Ocultar' : 'Mostrar'}
               </Button>
             </div>
-            <p id={passwordHintId} className="text-xs leading-5 text-slate-500">
+            <p id={passwordHintId} className="text-xs leading-5 text-slate-500 dark:text-slate-400">
               Mínimo {PASSWORD_MIN_LENGTH} caracteres.
             </p>
             {passwordError ? (
-              <p id={`${passwordId}-error`} className="text-sm text-rose-600">
+              <p id={`${passwordId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
                 {passwordError}
               </p>
             ) : null}
@@ -319,15 +323,15 @@ export default function LoginForm({
             className={cn(
               'rounded-2xl border px-4 py-4',
               hasVisibleErrors
-                ? 'border-amber-200 bg-amber-50'
-                : 'border-slate-200 bg-slate-50',
+                ? 'border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/60'
+                : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/60',
             )}
           >
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">
                 Validación lista para backend
               </p>
-              <p className="text-sm leading-6 text-slate-600">
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
                 El formulario valida la información en el navegador y envía la
                 solicitud real al endpoint de autenticación cuando las
                 credenciales son correctas.
@@ -336,16 +340,16 @@ export default function LoginForm({
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col items-stretch gap-4 border-t border-slate-100 bg-slate-50/80">
+        <CardFooter className="flex flex-col items-stretch gap-4 border-t border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
           <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Validando...' : 'Ingresar al panel'}
           </Button>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
 
             <a
               href="#soporte"
-              className="font-medium text-[#0f3042] transition-colors hover:text-[#f97316]"
+              className="font-medium text-[#0f3042] transition-colors hover:text-[#f97316] dark:text-sky-300 dark:hover:text-orange-300"
             >
               Contactar soporte
             </a>
