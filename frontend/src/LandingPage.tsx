@@ -640,7 +640,7 @@ function InterfacePreview() {
 // ------ Formulario de Captura ------
 const INITIAL_FORM = { nombre: "", comite: "", contacto: "" };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 function FormularioContacto() {
   const [formData, setFormData] = useState(INITIAL_FORM);

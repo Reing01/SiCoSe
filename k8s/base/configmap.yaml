@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sicose-config
+  namespace: sicose-prod
+data:
+  NODE_ENV: production
+  PORT: "3000"
+  CORS_ORIGIN: https://sicose.example.com
+  JWT_ISSUER: sicose
+  JWT_EXPIRES_IN: 8h
+  RATE_LIMIT_WINDOW_MS: "60000"
+  RATE_LIMIT_MAX: "10"
+  RATE_LIMIT_EMAIL_WINDOW_MS: "300000"
+  RATE_LIMIT_EMAIL_MAX: "5"
+  SUPABASE_STORAGE_BUCKET: comprobantes
+  POSTGRES_DB: sicose_prod
+  POSTGRES_USER: sicose_user
+  REDIS_APPENDONLY: "yes"

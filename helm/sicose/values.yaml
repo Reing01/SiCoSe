@@ -1,0 +1,147 @@
+global:
+  namespace: sicose-prod
+  nameOverride: ""
+  fullnameOverride: ""
+
+images:
+  backend:
+    repository: sicose-backend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: sicose-frontend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  postgres:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  redis:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  host: sicose.example.com
+
+backend:
+  replicaCount: 3
+  servicePort: 80
+  containerPort: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  probes:
+    startup:
+      path: /health/live
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 24
+    readiness:
+      path: /health/ready
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    liveness:
+      path: /health/live
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+frontend:
+  replicaCount: 3
+  servicePort: 80
+  containerPort: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
+  probes:
+    startup:
+      path: /health
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 12
+    readiness:
+      path: /health
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    liveness:
+      path: /health
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+pdb:
+  enabled: true
+  minAvailable: 2
+
+postgres:
+  enabled: true
+  replicaCount: 1
+  storage: 10Gi
+  servicePort: 5432
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+redis:
+  enabled: true
+  replicaCount: 1
+  storage: 2Gi
+  servicePort: 6379
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+config:
+  nodeEnv: production
+  corsOrigin: https://sicose.example.com
+  port: "3000"
+  jwtIssuer: sicose
+  jwtExpiresIn: 8h
+  rateLimitWindowMs: "60000"
+  rateLimitMax: "10"
+  rateLimitEmailWindowMs: "300000"
+  rateLimitEmailMax: "5"
+  supabaseStorageBucket: comprobantes
+  postgresDb: sicose_prod
+  postgresUser: sicose_user
+  redisAppendOnly: "yes"
+
+secrets:
+  jwtSecret: change-me-with-a-strong-secret
+  postgresPassword: change-me
+  supabaseUrl: https://your-project.supabase.co
+  supabaseServiceKey: replace-me
+
+migrate:
+  enabled: true
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300

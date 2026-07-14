@@ -1,0 +1,25 @@
+{{- if .Values.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "sicose.fullname" . }}-backend
+  namespace: {{ include "sicose.namespace" . }}
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sicose.name" . }}
+      app.kubernetes.io/component: backend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "sicose.fullname" . }}-frontend
+  namespace: {{ include "sicose.namespace" . }}
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sicose.name" . }}
+      app.kubernetes.io/component: frontend
+{{- end }}
