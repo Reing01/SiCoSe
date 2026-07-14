@@ -36,7 +36,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && apt-get install -y --no-install-recommends openssl ca-certificates curl \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
@@ -46,5 +46,8 @@ COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=10s \
+  CMD curl -fsS http://localhost:3000/health || exit 1
 
 CMD ["npm", "run", "start", "--prefix", "backend"]
