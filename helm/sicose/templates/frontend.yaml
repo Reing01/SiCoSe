@@ -43,6 +43,18 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.frontend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: frontend
           image: {{ .Values.images.frontend.repository }}:{{ .Values.images.frontend.tag }}
@@ -73,11 +85,15 @@ spec:
             failureThreshold: {{ .Values.frontend.probes.liveness.failureThreshold }}
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
+      {{- with .Values.frontend.scheduling.topologySpread }}
+      {{- if .enabled }}
       topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+        - maxSkew: {{ .maxSkew }}
+          topologyKey: {{ .topologyKey }}
+          whenUnsatisfiable: {{ .whenUnsatisfiable }}
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: {{ include "sicose.name" . }}
+              app.kubernetes.io/name: {{ include "sicose.name" $ }}
               app.kubernetes.io/component: frontend
+      {{- end }}
+      {{- end }}

@@ -13,7 +13,7 @@ Las imágenes se publican automáticamente en GHCR cuando se hace `push` a `main
 - 1 nodo principal para control y despliegue
 - 3 nodos de trabajo para distribución de carga
 - 12 réplicas totales para `backend` y `frontend`
-- 3 réplicas por máquina, distribuidas por el orquestador
+- 3 réplicas por máquina, distribuidas por el orquestador con `topologySpreadConstraints`
 
 ## Qué resuelve
 
@@ -21,6 +21,7 @@ Las imágenes se publican automáticamente en GHCR cuando se hace `push` a `main
 - Reubicación automática de pods cuando un nodo falla
 - Despliegue repetible desde Git
 - Un solo comando para levantar o actualizar el entorno
+- Distribución estricta de pods por hostname en el perfil de práctica
 
 ## Comando de despliegue
 
@@ -38,6 +39,7 @@ Ese comando aplica el release de Helm con:
 - autoscaling desactivado para que la práctica sea estable
 - `PodDisruptionBudget` reforzado
 - `imagePullPolicy: Always` para tomar la versión más reciente de `main`
+- `topologySpreadConstraints` estrictas para evitar sobrecarga de un mismo nodo
 
 ## Notas operativas
 
@@ -46,6 +48,7 @@ Ese comando aplica el release de Helm con:
 - Las imágenes de `backend` y `frontend` deben estar disponibles para el clúster, ya sea en un registry compartido, en GHCR público o pre-cargadas en los nodos.
 - Si el registry es privado, el chart ya soporta `imagePullSecrets`.
 - La comunicación entre servicios se hace por `Service`, así que las réplicas se descubren automáticamente dentro del clúster.
+- Si quieres afinar aún más la colocación, el chart acepta `nodeSelector`, `tolerations` y `affinity` por componente.
 
 Ejemplo de `imagePullSecret` si usas un registry privado:
 
