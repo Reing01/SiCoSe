@@ -65,7 +65,7 @@ test('login, dashboard and export flow stays connected', async ({ page }) => {
   await page.goto('/login')
   await expect(
     page.getByRole('heading', {
-      name: 'Acceso seguro al panel operativo de la junta auxiliar',
+      name: 'Acceso seguro al panel principal de la junta auxiliar',
     }),
   ).toBeVisible()
 

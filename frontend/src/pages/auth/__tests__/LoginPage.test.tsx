@@ -22,7 +22,7 @@ describe('LoginPage', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: /acceso seguro al panel operativo de la junta auxiliar/i,
+        name: /acceso seguro al panel principal de la junta auxiliar/i,
       }),
     ).toBeInTheDocument()
     expect(
