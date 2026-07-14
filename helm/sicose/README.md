@@ -21,6 +21,24 @@ helm upgrade --install sicose ./helm/sicose \
   --create-namespace
 ```
 
+## Practice profile for 4 physical nodes
+
+Use this profile when you want the workload distributed across a 4-machine cluster:
+
+- `backend` and `frontend` scale to 12 replicas total
+- the chart keeps the pods spread across nodes through its topology rules
+- autoscaling is disabled to keep the practice deterministic
+- PodDisruptionBudget is raised to keep the cluster stable during maintenance
+- the practice profile pulls the latest images from GHCR
+
+One-command deploy from the repo root:
+
+```bash
+npm run deploy:cluster:4nodos
+```
+
+The profile file lives at `helm/sicose/values-practica-4-nodos.yaml`.
+
 ## Example production flow
 
 1. Build and push `sicose-backend` and `sicose-frontend` images.

@@ -39,6 +39,10 @@ spec:
         app.kubernetes.io/component: backend
     spec:
       terminationGracePeriodSeconds: 30
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: backend
           image: {{ .Values.images.backend.repository }}:{{ .Values.images.backend.tag }}

@@ -54,6 +54,14 @@ docker compose up -d
 
 Levantará PostgreSQL 16 y Redis 7 con volúmenes persistentes y variables de entorno separadas en `.env.docker`.
 
+Para una práctica multi-máquina de 4 nodos con Helm:
+
+```bash
+npm run deploy:cluster:4nodos
+```
+
+La guía completa está en `Docs/practica-cluster-4-nodos.md`.
+
 ### Credenciales de prueba
 
 Si ya corriste el seed del backend, puedes entrar con cualquiera de estas cuentas:
@@ -83,6 +91,7 @@ El workflow de GitHub Actions valida `lint`, `test` y `build` en frontend y back
 ## Documentación adicional
 
 - `Docs/deploy-guia.md`
+- `Docs/practica-cluster-4-nodos.md`
 - `Docs/Flujo del Sistema-Act5.md`
 - `Docs/Gitthub-flow.md`
 - `Docs/ModelodeDatos-Act5.md`

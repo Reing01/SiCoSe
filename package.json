@@ -10,6 +10,7 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",
     "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "deploy:cluster:4nodos": "helm upgrade --install sicose ./helm/sicose --namespace sicose-prod --create-namespace -f ./helm/sicose/values-practica-4-nodos.yaml --wait --wait-for-jobs --atomic --timeout 15m",
     "lint": "npm run lint --prefix frontend && npm run lint --prefix backend",
     "test": "npm run test --prefix frontend && npm run test --prefix backend",
     "test:e2e": "npm run test:e2e --prefix frontend",

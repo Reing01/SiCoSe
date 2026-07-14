@@ -35,6 +35,10 @@ spec:
         app.kubernetes.io/component: postgres
     spec:
       terminationGracePeriodSeconds: 60
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: postgres
           image: {{ .Values.images.postgres.repository }}:{{ .Values.images.postgres.tag }}

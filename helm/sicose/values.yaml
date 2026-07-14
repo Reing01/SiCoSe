@@ -3,6 +3,8 @@ global:
   nameOverride: ""
   fullnameOverride: ""
 
+imagePullSecrets: []
+
 images:
   backend:
     repository: sicose-backend

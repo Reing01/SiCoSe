@@ -34,6 +34,10 @@ spec:
         app.kubernetes.io/name: {{ include "sicose.name" . }}
         app.kubernetes.io/component: redis
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: redis
           image: {{ .Values.images.redis.repository }}:{{ .Values.images.redis.tag }}
