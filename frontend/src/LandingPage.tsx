@@ -640,7 +640,7 @@ function InterfacePreview() {
 // ------ Formulario de Captura ------
 const INITIAL_FORM = { nombre: "", comite: "", contacto: "" };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 function FormularioContacto() {
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -844,8 +844,7 @@ function Footer() {
           </span>
         </p>
         <p className="text-xs mt-2 text-slate-600">
-          © {new Date().getFullYear()} — Bloque 1: Landing Page. Versión de
-          validación.
+          © {new Date().getFullYear()} — Página de inicio de SiCoSe.
         </p>
       </div>
     </footer>

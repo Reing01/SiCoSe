@@ -303,7 +303,7 @@ function DashboardContent({
             Comparativo mensual
           </CardTitle>
           <CardDescription className={cn(theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
-            Periodo {metrics.periodo} actualizado desde el backend operativo.
+            Periodo {metrics.periodo} actualizado para este panel.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">

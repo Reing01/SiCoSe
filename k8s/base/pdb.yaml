@@ -1,0 +1,23 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sicose-backend
+  namespace: sicose-prod
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: sicose
+      component: backend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sicose-frontend
+  namespace: sicose-prod
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: sicose
+      component: frontend

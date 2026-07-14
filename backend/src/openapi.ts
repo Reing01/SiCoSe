@@ -40,6 +40,44 @@ export const openApiDocument = {
         properties: {
           ok: { type: 'boolean', example: true },
           service: { type: 'string', example: 'sicose-backend' },
+          status: { type: 'string', example: 'ready' },
+          uptimeSeconds: { type: 'integer', example: 42 },
+          timestamp: { type: 'string', format: 'date-time' },
+          layers: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          checks: {
+            type: 'object',
+            properties: {
+              database: {
+                type: 'object',
+                properties: {
+                  ok: { type: 'boolean' },
+                  latencyMs: { type: 'integer' },
+                  error: { type: 'string', nullable: true },
+                },
+              },
+              redis: {
+                type: 'object',
+                properties: {
+                  ok: { type: 'boolean' },
+                  latencyMs: { type: 'integer' },
+                  error: { type: 'string', nullable: true },
+                },
+              },
+            },
+          },
+        },
+      },
+      LivenessResponse: {
+        type: 'object',
+        properties: {
+          ok: { type: 'boolean', example: true },
+          status: { type: 'string', example: 'alive' },
+          service: { type: 'string', example: 'sicose-backend' },
+          uptimeSeconds: { type: 'integer', example: 42 },
+          timestamp: { type: 'string', format: 'date-time' },
           layers: {
             type: 'array',
             items: { type: 'string' },
@@ -160,6 +198,54 @@ export const openApiDocument = {
               },
             },
           },
+          503: {
+            description: 'Service is not ready',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/HealthResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/health/live': {
+      get: {
+        tags: ['Health'],
+        summary: 'Liveness check',
+        responses: {
+          200: {
+            description: 'Service process is alive',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LivenessResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/health/ready': {
+      get: {
+        tags: ['Health'],
+        summary: 'Readiness check',
+        responses: {
+          200: {
+            description: 'Service is ready',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/HealthResponse' },
+              },
+            },
+          },
+          503: {
+            description: 'Service is not ready',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/HealthResponse' },
+              },
+            },
+          },
         },
       },
     },
@@ -170,6 +256,14 @@ export const openApiDocument = {
         responses: {
           200: {
             description: 'Service is healthy',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/HealthResponse' },
+              },
+            },
+          },
+          503: {
+            description: 'Service is not ready',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/HealthResponse' },

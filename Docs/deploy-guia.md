@@ -180,3 +180,17 @@ npm run lint
 npm test
 npm run build
 ```
+
+## 7. Practica multi-máquina de 4 nodos
+
+Si vas a levantar SiCoSe en un clúster de 4 máquinas físicas, usa el perfil de Helm preparado para esa práctica:
+
+```bash
+git pull
+npm run deploy:cluster:4nodos
+```
+
+Referencias:
+
+- `Docs/practica-cluster-4-nodos.md`
+- `helm/sicose/values-practica-4-nodos.yaml`

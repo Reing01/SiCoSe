@@ -1,0 +1,10 @@
+SiCoSe has been installed.
+
+Release name: {{ .Release.Name }}
+Namespace: {{ include "sicose.namespace" . }}
+Host: {{ .Values.ingress.host }}
+
+Recommended release flow:
+1. Push backend and frontend images tagged as defined in values.
+2. Run the migration job or let the chart include it during deployment.
+3. Confirm the backend is ready before directing traffic.

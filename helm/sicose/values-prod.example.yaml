@@ -1,0 +1,22 @@
+global:
+  namespace: sicose-prod
+
+images:
+  backend:
+    repository: registry.example.com/sicose/backend
+    tag: "1.0.0"
+  frontend:
+    repository: registry.example.com/sicose/frontend
+    tag: "1.0.0"
+
+ingress:
+  host: sicose.example.com
+
+config:
+  corsOrigin: https://sicose.example.com
+
+secrets:
+  jwtSecret: replace-with-a-strong-secret
+  postgresPassword: replace-with-a-strong-password
+  supabaseUrl: https://your-project.supabase.co
+  supabaseServiceKey: replace-me

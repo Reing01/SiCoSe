@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sicose.fullname" . }}-config
+  namespace: {{ include "sicose.namespace" . }}
+  labels:
+    {{- include "sicose.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.config.nodeEnv | quote }}
+  PORT: {{ .Values.config.port | quote }}
+  CORS_ORIGIN: {{ .Values.config.corsOrigin | quote }}
+  JWT_ISSUER: {{ .Values.config.jwtIssuer | quote }}
+  JWT_EXPIRES_IN: {{ .Values.config.jwtExpiresIn | quote }}
+  RATE_LIMIT_WINDOW_MS: {{ .Values.config.rateLimitWindowMs | quote }}
+  RATE_LIMIT_MAX: {{ .Values.config.rateLimitMax | quote }}
+  RATE_LIMIT_EMAIL_WINDOW_MS: {{ .Values.config.rateLimitEmailWindowMs | quote }}
+  RATE_LIMIT_EMAIL_MAX: {{ .Values.config.rateLimitEmailMax | quote }}
+  SUPABASE_STORAGE_BUCKET: {{ .Values.config.supabaseStorageBucket | quote }}
+  POSTGRES_DB: {{ .Values.config.postgresDb | quote }}
+  POSTGRES_USER: {{ .Values.config.postgresUser | quote }}
+  REDIS_APPENDONLY: {{ .Values.config.redisAppendOnly | quote }}

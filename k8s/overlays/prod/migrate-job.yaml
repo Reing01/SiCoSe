@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sicose-migrate
+  namespace: sicose-prod
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: sicose
+        component: migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: sicose-backend:1.0.0
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "npm run prisma:migrate:deploy"]
+          envFrom:
+            - configMapRef:
+                name: sicose-config
+            - secretRef:
+                name: sicose-secret

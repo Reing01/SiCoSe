@@ -50,7 +50,7 @@ export default function CitizenManagementPage() {
                 theme === 'dark' ? 'text-slate-300' : 'text-slate-500',
               )}
             >
-              Navegacion de evaluacion
+              Navegación principal
             </p>
           </div>
         </a>
@@ -99,7 +99,7 @@ export default function CitizenManagementPage() {
                   theme === 'dark' ? 'text-white' : 'text-slate-950',
                 )}
               >
-                Gestion de ciudadanos con busqueda, edicion y validacion local
+                Gestion de ciudadanos con busqueda, edicion y validacion previa
               </h1>
               <p
                 className={cn(
@@ -109,7 +109,7 @@ export default function CitizenManagementPage() {
               >
                 Esta vista centraliza el registro de ciudadanos para revisar
                 datos de contacto, editar informacion y validar formularios
-                antes de integrarlos con el backend real.
+                antes de publicarlos en el panel.
               </p>
             </div>
 
@@ -137,7 +137,7 @@ export default function CitizenManagementPage() {
               >
                 <li>- Busqueda por nombre, correo o clave catastral</li>
                 <li>- Filtros rapidos por estado del registro</li>
-                <li>- Alta, edicion y eliminacion local con validacion</li>
+                <li>- Alta, edicion y eliminacion con validacion previa</li>
               </ul>
             </div>
           </div>

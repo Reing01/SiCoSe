@@ -1,0 +1,29 @@
+{{- if .Values.migrate.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "sicose.fullname" . }}-migrate
+  namespace: {{ include "sicose.namespace" . }}
+  labels:
+    {{- include "sicose.labels" . | nindent 4 }}
+spec:
+  backoffLimit: {{ .Values.migrate.backoffLimit }}
+  ttlSecondsAfterFinished: {{ .Values.migrate.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sicose.name" . }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: {{ .Values.images.backend.repository }}:{{ .Values.images.backend.tag }}
+          imagePullPolicy: {{ .Values.images.backend.pullPolicy }}
+          command: ["sh", "-c", "npm run prisma:migrate:deploy"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "sicose.fullname" . }}-config
+            - secretRef:
+                name: {{ include "sicose.fullname" . }}-secret
+{{- end }}
