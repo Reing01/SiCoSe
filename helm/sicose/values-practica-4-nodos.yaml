@@ -18,9 +18,21 @@ ingress:
 
 backend:
   replicaCount: 12
+  scheduling:
+    topologySpread:
+      enabled: true
+      maxSkew: 1
+      whenUnsatisfiable: DoNotSchedule
+      topologyKey: kubernetes.io/hostname
 
 frontend:
   replicaCount: 12
+  scheduling:
+    topologySpread:
+      enabled: true
+      maxSkew: 1
+      whenUnsatisfiable: DoNotSchedule
+      topologyKey: kubernetes.io/hostname
 
 autoscaling:
   enabled: false
