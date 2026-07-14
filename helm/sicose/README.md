@@ -26,10 +26,11 @@ helm upgrade --install sicose ./helm/sicose \
 Use this profile when you want the workload distributed across a 4-machine cluster:
 
 - `backend` and `frontend` scale to 12 replicas total
-- the chart keeps the pods spread across nodes through its topology rules
+- the chart keeps the pods spread across nodes through `topologySpreadConstraints`
 - autoscaling is disabled to keep the practice deterministic
 - PodDisruptionBudget is raised to keep the cluster stable during maintenance
 - the practice profile pulls the latest images from GHCR
+- the practice profile uses strict scheduling so one node does not absorb extra replicas
 
 One-command deploy from the repo root:
 
