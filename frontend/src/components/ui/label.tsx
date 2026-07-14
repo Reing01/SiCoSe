@@ -12,7 +12,7 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
     <label
       ref={ref}
       className={cn(
-        'text-sm font-medium leading-none text-slate-800 peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+        'text-sm font-medium leading-none text-slate-800 peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-slate-200',
         className,
       )}
       {...props}
@@ -21,4 +21,3 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(function Label(
 })
 
 Label.displayName = 'Label'
-

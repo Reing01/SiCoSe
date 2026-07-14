@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import LandingPage from './LandingPage.jsx'
+import LandingPage from './LandingPage'
 import { readAuthSession } from './features/auth/auth.session'
 import { resolveAppRoute } from './features/auth/auth.routing'
 import { ThemeProvider } from './features/theme/theme'

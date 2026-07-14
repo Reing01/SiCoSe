@@ -8,6 +8,8 @@
 
 // ------ Sub-componentes ------
 
+import RoutePills from './components/RoutePills'
+
 const NAV_LINKS = [
   { label: "El Problema", href: "#problema" },
   { label: "Módulos", href: "#modulos" },
@@ -22,7 +24,7 @@ function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0f3042] shadow-lg">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-md bg-[#f97316] flex items-center justify-center">
             <svg
               width="18"
@@ -52,16 +54,19 @@ function Navbar() {
             <li key={l.href}>
               <a
                 href={l.href}
-                className="text-slate-300 hover:text-[#f97316] text-sm font-medium transition-colors"
+                className="inline-flex min-h-11 items-center text-slate-300 hover:text-[#f97316] text-sm font-medium transition-colors"
               >
                 {l.label}
               </a>
             </li>
           ))}
+          <li className="hidden lg:flex">
+            <RoutePills variant="light" />
+          </li>
           <li>
             <a
               href="#contacto"
-              className="bg-[#f97316] hover:bg-orange-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              className="inline-flex min-h-11 items-center bg-[#f97316] hover:bg-orange-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
             >
               Demo Gratis
             </a>
@@ -71,7 +76,7 @@ function Navbar() {
         {/* Hamburguesa — mobile */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden text-white p-2 rounded-md hover:bg-white/10 transition-colors"
+          className="md:hidden text-white h-11 w-11 rounded-md hover:bg-white/10 transition-colors"
           aria-label="Abrir menú"
         >
           {isOpen ? (
@@ -108,12 +113,17 @@ function Navbar() {
       {/* Menú mobile desplegable */}
       {isOpen && (
         <div className="md:hidden bg-[#0a2535] border-t border-white/10 px-4 py-4 flex flex-col gap-3">
+          <RoutePills
+            variant="light"
+            className="justify-start"
+            ariaLabel="Navegación rápida de pantallas"
+          />
           {NAV_LINKS.map((l) => (
             <a
               key={l.href}
               href={l.href}
               onClick={() => setIsOpen(false)}
-              className="text-slate-300 hover:text-[#f97316] text-base font-medium py-1 transition-colors"
+              className="inline-flex min-h-11 items-center text-slate-300 hover:text-[#f97316] text-base font-medium transition-colors"
             >
               {l.label}
             </a>
@@ -121,7 +131,7 @@ function Navbar() {
           <a
             href="#contacto"
             onClick={() => setIsOpen(false)}
-            className="mt-2 bg-[#f97316] hover:bg-orange-500 text-white font-semibold py-3 rounded-lg text-center transition-colors"
+            className="mt-2 inline-flex min-h-11 items-center justify-center bg-[#f97316] hover:bg-orange-500 text-white font-semibold py-3 rounded-lg text-center transition-colors"
           >
             Solicitar Demostración Gratis
           </a>
@@ -134,14 +144,14 @@ function Navbar() {
 // ------ Hero ------
 function Hero() {
   return (
-    <section className="pt-28 pb-20 bg-gradient-to-br from-[#0f3042] via-[#0f3042] to-[#0a2535] text-white relative overflow-hidden">
+    <section className="pt-28 pb-20 bg-gradient-to-br from-[#0f3042] via-[#0f3042] to-[#0a2535] text-white relative overflow-hidden animate-fade-in">
       {/* Decoración de fondo */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-10 right-0 w-96 h-96 rounded-full bg-[#f97316] blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-blue-400 blur-3xl" />
+        <div className="absolute top-10 right-0 w-96 h-96 rounded-full bg-[#f97316] blur-3xl animate-float-soft" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-blue-400 blur-3xl animate-float-soft" />
       </div>
 
-      <div className="relative max-w-5xl mx-auto px-4 text-center">
+      <div className="relative max-w-5xl mx-auto px-4 text-center animate-fade-up">
         {/* Badge */}
         <span className="inline-block bg-[#f97316]/20 border border-[#f97316]/40 text-[#f97316] text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6">
           Junta Auxiliar • Comite
@@ -161,10 +171,10 @@ function Hero() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
-            href="#contacto"
+            href="/login"
             className="bg-[#f97316] hover:bg-orange-500 active:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg shadow-orange-700/30 transition-all hover:-translate-y-0.5"
           >
-            Solicitar Demostración Gratis
+            Iniciar sesión
           </a>
           <a
             href="#modulos"
@@ -172,6 +182,26 @@ function Hero() {
           >
             Ver Módulos →
           </a>
+        </div>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          {[
+            { step: '01', label: 'Explora el proyecto', href: '#modulos' },
+            { step: '02', label: 'Entra al panel', href: '/login' },
+            { step: '03', label: 'Opera el flujo', href: '#contacto' },
+          ].map((item, index) => (
+            <a
+              key={item.step}
+              href={item.href}
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 text-left shadow-lg shadow-black/10 backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/10 animate-fade-up"
+              style={{ animationDelay: `${index * 120}ms` }}
+            >
+              <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#f97316]">
+                {item.step}
+              </p>
+              <p className="mt-2 text-sm font-semibold text-white">{item.label}</p>
+            </a>
+          ))}
         </div>
 
         {/* Stats rápidas */}
@@ -222,7 +252,7 @@ function ProblemaBanner() {
   ];
 
   return (
-    <section id="problema" className="py-20 bg-slate-900 text-white">
+    <section id="problema" className="py-20 bg-slate-900 text-white animate-fade-up">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-14">
           <span className="inline-block bg-red-500/20 border border-red-500/40 text-red-400 text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-4">
@@ -289,6 +319,8 @@ function Modulos() {
       nombre: "Dashboard Principal",
       desc: "Visualiza en tiempo real la recaudación del período: efectivo vs. SPEI, total cobrado, adeudos pendientes y cobertura del padrón.",
       tag: "Métricas en tiempo real",
+      href: '/dashboard',
+      cta: 'Abrir dashboard',
     },
     {
       icon: (
@@ -307,6 +339,8 @@ function Modulos() {
       nombre: "Login Seguro",
       desc: "Acceso protegido por usuario y contraseña. Solo el comité autorizado puede consultar y editar el padrón — sin riesgo de filtraciones.",
       tag: "Acceso controlado",
+      href: '/login',
+      cta: 'Ir al login',
     },
     {
       icon: (
@@ -328,6 +362,8 @@ function Modulos() {
       nombre: "Padrón Digital",
       desc: "Base de datos de cada usuario con su ID, nombre completo, dirección exacta (Zona, Calle, CP) y foto de referencia opcional.",
       tag: "Dirección exacta",
+      href: '/ciudadanos',
+      cta: 'Abrir padrón',
     },
     {
       icon: (
@@ -350,11 +386,13 @@ function Modulos() {
       nombre: "Historial Logístico",
       desc: "Consulta de un vistazo cuántos periodos pagó cada usuario y cuántos adeuda. Exportable para rendición de cuentas ante el municipio.",
       tag: "Períodos pagados / adeudados",
+      href: '/dashboard',
+      cta: 'Ver historial',
     },
   ];
 
   return (
-    <section id="modulos" className="py-20 bg-slate-50">
+    <section id="modulos" className="py-20 bg-slate-50 animate-fade-up">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-14">
           <span className="inline-block bg-[#0f3042]/10 border border-[#0f3042]/20 text-[#0f3042] text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-4">
@@ -370,10 +408,11 @@ function Modulos() {
         </div>
 
         <div className="grid sm:grid-cols-2 gap-6">
-          {modulos.map(({ icon, nombre, desc, tag }) => (
+          {modulos.map(({ icon, nombre, desc, tag, href, cta }, index) => (
             <div
               key={nombre}
-              className="bg-white border border-slate-200 rounded-2xl p-7 hover:shadow-lg hover:-translate-y-0.5 transition-all group"
+              className="bg-white border border-slate-200 rounded-2xl p-7 hover:shadow-lg hover:-translate-y-0.5 transition-all group animate-fade-up"
+              style={{ animationDelay: `${index * 120}ms` }}
             >
               <div className="w-12 h-12 rounded-xl bg-[#0f3042] text-white flex items-center justify-center mb-5 group-hover:bg-[#f97316] transition-colors">
                 {icon}
@@ -385,6 +424,12 @@ function Modulos() {
                 {nombre}
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
+              <a
+                href={href}
+                className="mt-5 inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-[#0f3042] transition-colors hover:border-[#f97316]/40 hover:bg-[#f97316]/5 hover:text-[#f97316]"
+              >
+                {cta}
+              </a>
             </div>
           ))}
         </div>
@@ -453,7 +498,7 @@ function InterfacePreview() {
   );
 
   return (
-    <section id="preview" className="py-20 bg-[#0f3042]">
+    <section id="preview" className="py-20 bg-[#0f3042] animate-fade-up">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-12">
           <span className="inline-block bg-[#f97316]/20 border border-[#f97316]/40 text-[#f97316] text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-4">
@@ -496,7 +541,7 @@ function InterfacePreview() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por nombre, ID o zona…"
-              className="bg-transparent text-white placeholder-slate-500 text-sm flex-1 outline-none"
+              className="bg-transparent text-white placeholder-slate-500 text-base sm:text-sm flex-1 outline-none"
             />
             <span className="text-slate-500 text-xs hidden sm:block">
               {filtrados.length} resultado{filtrados.length !== 1 && "s"}
@@ -635,7 +680,7 @@ function FormularioContacto() {
   }
 
   return (
-    <section id="contacto" className="py-20 bg-slate-50">
+    <section id="contacto" className="py-20 bg-slate-50 animate-fade-up">
       <div className="max-w-2xl mx-auto px-4">
         <div className="text-center mb-12">
           <span className="inline-block bg-[#0f3042]/10 border border-[#0f3042]/20 text-[#0f3042] text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-4">
@@ -650,7 +695,7 @@ function FormularioContacto() {
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
           {enviado ? (
             /* ── Estado de éxito ── */
             <div className="text-center py-8">
@@ -667,7 +712,7 @@ function FormularioContacto() {
                   setEnviado(false);
                   setError(false);
                 }}
-                className="mt-6 text-[#f97316] text-sm font-semibold hover:underline"
+                className="mt-6 inline-flex min-h-11 items-center justify-center text-[#f97316] text-sm font-semibold hover:underline"
               >
                 Enviar otra solicitud
               </button>
@@ -677,51 +722,63 @@ function FormularioContacto() {
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               {/* Nombre */}
               <div>
-                <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
+                <label
+                  htmlFor="landing-contact-nombre"
+                  className="block text-[#0f3042] font-semibold text-sm mb-1.5"
+                >
                   Nombre completo <span className="text-[#f97316]">*</span>
                 </label>
                 <input
+                  id="landing-contact-nombre"
                   type="text"
                   name="nombre"
                   value={formData.nombre}
                   onChange={handleChange}
                   placeholder="Ej. Juan Carlos Martínez"
                   required
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-sm transition"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
               </div>
 
               {/* Comité */}
               <div>
-                <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
+                <label
+                  htmlFor="landing-contact-comite"
+                  className="block text-[#0f3042] font-semibold text-sm mb-1.5"
+                >
                   Comité / Junta Auxiliar{" "}
                   <span className="text-[#f97316]">*</span>
                 </label>
                 <input
+                  id="landing-contact-comite"
                   type="text"
                   name="comite"
                   value={formData.comite}
                   onChange={handleChange}
                   placeholder="Ej. Junta Auxiliar San Diego Chalma"
                   required
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-sm transition"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
               </div>
 
               {/* Contacto */}
               <div>
-                <label className="block text-[#0f3042] font-semibold text-sm mb-1.5">
+                <label
+                  htmlFor="landing-contact-contacto"
+                  className="block text-[#0f3042] font-semibold text-sm mb-1.5"
+                >
                   Teléfono o Correo electrónico{" "}
                   <span className="text-[#f97316]">*</span>
                 </label>
                 <input
+                  id="landing-contact-contacto"
                   type="text"
                   name="contacto"
                   value={formData.contacto}
                   onChange={handleChange}
                   placeholder="Ej. 222 123 4567 o correo@ejemplo.com"
                   required
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-sm transition"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
               </div>
 
@@ -739,6 +796,13 @@ function FormularioContacto() {
               >
                 {cargando ? "Enviando…" : "Enviar Datos →"}
               </button>
+
+              <a
+                href="/login"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-[#0f3042] transition-colors hover:border-[#f97316]/40 hover:bg-[#f97316]/5 hover:text-[#f97316]"
+              >
+                Ya tengo acceso: ir al login
+              </a>
 
               <p className="text-center text-slate-400 text-xs">
                 Sin spam. Solo te contactamos para agendar la demo.
