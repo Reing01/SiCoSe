@@ -17,6 +17,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - red-datos
 
   frontend:
     build:
@@ -25,6 +27,8 @@ services:
     container_name: sicose-frontend
     env_file:
       - .env.docker
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000
     restart: unless-stopped
     depends_on:
       backend:
@@ -34,6 +38,8 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+    networks:
+      - red-publica
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:5173').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
@@ -44,6 +50,9 @@ services:
   backend:
     <<: *backend-common
     container_name: sicose-backend
+    environment:
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:5173
     restart: unless-stopped
     depends_on:
       migrate:
@@ -54,6 +63,10 @@ services:
         condition: service_healthy
     ports:
       - "3000:3000"
+    networks:
+      - red-publica
+      - red-privada
+      - red-datos
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health/ready').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
@@ -71,6 +84,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - red-datos
     healthcheck:
       test: ["CMD-SHELL", "PGPASSWORD=$$POSTGRES_PASSWORD psql -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB -c 'SELECT 1' >/dev/null"]
       interval: 10s
@@ -89,12 +104,22 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - red-privada
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 8
       start_period: 10s
+
+networks:
+  red-publica:
+    driver: bridge
+  red-privada:
+    driver: bridge
+  red-datos:
+    driver: bridge
 
 volumes:
   frontend_node_modules:

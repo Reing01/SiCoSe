@@ -1,22 +1,22 @@
-import { Router } from 'express'
-import { authenticate, requireRole } from '../middleware/require-role.js'
-import { getDashboardMetrics } from '../services/dashboard.js'
+import { Router } from "express";
+import { authenticate, requireResource } from "../middleware/require-role.js";
+import { getDashboardMetrics } from "../services/dashboard.js";
 
-export const dashboardRouter = Router()
+export const dashboardRouter = Router();
 
 dashboardRouter.get(
-  '/metricas',
+  "/metricas",
   authenticate,
-  requireRole('admin', 'tesorero'),
+  requireResource("dashboard"),
   async (_request, response, next) => {
     try {
-      const metrics = await getDashboardMetrics()
+      const metrics = await getDashboardMetrics();
 
       response.json({
         data: metrics,
-      })
+      });
     } catch (error) {
-      next(error)
+      next(error);
     }
   },
-)
+);

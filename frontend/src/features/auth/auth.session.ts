@@ -1,65 +1,70 @@
-import type { AuthRole, AuthSession, AuthUser } from './auth.types'
+import { isKnownAuthRole } from "./authorization";
+import type { AuthRole, AuthSession, AuthUser } from "./auth.types";
 
-const AUTH_TOKEN_KEY = 'sicose.auth.token'
-const AUTH_USER_KEY = 'sicose.auth.user'
+const AUTH_TOKEN_KEY = "sicose.auth.token";
+const AUTH_USER_KEY = "sicose.auth.user";
 
 function getStorage() {
-  return typeof window === 'undefined' ? null : window.sessionStorage
+  return typeof window === "undefined" ? null : window.sessionStorage;
 }
 
 export const authStorageKeys = {
   token: AUTH_TOKEN_KEY,
   user: AUTH_USER_KEY,
-} as const
+} as const;
 
 export function persistAuthSession(session: AuthSession) {
-  const storage = getStorage()
+  const storage = getStorage();
 
   if (!storage) {
-    return
+    return;
   }
 
-  storage.setItem(AUTH_TOKEN_KEY, session.token)
-  storage.setItem(AUTH_USER_KEY, JSON.stringify(session.user))
+  storage.setItem(AUTH_TOKEN_KEY, session.token);
+  storage.setItem(AUTH_USER_KEY, JSON.stringify(session.user));
 }
 
 export function clearAuthSession() {
-  const storage = getStorage()
+  const storage = getStorage();
 
   if (!storage) {
-    return
+    return;
   }
 
-  storage.removeItem(AUTH_TOKEN_KEY)
-  storage.removeItem(AUTH_USER_KEY)
+  storage.removeItem(AUTH_TOKEN_KEY);
+  storage.removeItem(AUTH_USER_KEY);
 }
 
 export function readAuthSession(): AuthSession | null {
-  const storage = getStorage()
+  const storage = getStorage();
 
   if (!storage) {
-    return null
+    return null;
   }
 
-  const token = storage.getItem(AUTH_TOKEN_KEY)
-  const rawUser = storage.getItem(AUTH_USER_KEY)
+  const token = storage.getItem(AUTH_TOKEN_KEY);
+  const rawUser = storage.getItem(AUTH_USER_KEY);
 
   if (!token || !rawUser) {
-    return null
+    return null;
   }
 
   try {
-    const user = JSON.parse(rawUser) as AuthUser
+    const user = JSON.parse(rawUser) as AuthUser;
+
+    if (!isKnownAuthRole(user.rol)) {
+      return null;
+    }
 
     return {
       token,
       user,
-    }
+    };
   } catch {
-    return null
+    return null;
   }
 }
 
 export function getHomeRouteForRole(role: AuthRole) {
-  return role === 'secretaria' ? '/ciudadanos' : '/dashboard'
+  return role === "secretaria" ? "/ciudadanos" : "/dashboard";
 }

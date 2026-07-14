@@ -1,8 +1,16 @@
 import bcrypt from 'bcrypt'
+import type { Response } from 'express'
 import { Router } from 'express'
 import { z } from 'zod'
+import { env } from '../config/env.js'
 import { prisma } from '../lib/prisma.js'
 import { signAuthToken, verifyAuthToken } from '../lib/jwt.js'
+import {
+  consumeRefreshToken,
+  issueRefreshToken,
+  REFRESH_TOKEN_COOKIE,
+  revokeRefreshToken,
+} from '../lib/refresh-token.js'
 import { blacklistToken, isTokenBlacklisted } from '../lib/token-blacklist.js'
 import { loginRateLimit, resetLoginEmailAttempts } from '../middleware/rate-limit.js'
 
@@ -17,6 +25,25 @@ function getBearerToken(header: string | undefined) {
   }
 
   return header.slice('Bearer '.length).trim()
+}
+
+function setRefreshCookie(response: Response, token: string, ttlSeconds: number) {
+  response.cookie(REFRESH_TOKEN_COOKIE, token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/api/auth',
+    maxAge: ttlSeconds * 1000,
+  })
+}
+
+function clearRefreshCookie(response: Response) {
+  response.clearCookie(REFRESH_TOKEN_COOKIE, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/api/auth',
+  })
 }
 
 export const authRouter = Router()
@@ -54,6 +81,9 @@ authRouter.post('/login', loginRateLimit, async (request, response, next) => {
       email: user.email,
       rol: user.rol,
     })
+
+    const { token: refreshToken, ttlSeconds } = await issueRefreshToken(user.id)
+    setRefreshCookie(response, refreshToken, ttlSeconds)
 
     return response.json({
       message: 'Login successful',
@@ -123,6 +153,53 @@ authRouter.get('/me', async (request, response) => {
   }
 })
 
+authRouter.post('/refresh', async (request, response) => {
+  const refreshToken = request.cookies?.[REFRESH_TOKEN_COOKIE]
+
+  if (!refreshToken) {
+    return response.status(401).json({
+      error: 'Missing refresh token',
+      code: 401,
+    })
+  }
+
+  const userId = await consumeRefreshToken(refreshToken)
+
+  if (!userId) {
+    clearRefreshCookie(response)
+    return response.status(401).json({
+      error: 'Invalid or expired token',
+      code: 401,
+    })
+  }
+
+  const user = await prisma.usuario.findFirst({
+    where: { id: userId, activo: true },
+  })
+
+  if (!user) {
+    clearRefreshCookie(response)
+    return response.status(401).json({
+      error: 'Invalid or expired token',
+      code: 401,
+    })
+  }
+
+  const token = await signAuthToken({
+    sub: user.id,
+    email: user.email,
+    rol: user.rol,
+  })
+
+  const { token: newRefreshToken, ttlSeconds } = await issueRefreshToken(user.id)
+  setRefreshCookie(response, newRefreshToken, ttlSeconds)
+
+  return response.json({
+    message: 'Token refreshed',
+    data: { token },
+  })
+})
+
 authRouter.post('/logout', async (request, response) => {
   const token = getBearerToken(request.headers.authorization)
 
@@ -136,6 +213,14 @@ authRouter.post('/logout', async (request, response) => {
   try {
     const payload = await verifyAuthToken(token)
     await blacklistToken(token, payload.exp)
+
+    const refreshToken = request.cookies?.[REFRESH_TOKEN_COOKIE]
+
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken)
+    }
+
+    clearRefreshCookie(response)
 
     return response.json({
       message: 'Logout successful',
