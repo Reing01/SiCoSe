@@ -844,8 +844,7 @@ function Footer() {
           </span>
         </p>
         <p className="text-xs mt-2 text-slate-600">
-          © {new Date().getFullYear()} — Bloque 1: Landing Page. Versión de
-          validación.
+          © {new Date().getFullYear()} — Página de inicio de SiCoSe.
         </p>
       </div>
     </footer>

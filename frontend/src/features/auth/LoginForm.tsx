@@ -163,7 +163,7 @@ export default function LoginForm({
         typeof result.message === 'string' &&
         result.message.trim().length > 0
           ? result.message
-          : 'Sesion iniciada correctamente. El backend respondio con exito.'
+          : 'Sesion iniciada correctamente.'
 
       setSubmissionState({
         kind: 'success',
@@ -204,7 +204,6 @@ export default function LoginForm({
     }
   }
 
-  const hasVisibleErrors = Boolean(emailError || passwordError)
   const statusTone =
     submissionState.kind === 'success'
       ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
@@ -269,7 +268,7 @@ export default function LoginForm({
               aria-describedby={emailError ? `${emailId}-error` : emailHintId}
             />
             <p id={emailHintId} className="text-xs leading-5 text-slate-500 dark:text-slate-400">
-              Usa la cuenta registrada en el seed o en tu entorno de producción.
+              Usa una cuenta autorizada para continuar.
             </p>
             {emailError ? (
               <p id={`${emailId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
@@ -319,25 +318,6 @@ export default function LoginForm({
             ) : null}
           </div>
 
-          <div
-            className={cn(
-              'rounded-2xl border px-4 py-4',
-              hasVisibleErrors
-                ? 'border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/60'
-                : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/60',
-            )}
-          >
-            <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                Validación lista para backend
-              </p>
-              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                El formulario valida la información en el navegador y envía la
-                solicitud real al endpoint de autenticación cuando las
-                credenciales son correctas.
-              </p>
-            </div>
-          </div>
         </CardContent>
 
         <CardFooter className="flex flex-col items-stretch gap-4 border-t border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
