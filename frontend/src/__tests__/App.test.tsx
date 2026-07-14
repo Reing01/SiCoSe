@@ -17,7 +17,7 @@ describe("App routing", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /acceso seguro al panel operativo de la junta auxiliar/i,
+        name: /acceso seguro al panel principal de la junta auxiliar/i,
       }),
     ).toBeInTheDocument();
   });
@@ -29,7 +29,7 @@ describe("App routing", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /acceso seguro al panel operativo de la junta auxiliar/i,
+        name: /acceso seguro al panel principal de la junta auxiliar/i,
       }),
     ).toBeInTheDocument();
   });
@@ -109,7 +109,7 @@ describe("App routing", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /gestion de ciudadanos con busqueda, edicion y validacion local/i,
+        name: /gestion de ciudadanos con busqueda, edicion y validacion previa/i,
       }),
     ).toBeInTheDocument();
   });

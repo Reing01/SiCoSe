@@ -857,8 +857,7 @@ export default function CitizenManagementPanel() {
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                   La validacion corre en el navegador para evitar guardar datos
-                  incompletos y mantener el padron limpio antes de conectarlo al
-                  backend.
+                  incompletos y mantener el padron limpio antes de continuar.
                 </p>
               </div>
             </CardContent>

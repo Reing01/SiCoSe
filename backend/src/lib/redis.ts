@@ -35,3 +35,23 @@ export async function withRedis<T>(operation: (redis: Redis) => Promise<T>) {
 
   return operation(redis)
 }
+
+export async function closeRedisClient() {
+  if (!redisClient) {
+    return
+  }
+
+  const client = redisClient
+  redisClient = null
+  redisUnavailable = false
+
+  if (client.status === 'end') {
+    return
+  }
+
+  try {
+    await client.quit()
+  } catch {
+    client.disconnect()
+  }
+}

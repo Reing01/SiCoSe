@@ -3,7 +3,6 @@ import LoginForm from '../../features/auth/LoginForm'
 import { login } from '../../features/auth/auth.api'
 import { getHomeRouteForRole, persistAuthSession, readAuthSession } from '../../features/auth/auth.session'
 import type { LoginRequest } from '../../features/auth/auth.types'
-import { API_BASE_URL } from '../../lib/api'
 import RoutePills from '../../components/RoutePills'
 
 const highlights = [
@@ -13,9 +12,9 @@ const highlights = [
       'El panel se prepara para administrar cuentas de tesorería, administración y secretaría.',
   },
   {
-    title: 'Conexión real',
+    title: 'Acceso seguro',
     description:
-      'La pantalla ya envía credenciales al backend usando la URL de API del entorno.',
+      'La pantalla acompaña el acceso con validacion clara y una experiencia consistente.',
   },
   {
     title: 'Experiencia mobile-first',
@@ -41,7 +40,7 @@ export default function LoginPage() {
     persistAuthSession(response.data)
 
     return {
-      message: 'Sesion iniciada correctamente. Backend conectado con exito.',
+      message: 'Sesion iniciada correctamente.',
       redirectTo: getHomeRouteForRole(response.data.user.rol),
     }
   }
@@ -64,7 +63,7 @@ export default function LoginPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
               SiCoSe
             </p>
-            <p className="text-sm text-slate-300">Navegación de evaluación</p>
+            <p className="text-sm text-slate-300">Navegación principal</p>
           </div>
         </a>
 
@@ -81,7 +80,7 @@ export default function LoginPage() {
                 SiCoSe · Sistema de Cobro de Servicios
               </p>
               <h1 className="max-w-xl text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Acceso seguro al panel operativo de la junta auxiliar
+                Acceso seguro al panel principal de la junta auxiliar
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
                 La pantalla de login concentra una experiencia clara para

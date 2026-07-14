@@ -1,0 +1,30 @@
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+RUN apk add --no-cache openssl libssl3 libc6-compat
+
+COPY package*.json ./
+RUN npm ci
+
+COPY prisma ./prisma
+COPY tsconfig.json ./
+COPY src ./src
+
+RUN npm run build
+
+FROM node:20-alpine AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN apk add --no-cache openssl libssl3 libc6-compat
+
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY prisma ./prisma
+
+EXPOSE 3000
+
+CMD ["sh", "-c", "npm run prisma:migrate:deploy && node dist/src/index.js"]
