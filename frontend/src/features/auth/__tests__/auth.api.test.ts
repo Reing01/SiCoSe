@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { API_BASE_URL, ApiError } from '../../../lib/api'
-import { login } from '../auth.api'
+import { getCurrentUser, login } from '../auth.api'
 
 describe('auth.api', () => {
   const fetchMock = vi.fn()
@@ -84,5 +84,29 @@ describe('auth.api', () => {
       status: 400,
       message: 'Invalid credentials payload',
     })
+  })
+
+  it('rejects unsupported user roles from the backend', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: {
+            sub: 'user-1',
+            email: 'admin@sicose.test',
+            rol: 'superadmin',
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      ),
+    )
+
+    await expect(getCurrentUser('jwt-token')).rejects.toThrow(
+      /rol de usuario no soportado/i,
+    )
   })
 })
