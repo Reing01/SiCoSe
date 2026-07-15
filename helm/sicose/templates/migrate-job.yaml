@@ -20,7 +20,7 @@ spec:
         - name: migrate
           image: {{ .Values.images.backend.repository }}:{{ .Values.images.backend.tag }}
           imagePullPolicy: {{ .Values.images.backend.pullPolicy }}
-          command: ["sh", "-c", "npm run prisma:migrate:deploy"]
+          command: ["sh", "-c", "pnpm run prisma:migrate:deploy"]
           envFrom:
             - configMapRef:
                 name: {{ include "sicose.fullname" . }}-config

@@ -29,7 +29,7 @@ Desde el nodo principal:
 
 ```bash
 git pull
-npm run deploy:cluster:4nodos
+pnpm run deploy:cluster:4nodos
 ```
 
 Ese comando aplica el release de Helm con:
@@ -63,14 +63,14 @@ kubectl create secret docker-registry ghcr-secret \
 
 ## Recomendación
 
-Si quieres un entorno todavía más formal, lo ideal es publicar las imágenes en un registry privado y dejar este despliegue como GitOps ligero: `git pull` + `npm run deploy:cluster:4nodos`.
+Si quieres un entorno todavía más formal, lo ideal es publicar las imágenes en un registry privado y dejar este despliegue como GitOps ligero: `git pull` + `pnpm run deploy:cluster:4nodos`.
 
 ## Bootstrap con secretos locales
 
 Si ya definiste los secretos en tu sesión local, puedes usar el bootstrap para crear el `imagePullSecret` y aplicar un override temporal sin guardar nada en el repo:
 
 ```bash
-npm run deploy:cluster:4nodos:bootstrap
+pnpm run deploy:cluster:4nodos:bootstrap
 ```
 
 Variables esperadas:

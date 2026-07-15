@@ -24,13 +24,13 @@ backend/railway.json
 Build command:
 
 ```bash
-npm ci && npm run build
+pnpm install && pnpm run build
 ```
 
 Start command:
 
 ```bash
-npm run deploy:start
+pnpm run deploy:start
 ```
 
 Healthcheck:
@@ -86,7 +86,7 @@ frontend/vercel.json
 Build command:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 Output directory:
@@ -115,13 +115,13 @@ Antes del primer deploy productivo:
 
 ```bash
 cd backend
-npm run prisma:migrate:deploy
+pnpm run prisma:migrate:deploy
 ```
 
 El comando tambien corre automaticamente al arrancar el backend con:
 
 ```bash
-npm run deploy:start
+pnpm run deploy:start
 ```
 
 Verificar:
@@ -166,19 +166,19 @@ Backend:
 
 ```bash
 cd backend
-npm run prisma:migrate:status
-npm run lint
-npm test
-npm run build
+pnpm run prisma:migrate:status
+pnpm run lint
+pnpm test
+pnpm run build
 ```
 
 Frontend:
 
 ```bash
 cd frontend
-npm run lint
-npm test
-npm run build
+pnpm run lint
+pnpm test
+pnpm run build
 ```
 
 ## 7. Practica multi-máquina de 4 nodos
@@ -187,7 +187,7 @@ Si vas a levantar SiCoSe en un clúster de 4 máquinas físicas, usa el perfil d
 
 ```bash
 git pull
-npm run deploy:cluster:4nodos
+pnpm run deploy:cluster:4nodos
 ```
 
 Referencias:

@@ -4,14 +4,16 @@ WORKDIR /app
 
 RUN apk add --no-cache openssl libssl3 libc6-compat
 
-COPY package*.json ./
-RUN npm ci
+RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY prisma ./prisma
 COPY tsconfig.json ./
 COPY src ./src
 
-RUN npm run build
+RUN pnpm run build
 
 FROM node:20-alpine AS runtime
 
@@ -27,4 +29,4 @@ COPY prisma ./prisma
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run prisma:migrate:deploy && node dist/src/index.js"]
+CMD ["sh", "-c", "pnpm run prisma:migrate:deploy && node dist/src/index.js"]

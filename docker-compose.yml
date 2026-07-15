@@ -13,7 +13,7 @@ services:
     <<: *backend-common
     container_name: sicose-migrate
     restart: "no"
-    command: ["sh", "-c", "npm run prisma:migrate:deploy"]
+    command: ["sh", "-c", "pnpm run prisma:migrate:deploy"]
     depends_on:
       postgres:
         condition: service_healthy

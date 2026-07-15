@@ -20,15 +20,15 @@ SiCoSe es un monorepo para digitalizar la recaudación, el control de adeudos y 
 ## Instalación
 
 ```bash
-npm install
-npm install --prefix frontend
-npm install --prefix backend
+pnpm install
+pnpm install --dir frontend
+pnpm install --dir backend
 ```
 
 ## Desarrollo
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 - Frontend: `http://localhost:5173`
@@ -37,8 +37,8 @@ npm run dev
 ## Pruebas y build
 
 ```bash
-npm test
-npm run build
+pnpm test
+pnpm run build
 ```
 
 ## API
@@ -57,13 +57,13 @@ Levantará PostgreSQL 16 y Redis 7 con volúmenes persistentes y variables de en
 Para una práctica multi-máquina de 4 nodos con Helm:
 
 ```bash
-npm run deploy:cluster:4nodos
+pnpm run deploy:cluster:4nodos
 ```
 
 Si ya tienes los secretos locales definidos, usa el bootstrap:
 
 ```bash
-npm run deploy:cluster:4nodos:bootstrap
+pnpm run deploy:cluster:4nodos:bootstrap
 ```
 
 La guía completa está en `Docs/practica-cluster-4-nodos.md`.
@@ -81,7 +81,7 @@ Contraseña para las tres: `SiCoSe2026!`
 Para cargar los datos de prueba en local:
 
 ```bash
-npm run seed --prefix backend
+pnpm --dir backend run seed
 ```
 
 ## Ramas

@@ -2,11 +2,13 @@ FROM node:20-bookworm-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
-COPY frontend/package*.json ./
-RUN npm ci
+RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
+
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY frontend/ ./
-RUN npm run build
+RUN pnpm run build
 
 FROM node:20-bookworm-slim AS backend-builder
 
@@ -16,18 +18,20 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
+RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
+
 ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 ENV DIRECT_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 ENV REDIS_URL=redis://localhost:6379
 ENV JWT_SECRET=placeholder-placeholder-placeholder
 ENV CORS_ORIGIN=https://example.com
 
-COPY backend/package*.json ./
-RUN npm ci
+COPY backend/package.json backend/pnpm-lock.yaml backend/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY backend/ ./
-RUN npx prisma generate
-RUN npm run build
+RUN pnpm run prisma:generate
+RUN pnpm run build
 
 FROM node:20-bookworm-slim AS runtime
 
@@ -50,4 +54,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=10s \
   CMD curl -fsS http://localhost:3000/health || exit 1
 
-CMD ["npm", "run", "start", "--prefix", "backend"]
+CMD ["node", "backend/dist/src/index.js"]
