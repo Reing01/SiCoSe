@@ -60,6 +60,12 @@ Para una práctica multi-máquina de 4 nodos con Helm:
 npm run deploy:cluster:4nodos
 ```
 
+Si ya tienes los secretos locales definidos, usa el bootstrap:
+
+```bash
+npm run deploy:cluster:4nodos:bootstrap
+```
+
 La guía completa está en `Docs/practica-cluster-4-nodos.md`.
 
 ### Credenciales de prueba
