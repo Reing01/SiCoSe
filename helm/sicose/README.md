@@ -35,7 +35,7 @@ Use this profile when you want the workload distributed across a 4-machine clust
 One-command deploy from the repo root:
 
 ```bash
-pnpm run deploy:cluster:4nodos
+npm run deploy:cluster:4nodos
 ```
 
 The profile file lives at `helm/sicose/values-practica-4-nodos.yaml`.

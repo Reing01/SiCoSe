@@ -2,13 +2,11 @@ FROM node:20-bookworm-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
-RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
-
-COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY frontend/package.json ./
+RUN npm install
 
 COPY frontend/ ./
-RUN pnpm run build
+RUN npm run build
 
 FROM node:20-bookworm-slim AS backend-builder
 
@@ -18,20 +16,18 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
-
 ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 ENV DIRECT_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 ENV REDIS_URL=redis://localhost:6379
 ENV JWT_SECRET=placeholder-placeholder-placeholder
 ENV CORS_ORIGIN=https://example.com
 
-COPY backend/package.json backend/pnpm-lock.yaml backend/pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY backend/package.json ./
+RUN npm install
 
 COPY backend/ ./
-RUN pnpm run prisma:generate
-RUN pnpm run build
+RUN npm run prisma:generate
+RUN npm run build
 
 FROM node:20-bookworm-slim AS runtime
 

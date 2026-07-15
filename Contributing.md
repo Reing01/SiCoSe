@@ -212,7 +212,7 @@ Contexto del issue o tarea que este PR resuelve.
 Adjuntar imagenes si existen cambios visuales en la interfaz.
 
 ## Checklist
-- [ ] El proyecto compila sin errores con pnpm run dev
+- [ ] El proyecto compila sin errores con npm run dev
 - [ ] No hay console.log olvidados en el codigo
 - [ ] Los estilos son responsivos en mobile y desktop
 - [ ] El formulario valida correctamente todos sus campos
@@ -227,7 +227,7 @@ Adjuntar imagenes si existen cambios visuales en la interfaz.
 Al ser asignado como reviewer, verificar los siguientes puntos:
 
 **Funcionalidad**
-- El codigo compila sin errores haciendo checkout a la rama y ejecutando `pnpm run dev`
+- El codigo compila sin errores haciendo checkout a la rama y ejecutando `npm run dev`
 - Los criterios de aceptacion del issue estan cumplidos
 - El formulario (si aplica) valida todos sus campos correctamente
 

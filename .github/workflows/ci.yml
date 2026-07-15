@@ -14,29 +14,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.18.0
-          cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
-            backend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: |
-          pnpm install --frozen-lockfile
-          pnpm --dir frontend install --frozen-lockfile
-          pnpm --dir backend install --frozen-lockfile
+          npm install
+          npm install --prefix frontend
+          npm install --prefix backend
 
       - name: Run lint
-        run: pnpm run lint
+        run: npm run lint
 
   test:
     name: Test
@@ -45,29 +35,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.18.0
-          cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
-            backend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: |
-          pnpm install --frozen-lockfile
-          pnpm --dir frontend install --frozen-lockfile
-          pnpm --dir backend install --frozen-lockfile
+          npm install
+          npm install --prefix frontend
+          npm install --prefix backend
 
       - name: Run tests
-        run: pnpm test
+        run: npm test
 
   build:
     name: Build
@@ -76,26 +56,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.18.0
-          cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
-            backend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: |
-          pnpm install --frozen-lockfile
-          pnpm --dir frontend install --frozen-lockfile
-          pnpm --dir backend install --frozen-lockfile
+          npm install
+          npm install --prefix frontend
+          npm install --prefix backend
 
       - name: Run build
-        run: pnpm run build
+        run: npm run build

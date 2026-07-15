@@ -10,7 +10,7 @@ Entorno usado:
 
 ## Migraciones
 
-Resultado de `pnpm run prisma:migrate:status`:
+Resultado de `npm run prisma:migrate:status`:
 
 ```text
 Database schema is up to date!
