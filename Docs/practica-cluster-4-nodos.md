@@ -64,3 +64,24 @@ kubectl create secret docker-registry ghcr-secret \
 ## Recomendación
 
 Si quieres un entorno todavía más formal, lo ideal es publicar las imágenes en un registry privado y dejar este despliegue como GitOps ligero: `git pull` + `npm run deploy:cluster:4nodos`.
+
+## Bootstrap con secretos locales
+
+Si ya definiste los secretos en tu sesión local, puedes usar el bootstrap para crear el `imagePullSecret` y aplicar un override temporal sin guardar nada en el repo:
+
+```bash
+npm run deploy:cluster:4nodos:bootstrap
+```
+
+Variables esperadas:
+
+- `SICOSE_JWT_SECRET`
+- `SICOSE_POSTGRES_PASSWORD`
+- `SICOSE_SUPABASE_URL`
+- `SICOSE_SUPABASE_SERVICE_KEY`
+- `SICOSE_INGRESS_HOST` opcional
+- `SICOSE_CORS_ORIGIN` opcional
+- `GHCR_USERNAME` opcional
+- `GHCR_TOKEN` opcional
+
+El bootstrap valida `kubectl` y `helm`, crea el namespace si hace falta y limpia el archivo temporal al terminar.
