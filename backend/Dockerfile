@@ -10,4 +10,4 @@ RUN npm install
 COPY . .
 
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npm run prisma:generate && npm run dev"]
