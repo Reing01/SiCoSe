@@ -2,8 +2,8 @@ FROM node:20-bookworm-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
-COPY frontend/package*.json ./
-RUN npm ci
+COPY frontend/package.json ./
+RUN npm install
 
 COPY frontend/ ./
 RUN npm run build
@@ -22,11 +22,11 @@ ENV REDIS_URL=redis://localhost:6379
 ENV JWT_SECRET=placeholder-placeholder-placeholder
 ENV CORS_ORIGIN=https://example.com
 
-COPY backend/package*.json ./
-RUN npm ci
+COPY backend/package.json ./
+RUN npm install
 
 COPY backend/ ./
-RUN npx prisma generate
+RUN npm run prisma:generate
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runtime
@@ -50,4 +50,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=10s \
   CMD curl -fsS http://localhost:3000/health || exit 1
 
-CMD ["npm", "run", "start", "--prefix", "backend"]
+CMD ["node", "backend/dist/src/index.js"]

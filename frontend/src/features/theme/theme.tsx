@@ -12,18 +12,32 @@ type ThemeContextValue = {
 const THEME_STORAGE_KEY = 'sicose-theme'
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
+function readStoredTheme(): ThemeMode | null {
+  try {
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+
+    return storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : null
+  } catch {
+    return null
+  }
+}
+
 function getInitialTheme(): ThemeMode {
   if (typeof window === 'undefined') {
     return 'light'
   }
 
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+  const storedTheme = readStoredTheme()
 
-  if (storedTheme === 'light' || storedTheme === 'dark') {
+  if (storedTheme) {
     return storedTheme
   }
 
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  if (typeof window.matchMedia === 'function') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+
+  return 'light'
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -34,7 +48,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     root.dataset.theme = theme
     root.style.colorScheme = theme
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+    } catch {
+      // Persistencia opcional: el tema sigue funcionando sin storage.
+    }
   }, [theme])
 
   const value = useMemo<ThemeContextValue>(

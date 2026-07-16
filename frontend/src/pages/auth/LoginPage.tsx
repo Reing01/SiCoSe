@@ -9,12 +9,12 @@ const highlights = [
   {
     title: 'Acceso por roles',
     description:
-      'El panel se prepara para administrar cuentas de tesorería, administración y secretaría.',
+      'El panel organiza el acceso para cuentas de tesorería, administración y secretaría.',
   },
   {
     title: 'Acceso seguro',
     description:
-      'La pantalla acompaña el acceso con validacion clara y una experiencia consistente.',
+      'La pantalla mantiene un flujo claro, consistente y listo para integrarse con el backend.',
   },
   {
     title: 'Experiencia mobile-first',
@@ -84,8 +84,8 @@ export default function LoginPage() {
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
                 La pantalla de login concentra una experiencia clara para
-                entrar al sistema, validar credenciales y preparar el salto a
-                los módulos protegidos sin sacrificar legibilidad ni enfoque.
+                entrar al sistema y preparar el salto a los módulos protegidos
+                sin sacrificar legibilidad ni enfoque.
               </p>
             </div>
           </div>

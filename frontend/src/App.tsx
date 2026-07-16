@@ -1,11 +1,24 @@
-import { useEffect } from 'react'
-import LandingPage from './LandingPage'
+import { lazy, Suspense, useEffect } from 'react'
 import { readAuthSession } from './features/auth/auth.session'
 import { resolveAppRoute } from './features/auth/auth.routing'
 import { ThemeProvider } from './features/theme/theme'
-import LoginPage from './pages/auth/LoginPage'
-import CitizenManagementPage from './pages/citizens/CitizenManagementPage'
-import DashboardPage from './pages/dashboard/DashboardPage'
+
+const LandingPage = lazy(() => import('./LandingPage'))
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
+const CitizenManagementPage = lazy(() => import('./pages/citizens/CitizenManagementPage'))
+const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'))
+
+function AppFallback() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex min-h-screen items-center justify-center bg-slate-950 text-white"
+    >
+      Cargando interfaz...
+    </div>
+  )
+}
 
 export default function App() {
   const pathname =
@@ -27,15 +40,17 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      {resolvedRoute === '/login' ? (
-        <LoginPage />
-      ) : resolvedRoute === '/ciudadanos' ? (
-        <CitizenManagementPage />
-      ) : resolvedRoute === '/dashboard' ? (
-        <DashboardPage />
-      ) : (
-        <LandingPage />
-      )}
+      <Suspense fallback={<AppFallback />}>
+        {resolvedRoute === '/login' ? (
+          <LoginPage />
+        ) : resolvedRoute === '/ciudadanos' ? (
+          <CitizenManagementPage />
+        ) : resolvedRoute === '/dashboard' ? (
+          <DashboardPage />
+        ) : (
+          <LandingPage />
+        )}
+      </Suspense>
     </ThemeProvider>
   )
 }

@@ -1,4 +1,5 @@
 import { apiRequest } from '../../lib/api'
+import { isKnownAuthRole } from './authorization'
 import type {
   AuthMeResponse,
   AuthRole,
@@ -23,11 +24,15 @@ export async function getCurrentUser(token: string): Promise<AuthSession> {
     },
   })
 
+  if (!isKnownAuthRole(response.data.rol)) {
+    throw new Error('El backend devolvió un rol de usuario no soportado.')
+  }
+
   return {
     token,
     user: {
       email: response.data.email,
-      rol: response.data.rol as AuthRole,
+      rol: response.data.rol,
     },
   }
 }
@@ -40,4 +45,3 @@ export async function logout(token: string): Promise<{ message: string }> {
     },
   })
 }
-
