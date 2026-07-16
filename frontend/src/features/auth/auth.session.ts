@@ -8,6 +8,20 @@ function getStorage() {
   return typeof window === "undefined" ? null : window.sessionStorage;
 }
 
+function isAuthUser(value: unknown): value is AuthUser {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<AuthUser>;
+
+  return (
+    typeof candidate.email === "string" &&
+    candidate.email.trim().length > 0 &&
+    isKnownAuthRole(candidate.rol ?? "")
+  );
+}
+
 export const authStorageKeys = {
   token: AUTH_TOKEN_KEY,
   user: AUTH_USER_KEY,
@@ -45,14 +59,14 @@ export function readAuthSession(): AuthSession | null {
   const token = storage.getItem(AUTH_TOKEN_KEY);
   const rawUser = storage.getItem(AUTH_USER_KEY);
 
-  if (!token || !rawUser) {
+  if (!token?.trim() || !rawUser) {
     return null;
   }
 
   try {
-    const user = JSON.parse(rawUser) as AuthUser;
+    const user = JSON.parse(rawUser) as unknown;
 
-    if (!isKnownAuthRole(user.rol)) {
+    if (!isAuthUser(user)) {
       return null;
     }
 

@@ -529,7 +529,7 @@ export default function DashboardPage() {
         ) : null}
 
         {state.kind === 'error' ? (
-          <Card className="border-rose-200 bg-rose-50 shadow-sm animate-scale-in">
+          <Card className="border-rose-200 bg-rose-50 shadow-sm animate-scale-in" role="alert" aria-live="polite">
             <CardContent className="flex flex-col gap-4 p-6 text-sm font-medium text-rose-800">
               <p>{state.message}</p>
               <button

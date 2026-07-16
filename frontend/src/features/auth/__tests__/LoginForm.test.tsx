@@ -18,6 +18,15 @@ describe('validateLoginForm', () => {
       }),
     ).toEqual({})
   })
+
+  it('does not trim password characters during validation', () => {
+    expect(
+      validateLoginForm({
+        email: 'admin@sicose.test',
+        password: '  SiCoSe2026!  ',
+      }),
+    ).toEqual({})
+  })
 })
 
 describe('LoginForm', () => {

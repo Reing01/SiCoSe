@@ -19,11 +19,11 @@ describe('CitizenManagementPage', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: /gestion de ciudadanos con busqueda, edicion y validacion previa/i,
+        name: /gesti[oó]n de ciudadanos con b[uú]squeda, edici[oó]n y control de datos/i,
       }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/sicose - padron digital/i),
+      screen.getByText(/sicose - padr[oó]n digital/i),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /nuevo ciudadano/i }),

@@ -647,33 +647,54 @@ function FormularioContacto() {
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(false);
+  const [formMessage, setFormMessage] = useState("");
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (formMessage) setFormMessage("");
+    if (error) setError(false);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!formData.nombre || !formData.comite || !formData.contacto) return;
+    setAttemptedSubmit(true);
+
+    const nombre = formData.nombre.trim();
+    const comite = formData.comite.trim();
+    const contacto = formData.contacto.trim();
+
+    if (!nombre || !comite || !contacto) {
+      setError(false);
+      setFormMessage("Completa nombre, comité y contacto para continuar.");
+      return;
+    }
 
     setCargando(true);
     setError(false);
+    setFormMessage("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/leads`, {
+      const response = await fetch(`${API_BASE_URL}/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          nombre,
+          comite,
+          contacto,
+        }),
       });
       if (!response.ok) {
         throw new Error("Lead submission failed");
       }
       setEnviado(true);
       setFormData(INITIAL_FORM);
+      setAttemptedSubmit(false);
     } catch (_) {
       // Si hay un error de red real lo mostramos
       setError(true);
+      setFormMessage("Ocurrió un problema al enviar. Intenta de nuevo.");
     } finally {
       setCargando(false);
     }
@@ -736,8 +757,19 @@ function FormularioContacto() {
                   onChange={handleChange}
                   placeholder="Ej. Juan Carlos Martínez"
                   required
+                  aria-invalid={attemptedSubmit && !formData.nombre.trim()}
+                  aria-describedby={
+                    attemptedSubmit && !formData.nombre.trim()
+                      ? "landing-contact-nombre-error"
+                      : undefined
+                  }
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
+                {attemptedSubmit && !formData.nombre.trim() ? (
+                  <p id="landing-contact-nombre-error" className="mt-1 text-xs text-red-600">
+                    Ingresa tu nombre completo.
+                  </p>
+                ) : null}
               </div>
 
               {/* Comité */}
@@ -757,8 +789,19 @@ function FormularioContacto() {
                   onChange={handleChange}
                   placeholder="Ej. Junta Auxiliar San Diego Chalma"
                   required
+                  aria-invalid={attemptedSubmit && !formData.comite.trim()}
+                  aria-describedby={
+                    attemptedSubmit && !formData.comite.trim()
+                      ? "landing-contact-comite-error"
+                      : undefined
+                  }
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
+                {attemptedSubmit && !formData.comite.trim() ? (
+                  <p id="landing-contact-comite-error" className="mt-1 text-xs text-red-600">
+                    Ingresa el comité o junta auxiliar.
+                  </p>
+                ) : null}
               </div>
 
               {/* Contacto */}
@@ -778,14 +821,24 @@ function FormularioContacto() {
                   onChange={handleChange}
                   placeholder="Ej. 222 123 4567 o correo@ejemplo.com"
                   required
+                  aria-invalid={attemptedSubmit && !formData.contacto.trim()}
+                  aria-describedby={
+                    attemptedSubmit && !formData.contacto.trim()
+                      ? "landing-contact-contacto-error"
+                      : undefined
+                  }
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
+                {attemptedSubmit && !formData.contacto.trim() ? (
+                  <p id="landing-contact-contacto-error" className="mt-1 text-xs text-red-600">
+                    Ingresa un teléfono o correo de contacto.
+                  </p>
+                ) : null}
               </div>
 
-              {/* Mensaje de error visible (opcional, por si quieres mostrarlo) */}
-              {error && (
-                <p className="text-red-500 text-xs text-center">
-                  Ocurrió un problema al enviar. Intenta de nuevo.
+              {(formMessage || error) && (
+                <p role="alert" aria-live="polite" className="text-center text-xs text-red-600">
+                  {formMessage || "Ocurrió un problema al enviar. Intenta de nuevo."}
                 </p>
               )}
 

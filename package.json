@@ -4,6 +4,7 @@
   "description": "Sistema web para la digitalizacion y gestion de pagos de servicios publicos en Juntas Auxiliares gubernamentales del estado de Puebla.",
   "main": "index.js",
   "type": "module",
+  "packageManager": "npm@10.8.2",
   "scripts": {
     "build": "npm run build --prefix frontend && npm run build --prefix backend",
     "start": "npm run start --prefix backend",

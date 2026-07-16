@@ -45,7 +45,7 @@ const DEFAULT_TOUCHED: Record<LoginFieldName, boolean> = {
 export function validateLoginForm(values: LoginRequest): LoginFieldErrors {
   const errors: LoginFieldErrors = {}
   const email = values.email.trim()
-  const password = values.password.trim()
+  const password = values.password
 
   if (!email) {
     errors.email = 'Ingresa tu correo institucional.'

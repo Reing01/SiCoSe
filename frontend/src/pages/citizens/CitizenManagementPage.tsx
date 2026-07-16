@@ -69,7 +69,7 @@ export default function CitizenManagementPage() {
                 : 'border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:text-rose-700',
             )}
           >
-            Cerrar sesion
+            Cerrar sesión
           </button>
         </div>
       </header>
@@ -91,7 +91,7 @@ export default function CitizenManagementPage() {
                   theme === 'dark' ? 'text-sky-300' : 'text-slate-500',
                 )}
               >
-                SiCoSe - Padron digital
+                SiCoSe - Padrón digital
               </p>
               <h1
                 className={cn(
@@ -99,7 +99,7 @@ export default function CitizenManagementPage() {
                   theme === 'dark' ? 'text-white' : 'text-slate-950',
                 )}
               >
-                Gestion de ciudadanos con busqueda, edicion y validacion previa
+                Gestión de ciudadanos con búsqueda, edición y control de datos
               </h1>
               <p
                 className={cn(
@@ -108,8 +108,8 @@ export default function CitizenManagementPage() {
                 )}
               >
                 Esta vista centraliza el registro de ciudadanos para revisar
-                datos de contacto, editar informacion y validar formularios
-                antes de publicarlos en el panel.
+                datos de contacto, editar información y mantener el padrón en
+                orden antes de publicarlos en el panel.
               </p>
             </div>
 
@@ -135,9 +135,9 @@ export default function CitizenManagementPage() {
                   theme === 'dark' ? 'text-slate-300' : 'text-slate-600',
                 )}
               >
-                <li>- Busqueda por nombre, correo o clave catastral</li>
-                <li>- Filtros rapidos por estado del registro</li>
-                <li>- Alta, edicion y eliminacion con validacion previa</li>
+                <li>- Búsqueda por nombre, correo o clave catastral</li>
+                <li>- Filtros rápidos por estado del registro</li>
+                <li>- Alta, edición y eliminación con control de campos</li>
               </ul>
             </div>
           </div>
