@@ -1,8 +1,24 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { authStorageKeys } from '../../auth/auth.session'
+import { citizenSeed } from '../citizen.seed'
+import * as citizenApi from '../citizen.api'
 import CitizenManagementPanel, {
   validateCitizenForm,
 } from '../CitizenManagementPanel'
+
+vi.mock('../citizen.api')
+
+function persistSecretarySession() {
+  window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+  window.sessionStorage.setItem(
+    authStorageKeys.user,
+    JSON.stringify({
+      email: 'secretaria@sicose.test',
+      rol: 'secretaria',
+    }),
+  )
+}
 
 describe('validateCitizenForm', () => {
   it('returns validation errors for empty values', () => {
@@ -38,28 +54,59 @@ describe('validateCitizenForm', () => {
 })
 
 describe('CitizenManagementPanel', () => {
-  it('renders the seed list and supports filtering', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    window.sessionStorage.clear()
+    persistSecretarySession()
+    vi.mocked(citizenApi.fetchCitizens).mockResolvedValue(
+      citizenSeed.map((record) => ({ ...record })),
+    )
+    vi.mocked(citizenApi.createCitizen).mockImplementation(
+      async (_token, values) => ({
+        id: 'citizen-created',
+        ...values,
+        createdAt: '2026-07-17T12:00:00.000Z',
+        updatedAt: '2026-07-17T12:00:00.000Z',
+      }),
+    )
+    vi.mocked(citizenApi.updateCitizen).mockImplementation(
+      async (_token, id, values) => ({
+        id,
+        ...values,
+        createdAt: '2026-05-03T10:00:00.000Z',
+        updatedAt: '2026-07-17T12:00:00.000Z',
+      }),
+    )
+    vi.mocked(citizenApi.deactivateCitizen).mockResolvedValue()
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    )
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('renders the backend list and supports filtering', async () => {
     render(<CitizenManagementPanel />)
 
-    expect(
-      screen.getByText(/mariana lopez torres/i),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(/mariana lopez torres/i)).toBeInTheDocument()
     expect(screen.getByText(/total ciudadanos/i)).toBeInTheDocument()
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /requieren atencion/i }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: /requieren atencion/i }))
 
     expect(screen.getByText(/esperanza mendez lara/i)).toBeInTheDocument()
     expect(screen.queryByText(/mariana lopez torres/i)).not.toBeInTheDocument()
   })
 
-  it('shows validation errors when the form is submitted empty', () => {
+  it('shows validation errors when the form is submitted empty', async () => {
     render(<CitizenManagementPanel />)
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /crear ciudadano/i }),
-    )
+    await screen.findByText(/mariana lopez torres/i)
+
+    fireEvent.click(screen.getByRole('button', { name: /crear ciudadano/i }))
 
     expect(
       screen.getByText('Corrige los campos marcados para continuar.'),
@@ -70,6 +117,8 @@ describe('CitizenManagementPanel', () => {
 
   it('creates a new citizen after validation', async () => {
     render(<CitizenManagementPanel />)
+
+    await screen.findByText(/mariana lopez torres/i)
 
     fireEvent.change(screen.getByLabelText(/nombre \*/i), {
       target: { value: 'Luis' },
@@ -89,9 +138,7 @@ describe('CitizenManagementPanel', () => {
     fireEvent.change(screen.getByLabelText(/clave catastral \*/i), {
       target: { value: 'SDC-72810-006' },
     })
-    fireEvent.click(
-      screen.getByRole('button', { name: /crear ciudadano/i }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: /crear ciudadano/i }))
 
     await waitFor(() => {
       expect(
@@ -103,10 +150,19 @@ describe('CitizenManagementPanel', () => {
     expect(
       screen.getByRole('row', { name: /luis garcia perez/i }),
     ).toBeInTheDocument()
+    expect(citizenApi.createCitizen).toHaveBeenCalledWith(
+      'test-token',
+      expect.objectContaining({
+        email: 'luis.garcia@sicose.mx',
+        claveCatastral: 'SDC-72810-006',
+      }),
+    )
   })
 
   it('edits and deletes a citizen from the table', async () => {
     render(<CitizenManagementPanel />)
+
+    await screen.findByText(/jose ramirez hernandez/i)
 
     fireEvent.click(
       screen.getByRole('button', { name: /editar jose ramirez hernandez/i }),
@@ -114,9 +170,7 @@ describe('CitizenManagementPanel', () => {
     fireEvent.change(screen.getByLabelText(/nombre \*/i), {
       target: { value: 'Jose Alfredo' },
     })
-    fireEvent.click(
-      screen.getByRole('button', { name: /guardar cambios/i }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: /guardar cambios/i }))
 
     await waitFor(() => {
       expect(
@@ -124,10 +178,14 @@ describe('CitizenManagementPanel', () => {
       ).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/jose alfredo ramirez hernandez/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/jose alfredo ramirez hernandez/i),
+    ).toBeInTheDocument()
 
     fireEvent.click(
-      screen.getByRole('button', { name: /eliminar jose alfredo ramirez hernandez/i }),
+      screen.getByRole('button', {
+        name: /eliminar jose alfredo ramirez hernandez/i,
+      }),
     )
 
     await waitFor(() => {
@@ -135,5 +193,11 @@ describe('CitizenManagementPanel', () => {
         screen.queryByText(/jose alfredo ramirez hernandez/i),
       ).not.toBeInTheDocument()
     })
+
+    expect(citizenApi.updateCitizen).toHaveBeenCalled()
+    expect(citizenApi.deactivateCitizen).toHaveBeenCalledWith(
+      'test-token',
+      'CIT-002',
+    )
   })
 })

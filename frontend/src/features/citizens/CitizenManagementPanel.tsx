@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Button } from '../../components/ui/button'
 import {
   Card,
@@ -13,7 +13,13 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { useToast } from '../../components/ui/toast'
 import { cn } from '../../lib/utils'
-import { citizenSeed } from './citizen.seed'
+import { readAuthSession } from '../auth/auth.session'
+import {
+  createCitizen,
+  deactivateCitizen,
+  fetchCitizens,
+  updateCitizen,
+} from './citizen.api'
 import type {
   CitizenFieldErrors,
   CitizenFieldName,
@@ -156,21 +162,6 @@ function getCitizenStatus(record: CitizenRecord): {
   }
 }
 
-function buildNextCitizenId(records: CitizenRecord[]) {
-  const highestNumber = records.reduce((max, record) => {
-    const match = record.id.match(/(\d+)$/)
-
-    if (!match) {
-      return max
-    }
-
-    const parsedNumber = Number.parseInt(match[1], 10)
-    return Number.isNaN(parsedNumber) ? max : Math.max(max, parsedNumber)
-  }, 0)
-
-  return `CIT-${String(highestNumber + 1).padStart(3, '0')}`
-}
-
 function matchesSearch(record: CitizenRecord, searchTerm: string) {
   if (!searchTerm) {
     return true
@@ -222,28 +213,69 @@ export default function CitizenManagementPanel() {
   const statusId = useId()
   const { addToast } = useToast()
 
-  const [citizens, setCitizens] = useState<CitizenRecord[]>(() =>
-    citizenSeed.map((record) => ({ ...record })),
+  const [citizens, setCitizens] = useState<CitizenRecord[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [deletingCitizenId, setDeletingCitizenId] = useState<string | null>(
+    null,
   )
+  const [reloadKey, setReloadKey] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeFilter, setActiveFilter] = useState<CitizenFilter>('all')
   const [selectedCitizenId, setSelectedCitizenId] = useState<string | null>(
     null,
   )
-  const [values, setValues] = useState<CitizenFormValues>(
-    createEmptyFormValues,
-  )
-  const [touched, setTouched] = useState<Record<CitizenFieldName, boolean>>(
-    DEFAULT_TOUCHED,
-  )
+  const [values, setValues] = useState<CitizenFormValues>(createEmptyFormValues)
+  const [touched, setTouched] =
+    useState<Record<CitizenFieldName, boolean>>(DEFAULT_TOUCHED)
   const [submissionState, setSubmissionState] = useState<SubmissionState>({
     kind: 'idle',
   })
 
+  useEffect(() => {
+    const session = readAuthSession()
+
+    if (!session) {
+      setIsLoading(false)
+      setLoadError('Inicia sesión para consultar el padrón de ciudadanos.')
+      return
+    }
+
+    let cancelled = false
+    setIsLoading(true)
+    setLoadError(null)
+
+    fetchCitizens(session.token)
+      .then((records) => {
+        if (!cancelled) {
+          setCitizens(records)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : 'No fue posible cargar el padrón de ciudadanos.',
+          )
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [reloadKey])
+
   const selectedCitizen =
     selectedCitizenId == null
       ? null
-      : citizens.find((record) => record.id === selectedCitizenId) ?? null
+      : (citizens.find((record) => record.id === selectedCitizenId) ?? null)
 
   const fieldErrors = validateCitizenForm(values)
   const visibleCitizens = citizens.filter((record) => {
@@ -253,7 +285,9 @@ export default function CitizenManagementPanel() {
       (activeFilter === 'complete' && status) ||
       (activeFilter === 'attention' && !status)
 
-    return matchesFilter && matchesSearch(record, searchTerm.trim().toLowerCase())
+    return (
+      matchesFilter && matchesSearch(record, searchTerm.trim().toLowerCase())
+    )
   })
 
   const completeCitizens = citizens.filter(isCitizenComplete)
@@ -264,16 +298,15 @@ export default function CitizenManagementPanel() {
 
   const hasVisibleErrors = Boolean(
     (touched.nombre && fieldErrors.nombre) ||
-      (touched.apellido && fieldErrors.apellido) ||
-      (touched.email && fieldErrors.email) ||
-      (touched.telefono && fieldErrors.telefono) ||
-      (touched.direccion && fieldErrors.direccion) ||
-      (touched.claveCatastral && fieldErrors.claveCatastral),
+    (touched.apellido && fieldErrors.apellido) ||
+    (touched.email && fieldErrors.email) ||
+    (touched.telefono && fieldErrors.telefono) ||
+    (touched.direccion && fieldErrors.direccion) ||
+    (touched.claveCatastral && fieldErrors.claveCatastral),
   )
 
   const handleFieldChange =
-    (field: CitizenFieldName) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
+    (field: CitizenFieldName) => (event: ChangeEvent<HTMLInputElement>) => {
       const nextValue = event.target.value
 
       setValues((current) => ({
@@ -314,28 +347,57 @@ export default function CitizenManagementPanel() {
     setSubmissionState({ kind: 'idle' })
   }
 
-  const handleDeleteCitizen = (id: string) => {
-    setCitizens((current) => current.filter((record) => record.id !== id))
+  const handleDeleteCitizen = async (record: CitizenRecord) => {
+    const session = readAuthSession()
 
-    const message = 'Ciudadano eliminado correctamente.'
-
-    if (selectedCitizenId === id) {
-      resetForm(message)
-    } else {
-      setSubmissionState({
-        kind: 'success',
-        message,
+    if (!session) {
+      addToast({
+        tone: 'warning',
+        title: 'Sesión requerida',
+        message: 'Inicia sesión para eliminar ciudadanos.',
       })
+      return
     }
 
-    addToast({
-      tone: 'success',
-      title: 'Ciudadano eliminado',
-      message,
-    })
+    if (
+      !window.confirm(
+        `¿Desactivar a ${record.nombre} ${record.apellido} del padrón?`,
+      )
+    ) {
+      return
+    }
+
+    setDeletingCitizenId(record.id)
+
+    try {
+      await deactivateCitizen(session.token, record.id)
+      setCitizens((current) =>
+        current.filter((citizen) => citizen.id !== record.id),
+      )
+
+      const message = 'Ciudadano eliminado correctamente.'
+
+      if (selectedCitizenId === record.id) {
+        resetForm(message)
+      } else {
+        setSubmissionState({ kind: 'success', message })
+      }
+
+      addToast({ tone: 'success', title: 'Ciudadano eliminado', message })
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'No fue posible eliminar al ciudadano.'
+
+      setSubmissionState({ kind: 'error', message })
+      addToast({ tone: 'warning', title: 'No se pudo eliminar', message })
+    } finally {
+      setDeletingCitizenId(null)
+    }
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const normalizedValues = normalizeCitizenForm(values)
@@ -365,49 +427,65 @@ export default function CitizenManagementPanel() {
       return
     }
 
+    const session = readAuthSession()
+
+    if (!session) {
+      setSubmissionState({
+        kind: 'error',
+        message: 'Inicia sesión para guardar ciudadanos.',
+      })
+      return
+    }
+
     const existingCitizen =
       selectedCitizenId == null
         ? null
-        : citizens.find((record) => record.id === selectedCitizenId) ?? null
+        : (citizens.find((record) => record.id === selectedCitizenId) ?? null)
     const isEditing = existingCitizen !== null
-    const now = new Date().toISOString()
-    const nextCitizen: CitizenRecord =
-      isEditing && existingCitizen
-        ? {
-            ...existingCitizen,
-            ...normalizedValues,
-            updatedAt: now,
-          }
-        : {
-            id: buildNextCitizenId(citizens),
-            ...normalizedValues,
-            createdAt: now,
-            updatedAt: now,
-          }
+    setIsSaving(true)
 
-    setCitizens((current) =>
-      isEditing
-        ? current.map((record) =>
-            record.id === nextCitizen.id ? nextCitizen : record,
-          )
-        : [...current, nextCitizen],
-    )
-    setSelectedCitizenId(nextCitizen.id)
-    setValues(recordToFormValues(nextCitizen))
-    setTouched(DEFAULT_TOUCHED)
-    const successMessage = isEditing
-      ? 'Ciudadano actualizado correctamente.'
-      : 'Ciudadano creado correctamente.'
+    try {
+      const savedCitizen =
+        isEditing && existingCitizen
+          ? await updateCitizen(
+              session.token,
+              existingCitizen.id,
+              normalizedValues,
+            )
+          : await createCitizen(session.token, normalizedValues)
 
-    setSubmissionState({
-      kind: 'success',
-      message: successMessage,
-    })
-    addToast({
-      tone: 'success',
-      title: isEditing ? 'Ciudadano actualizado' : 'Ciudadano creado',
-      message: successMessage,
-    })
+      setCitizens((current) =>
+        isEditing
+          ? current.map((record) =>
+              record.id === savedCitizen.id ? savedCitizen : record,
+            )
+          : [...current, savedCitizen],
+      )
+      setSelectedCitizenId(savedCitizen.id)
+      setValues(recordToFormValues(savedCitizen))
+      setTouched(DEFAULT_TOUCHED)
+
+      const successMessage = isEditing
+        ? 'Ciudadano actualizado correctamente.'
+        : 'Ciudadano creado correctamente.'
+
+      setSubmissionState({ kind: 'success', message: successMessage })
+      addToast({
+        tone: 'success',
+        title: isEditing ? 'Ciudadano actualizado' : 'Ciudadano creado',
+        message: successMessage,
+      })
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'No fue posible guardar al ciudadano.'
+
+      setSubmissionState({ kind: 'error', message })
+      addToast({ tone: 'warning', title: 'No se pudo guardar', message })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const statusToneClasses: Record<StatusTone, string> = {
@@ -423,7 +501,7 @@ export default function CitizenManagementPanel() {
         <SummaryCard
           label="Total ciudadanos"
           value={String(citizens.length)}
-          detail="Listado local"
+          detail="Padrón real"
         />
         <SummaryCard
           label="Perfiles completos"
@@ -507,7 +585,6 @@ export default function CitizenManagementPanel() {
             Mostrando {visibleCitizens.length} de {citizens.length} registros
           </span>
           <span className="hidden h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700 sm:inline-flex" />
-
         </div>
       </div>
 
@@ -546,87 +623,127 @@ export default function CitizenManagementPanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleCitizens.map((record) => {
-                    const status = getCitizenStatus(record)
-                    const isSelected = selectedCitizenId === record.id
-
-                    return (
-                      <tr
-                        key={record.id}
-                        className={cn(
-                          'border-b border-slate-100 last:border-b-0 dark:border-slate-800',
-                          isSelected && 'bg-[#f97316]/5 dark:bg-[#f97316]/10',
-                        )}
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-5 py-16 text-center text-sm text-slate-500 dark:text-slate-400"
                       >
-                        <td className="px-5 py-4 align-top">
-                          <p className="font-semibold text-slate-950 dark:text-white">
-                            {record.nombre} {record.apellido}
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {record.id}
-                          </p>
-                          <button
-                            type="button"
-                            className="mt-2 text-xs font-semibold text-[#0f3042] transition-colors hover:text-[#f97316] dark:text-sky-300 dark:hover:text-orange-300"
-                            onClick={() => handleSelectCitizen(record)}
-                          >
-                            Editar registro
-                          </button>
-                        </td>
-                        <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
-                          <p>{record.email}</p>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {record.telefono || 'Sin telefono'}
-                          </p>
-                        </td>
-                        <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
-                          {record.direccion || (
-                            <span className="text-slate-400 dark:text-slate-500">Sin direccion</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-4 align-top font-mono text-xs font-semibold text-[#0f3042] dark:text-sky-300">
-                          {record.claveCatastral}
-                        </td>
-                        <td className="px-5 py-4 align-top">
-                          <span
-                            className={cn(
-                              'inline-flex rounded-full border px-3 py-1 text-xs font-semibold',
-                              statusToneClasses[status.tone],
-                            )}
-                          >
-                            {status.label}
-                          </span>
-                          <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                            {status.detail}
-                          </p>
-                        </td>
-                        <td className="px-5 py-4 align-top">
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSelectCitizen(record)}
-                              aria-label={`Editar ${record.nombre} ${record.apellido}`}
-                            >
-                              Editar
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteCitizen(record.id)}
-                              aria-label={`Eliminar ${record.nombre} ${record.apellido}`}
-                            >
-                              Eliminar
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                        Cargando padrón de ciudadanos...
+                      </td>
+                    </tr>
+                  ) : null}
 
-                  {visibleCitizens.length === 0 ? (
+                  {!isLoading && loadError ? (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-16 text-center">
+                        <p
+                          role="alert"
+                          className="text-sm font-medium text-rose-600 dark:text-rose-300"
+                        >
+                          {loadError}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-4"
+                          onClick={() => setReloadKey((current) => current + 1)}
+                        >
+                          Reintentar
+                        </Button>
+                      </td>
+                    </tr>
+                  ) : null}
+
+                  {!isLoading &&
+                    !loadError &&
+                    visibleCitizens.map((record) => {
+                      const status = getCitizenStatus(record)
+                      const isSelected = selectedCitizenId === record.id
+
+                      return (
+                        <tr
+                          key={record.id}
+                          className={cn(
+                            'border-b border-slate-100 last:border-b-0 dark:border-slate-800',
+                            isSelected && 'bg-[#f97316]/5 dark:bg-[#f97316]/10',
+                          )}
+                        >
+                          <td className="px-5 py-4 align-top">
+                            <p className="font-semibold text-slate-950 dark:text-white">
+                              {record.nombre} {record.apellido}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {record.id}
+                            </p>
+                            <button
+                              type="button"
+                              className="mt-2 text-xs font-semibold text-[#0f3042] transition-colors hover:text-[#f97316] dark:text-sky-300 dark:hover:text-orange-300"
+                              onClick={() => handleSelectCitizen(record)}
+                            >
+                              Editar registro
+                            </button>
+                          </td>
+                          <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
+                            <p>{record.email}</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {record.telefono || 'Sin telefono'}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
+                            {record.direccion || (
+                              <span className="text-slate-400 dark:text-slate-500">
+                                Sin direccion
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4 align-top font-mono text-xs font-semibold text-[#0f3042] dark:text-sky-300">
+                            {record.claveCatastral}
+                          </td>
+                          <td className="px-5 py-4 align-top">
+                            <span
+                              className={cn(
+                                'inline-flex rounded-full border px-3 py-1 text-xs font-semibold',
+                                statusToneClasses[status.tone],
+                              )}
+                            >
+                              {status.label}
+                            </span>
+                            <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                              {status.detail}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4 align-top">
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSelectCitizen(record)}
+                                aria-label={`Editar ${record.nombre} ${record.apellido}`}
+                              >
+                                Editar
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                disabled={deletingCitizenId === record.id}
+                                onClick={() => handleDeleteCitizen(record)}
+                                aria-label={`Eliminar ${record.nombre} ${record.apellido}`}
+                              >
+                                {deletingCitizenId === record.id
+                                  ? 'Eliminando...'
+                                  : 'Eliminar'}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+
+                  {!isLoading && !loadError && visibleCitizens.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
@@ -643,7 +760,11 @@ export default function CitizenManagementPanel() {
         </Card>
 
         <Card className="overflow-hidden border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-900/90">
-          <form onSubmit={handleSubmit} noValidate className="flex h-full flex-col">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="flex h-full flex-col"
+          >
             <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -702,7 +823,10 @@ export default function CitizenManagementPanel() {
                     }
                   />
                   {touched.nombre && fieldErrors.nombre ? (
-                    <p id={`${nombreId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
+                    <p
+                      id={`${nombreId}-error`}
+                      className="text-sm text-rose-600 dark:text-rose-300"
+                    >
                       {fieldErrors.nombre}
                     </p>
                   ) : null}
@@ -716,9 +840,9 @@ export default function CitizenManagementPanel() {
                     onChange={handleFieldChange('apellido')}
                     onBlur={handleFieldBlur('apellido')}
                     placeholder="Lopez Torres"
-                    aria-invalid={
-                      Boolean(touched.apellido && fieldErrors.apellido)
-                    }
+                    aria-invalid={Boolean(
+                      touched.apellido && fieldErrors.apellido,
+                    )}
                     aria-describedby={
                       touched.apellido && fieldErrors.apellido
                         ? `${apellidoId}-error`
@@ -726,7 +850,10 @@ export default function CitizenManagementPanel() {
                     }
                   />
                   {touched.apellido && fieldErrors.apellido ? (
-                    <p id={`${apellidoId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
+                    <p
+                      id={`${apellidoId}-error`}
+                      className="text-sm text-rose-600 dark:text-rose-300"
+                    >
                       {fieldErrors.apellido}
                     </p>
                   ) : null}
@@ -751,7 +878,10 @@ export default function CitizenManagementPanel() {
                     }
                   />
                   {touched.email && fieldErrors.email ? (
-                    <p id={`${emailId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
+                    <p
+                      id={`${emailId}-error`}
+                      className="text-sm text-rose-600 dark:text-rose-300"
+                    >
                       {fieldErrors.email}
                     </p>
                   ) : null}
@@ -768,7 +898,9 @@ export default function CitizenManagementPanel() {
                     onChange={handleFieldChange('telefono')}
                     onBlur={handleFieldBlur('telefono')}
                     placeholder="222 111 0101"
-                    aria-invalid={Boolean(touched.telefono && fieldErrors.telefono)}
+                    aria-invalid={Boolean(
+                      touched.telefono && fieldErrors.telefono,
+                    )}
                     aria-describedby={
                       touched.telefono && fieldErrors.telefono
                         ? `${telefonoId}-error`
@@ -793,11 +925,9 @@ export default function CitizenManagementPanel() {
                     onChange={handleFieldChange('claveCatastral')}
                     onBlur={handleFieldBlur('claveCatastral')}
                     placeholder="SDC-72810-001"
-                    aria-invalid={
-                      Boolean(
-                        touched.claveCatastral && fieldErrors.claveCatastral,
-                      )
-                    }
+                    aria-invalid={Boolean(
+                      touched.claveCatastral && fieldErrors.claveCatastral,
+                    )}
                     aria-describedby={
                       touched.claveCatastral && fieldErrors.claveCatastral
                         ? `${claveCatastralId}-error`
@@ -822,9 +952,9 @@ export default function CitizenManagementPanel() {
                     onChange={handleFieldChange('direccion')}
                     onBlur={handleFieldBlur('direccion')}
                     placeholder="Av. Hidalgo 14"
-                    aria-invalid={
-                      Boolean(touched.direccion && fieldErrors.direccion)
-                    }
+                    aria-invalid={Boolean(
+                      touched.direccion && fieldErrors.direccion,
+                    )}
                     aria-describedby={
                       touched.direccion && fieldErrors.direccion
                         ? `${direccionId}-error`
@@ -863,14 +993,23 @@ export default function CitizenManagementPanel() {
             </CardContent>
 
             <CardFooter className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
-              <Button type="submit" size="lg" className="w-full">
-                {selectedCitizen ? 'Guardar cambios' : 'Crear ciudadano'}
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isSaving}
+              >
+                {isSaving
+                  ? 'Guardando...'
+                  : selectedCitizen
+                    ? 'Guardar cambios'
+                    : 'Crear ciudadano'}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={resetForm}
+                onClick={() => resetForm()}
               >
                 Limpiar formulario
               </Button>

@@ -3,6 +3,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { authStorageKeys } from '../features/auth/auth.session'
 
+function mockCitizenListRequest() {
+  vi.spyOn(window, 'fetch').mockResolvedValue(
+    Response.json({
+      data: [],
+      metadata: {
+        total: 0,
+        pagina: 1,
+        limite: 100,
+        totalPaginas: 0,
+      },
+    }),
+  )
+}
+
 afterEach(() => {
   window.history.replaceState({}, '', '/')
   window.sessionStorage.clear()
@@ -104,6 +118,7 @@ describe('App routing', () => {
         rol: 'secretaria',
       }),
     )
+    mockCitizenListRequest()
 
     render(<App />)
 
@@ -126,6 +141,7 @@ describe('App routing', () => {
         rol: 'secretaria',
       }),
     )
+    mockCitizenListRequest()
 
     render(<App />)
 

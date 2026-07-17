@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
-import { authenticate, requireRole } from '../middleware/require-role.js'
+import { authenticate, requireResource } from '../middleware/require-role.js'
 
 const listQuerySchema = z.object({
   pagina: z.coerce.number().int().min(1).default(1),
@@ -21,12 +21,11 @@ const ciudadanoSchema = z.object({
   clave_catastral: z.string().trim().min(3),
 })
 
-const updateCiudadanoSchema = ciudadanoSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  {
+const updateCiudadanoSchema = ciudadanoSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field is required',
-  },
-)
+  })
 
 export const ciudadanosRouter = Router()
 
@@ -163,7 +162,7 @@ ciudadanosRouter.get('/:id', async (request, response, next) => {
 
 ciudadanosRouter.post(
   '/',
-  requireRole('admin'),
+  requireResource('ciudadanos'),
   async (request, response, next) => {
     try {
       const parsed = ciudadanoSchema.safeParse(request.body)
@@ -205,7 +204,7 @@ ciudadanosRouter.post(
 
 ciudadanosRouter.put(
   '/:id',
-  requireRole('admin'),
+  requireResource('ciudadanos'),
   async (request, response, next) => {
     try {
       const ciudadanoId = getParamId(request.params.id)
@@ -265,7 +264,7 @@ ciudadanosRouter.put(
 
 ciudadanosRouter.put(
   '/:id/desactivar',
-  requireRole('admin'),
+  requireResource('ciudadanos'),
   async (request, response, next) => {
     try {
       const ciudadanoId = getParamId(request.params.id)
