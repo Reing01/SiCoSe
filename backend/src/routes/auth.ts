@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import type { Response } from 'express'
+import type { Request, Response } from 'express'
 import { Router } from 'express'
 import { z } from 'zod'
 import { env } from '../config/env.js'
@@ -12,7 +12,11 @@ import {
   revokeRefreshToken,
 } from '../lib/refresh-token.js'
 import { blacklistToken, isTokenBlacklisted } from '../lib/token-blacklist.js'
-import { loginRateLimit, resetLoginEmailAttempts } from '../middleware/rate-limit.js'
+import {
+  loginRateLimit,
+  resetLoginEmailAttempts,
+} from '../middleware/rate-limit.js'
+import { auditLogger } from '../services/audit.js'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -27,11 +31,15 @@ function getBearerToken(header: string | undefined) {
   return header.slice('Bearer '.length).trim()
 }
 
-function setRefreshCookie(response: Response, token: string, ttlSeconds: number) {
+function setRefreshCookie(
+  response: Response,
+  token: string,
+  ttlSeconds: number,
+) {
   response.cookie(REFRESH_TOKEN_COOKIE, token, {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
     path: '/api/auth',
     maxAge: ttlSeconds * 1000,
   })
@@ -41,9 +49,13 @@ function clearRefreshCookie(response: Response) {
   response.clearCookie(REFRESH_TOKEN_COOKIE, {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
     path: '/api/auth',
   })
+}
+
+function getRequestIp(request: Request) {
+  return request.ip || request.socket.remoteAddress || 'unknown'
 }
 
 export const authRouter = Router()
@@ -65,7 +77,8 @@ authRouter.post('/login', loginRateLimit, async (request, response, next) => {
 
     const passwordHash = user?.passwordHash ?? ''
     const validPassword =
-      Boolean(user?.activo) && (await bcrypt.compare(parsed.data.password, passwordHash))
+      Boolean(user?.activo) &&
+      (await bcrypt.compare(parsed.data.password, passwordHash))
 
     if (!user || !validPassword) {
       return response.status(401).json({
@@ -191,7 +204,9 @@ authRouter.post('/refresh', async (request, response) => {
     rol: user.rol,
   })
 
-  const { token: newRefreshToken, ttlSeconds } = await issueRefreshToken(user.id)
+  const { token: newRefreshToken, ttlSeconds } = await issueRefreshToken(
+    user.id,
+  )
   setRefreshCookie(response, newRefreshToken, ttlSeconds)
 
   return response.json({
@@ -200,21 +215,21 @@ authRouter.post('/refresh', async (request, response) => {
   })
 })
 
-authRouter.post('/logout', async (request, response) => {
+authRouter.post('/logout', async (request, response, next) => {
   const token = getBearerToken(request.headers.authorization)
-
-  if (!token) {
-    return response.status(401).json({
-      error: 'Missing bearer token',
-      code: 401,
-    })
-  }
+  const refreshToken = request.cookies?.[REFRESH_TOKEN_COOKIE]
+  let logoutUserId = ''
 
   try {
-    const payload = await verifyAuthToken(token)
-    await blacklistToken(token, payload.exp)
-
-    const refreshToken = request.cookies?.[REFRESH_TOKEN_COOKIE]
+    if (token) {
+      try {
+        const payload = await verifyAuthToken(token)
+        logoutUserId = payload.sub
+        await blacklistToken(token, payload.exp)
+      } catch {
+        // Un access token vencido no debe impedir revocar el refresh token.
+      }
+    }
 
     if (refreshToken) {
       await revokeRefreshToken(refreshToken)
@@ -222,13 +237,28 @@ authRouter.post('/logout', async (request, response) => {
 
     clearRefreshCookie(response)
 
+    if (logoutUserId) {
+      try {
+        await auditLogger(prisma, {
+          usuarioId: logoutUserId,
+          accion: 'LOGOUT',
+          entidad: 'Usuario',
+          entidadId: logoutUserId,
+          ip: getRequestIp(request),
+          detalles: {
+            refreshTokenRevocado: Boolean(refreshToken),
+          },
+        })
+      } catch {
+        // La auditoria no debe bloquear el cierre de sesion del usuario.
+      }
+    }
+
     return response.json({
       message: 'Logout successful',
     })
-  } catch {
-    return response.status(401).json({
-      error: 'Invalid or expired token',
-      code: 401,
-    })
+  } catch (error) {
+    clearRefreshCookie(response)
+    return next(error)
   }
 })

@@ -7,14 +7,21 @@ import type {
 
 let generateMonthlyReport: typeof generateMonthlyReportType
 let exportMonthlyReport: typeof exportMonthlyReportType
+let createPrivateStorageSignedUrl: typeof import('../src/lib/supabase-storage.js').createPrivateStorageSignedUrl
 
 before(async () => {
-  process.env.DATABASE_URL ??= 'postgresql://user:pass@localhost:5432/sicose_test'
+  process.env.DATABASE_URL ??=
+    'postgresql://user:pass@localhost:5432/sicose_test'
   process.env.DIRECT_URL ??= 'postgresql://user:pass@localhost:5432/sicose_test'
   process.env.REDIS_URL ??= 'redis://localhost:6379'
   process.env.JWT_SECRET ??= 'test-secret-with-at-least-sixteen-chars'
+  process.env.SUPABASE_URL ??= 'https://project.supabase.co'
+  process.env.SUPABASE_SERVICE_KEY ??= 'service-role-test-key'
 
-  ;({ generateMonthlyReport, exportMonthlyReport } = await import('../src/services/reportes.js'))
+  ;({ generateMonthlyReport, exportMonthlyReport } =
+    await import('../src/services/reportes.js'))
+  ;({ createPrivateStorageSignedUrl } =
+    await import('../src/lib/supabase-storage.js'))
 })
 
 function createReportClient() {
@@ -102,9 +109,11 @@ function createReportClient() {
     },
   ]
 
-    const tx = {
+  const tx = {
     pago: {
-      findMany: async (args: { where: { fecha: { gte: Date; lte: Date } } }) => {
+      findMany: async (args: {
+        where: { fecha: { gte: Date; lte: Date } }
+      }) => {
         const startMonth = args.where.fecha.gte.getUTCMonth()
         return startMonth === 5 ? currentPayments : previousPayments
       },
@@ -125,7 +134,8 @@ function createReportClient() {
           id: 'reporte-1',
           ciudadanoId: null,
           titulo: 'Reporte mensual junio 2026',
-          descripcion: 'PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.',
+          descripcion:
+            'PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.',
           tipo: 'MENSUAL',
           estado: 'GENERADO',
           periodo: '2026-06',
@@ -142,10 +152,15 @@ function createReportClient() {
   }
 
   const client = {
-    $transaction: async <T>(callback: (transaction: typeof tx) => Promise<T>) => callback(tx),
+    $transaction: async <T>(callback: (transaction: typeof tx) => Promise<T>) =>
+      callback(tx),
   }
 
-  const storageUploader = async (args: { path: string; buffer: Buffer; contentType: string }) => {
+  const storageUploader = async (args: {
+    path: string
+    buffer: Buffer
+    contentType: string
+  }) => {
     calls.upload = args
     return {
       bucket: 'comprobantes',
@@ -176,10 +191,20 @@ describe('generateMonthlyReport', () => {
     assert.equal(result.topMorosos.length, 2)
     assert.equal(result.carteraVencida, 175)
     assert.equal(result.report.periodo, '2026-06')
-    assert.match(result.report.archivo_url, /^https:\/\/storage\.example\/reportes\/2026-06\/\d+-reporte-mensual-2026-06\.pdf$/)
+    assert.match(
+      result.report.archivo_url,
+      /^https:\/\/storage\.example\/reportes\/2026-06\/\d+-reporte-mensual-2026-06\.pdf$/,
+    )
 
-    const uploadArgs = calls.upload as { path: string; buffer: Buffer; contentType: string }
-    assert.match(uploadArgs.path, /^reportes\/2026-06\/\d+-reporte-mensual-2026-06\.pdf$/)
+    const uploadArgs = calls.upload as {
+      path: string
+      buffer: Buffer
+      contentType: string
+    }
+    assert.match(
+      uploadArgs.path,
+      /^reportes\/2026-06\/\d+-reporte-mensual-2026-06\.pdf$/,
+    )
     assert.equal(uploadArgs.contentType, 'application/pdf')
     assert.equal(uploadArgs.buffer.length > 0, true)
 
@@ -190,7 +215,10 @@ describe('generateMonthlyReport', () => {
       }
     }
     assert.equal(createArgs.data.periodo, '2026-06')
-    assert.equal(createArgs.data.resumen_json.recaudacionPorServicio[0].servicio, 'Agua potable')
+    assert.equal(
+      createArgs.data.resumen_json.recaudacionPorServicio[0].servicio,
+      'Agua potable',
+    )
   })
 
   it('rejects an invalid period format', async () => {
@@ -232,12 +260,55 @@ describe('generateMonthlyReport', () => {
       /^https:\/\/storage\.example\/reportes\/2026-06\/\d+-reporte-mensual-2026-06\.xlsx$/,
     )
 
-    const uploadArgs = calls.upload as { path: string; buffer: Buffer; contentType: string }
-    assert.match(uploadArgs.path, /^reportes\/2026-06\/\d+-reporte-mensual-2026-06\.xlsx$/)
+    const uploadArgs = calls.upload as {
+      path: string
+      buffer: Buffer
+      contentType: string
+    }
+    assert.match(
+      uploadArgs.path,
+      /^reportes\/2026-06\/\d+-reporte-mensual-2026-06\.xlsx$/,
+    )
     assert.equal(
       uploadArgs.contentType,
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )
     assert.equal(uploadArgs.buffer.length > 0, true)
+  })
+
+  it('creates a temporary download URL for a private storage object', async () => {
+    const originalFetch = globalThis.fetch
+    let requestUrl = ''
+    let requestInit: RequestInit | undefined
+
+    globalThis.fetch = async (input, init) => {
+      requestUrl = String(input)
+      requestInit = init
+
+      return Response.json({
+        signedURL:
+          '/object/sign/comprobantes/reportes/2026-06/reporte.pdf?token=test',
+      })
+    }
+
+    try {
+      const url = await createPrivateStorageSignedUrl(
+        'reportes/2026-06/reporte.pdf',
+        120,
+      )
+
+      assert.equal(
+        requestUrl,
+        'https://project.supabase.co/storage/v1/object/sign/comprobantes/reportes/2026-06/reporte.pdf',
+      )
+      assert.equal(requestInit?.method, 'POST')
+      assert.equal(requestInit?.body, JSON.stringify({ expiresIn: 120 }))
+      assert.equal(
+        url,
+        'https://project.supabase.co/storage/v1/object/sign/comprobantes/reportes/2026-06/reporte.pdf?token=test&download=reporte.pdf',
+      )
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 })

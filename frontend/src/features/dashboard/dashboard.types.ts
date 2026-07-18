@@ -7,11 +7,17 @@ export type DashboardTrend = {
 export type DashboardMetrics = {
   periodo: string
   totalRecaudadoMes: number
+  totalPendienteMes: number
   porcentajeCobertura: number
   numeroMorosos: number
   comparativoMesAnterior: number
   totalAdeudosMes: number
+  adeudosPagadosMes: number
   pagosRegistradosMes: number
+  historicoRecaudacion: Array<{
+    periodo: string
+    total: number
+  }>
   variacion: DashboardTrend
   ultimaActualizacion: string
   cache: {

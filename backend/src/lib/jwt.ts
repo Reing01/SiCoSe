@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { SignJWT, jwtVerify } from 'jose'
 import { env } from '../config/env.js'
 
@@ -14,6 +15,7 @@ export async function signAuthToken(payload: AuthTokenPayload) {
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(payload.sub)
     .setIssuer(env.JWT_ISSUER)
+    .setJti(randomUUID())
     .setIssuedAt()
     .setExpirationTime(env.JWT_EXPIRES_IN)
     .sign(secret)

@@ -2,23 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import ThemeToggle from '../../components/ThemeToggle'
 import RoutePills from '../../components/RoutePills'
 import { Button } from '../../components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../../components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
+import { Input } from '../../components/ui/input'
 import { clearAuthSession, readAuthSession } from '../../features/auth/auth.session'
+import { logout } from '../../features/auth/auth.api'
 import { exportMonthlyReport, fetchDashboardMetrics } from '../../features/dashboard/dashboard.api'
 import type { DashboardMetrics } from '../../features/dashboard/dashboard.types'
 import { cn } from '../../lib/utils'
 import { useTheme } from '../../features/theme/theme'
 
-type LoadState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; metrics: DashboardMetrics }
-  | { kind: 'error'; message: string }
+type LoadState = { kind: 'loading' } | { kind: 'ready'; metrics: DashboardMetrics } | { kind: 'error'; message: string }
 
 type KpiTone = 'green' | 'yellow' | 'red' | 'blue'
 
@@ -93,9 +86,16 @@ function buildCards(metrics: DashboardMetrics): KpiCard[] {
     {
       label: 'Cobertura',
       value: formatPercent(metrics.porcentajeCobertura),
-      detail: `${metrics.totalAdeudosMes} adeudos del periodo`,
+      detail: `${metrics.adeudosPagadosMes} de ${metrics.totalAdeudosMes} adeudos`,
       tone: getCoverageTone(metrics.porcentajeCobertura),
       icon: '%',
+    },
+    {
+      label: 'Pendiente del mes',
+      value: formatCurrency(metrics.totalPendienteMes),
+      detail: 'Monto pendiente por cobrar',
+      tone: metrics.totalPendienteMes === 0 ? 'green' : 'red',
+      icon: 'P',
     },
     {
       label: 'Morosos',
@@ -105,15 +105,17 @@ function buildCards(metrics: DashboardMetrics): KpiCard[] {
       icon: '!',
     },
     {
+      label: 'Pagos capturados',
+      value: String(metrics.pagosRegistradosMes),
+      detail: `Periodo ${metrics.periodo}`,
+      tone: metrics.pagosRegistradosMes > 0 ? 'blue' : 'yellow',
+      icon: '#',
+    },
+    {
       label: 'Vs mes anterior',
       value: formatPercent(metrics.comparativoMesAnterior),
       detail: `Mes anterior ${formatCurrency(metrics.variacion.montoMesAnterior)}`,
-      tone:
-        metrics.variacion.color === 'verde'
-          ? 'green'
-          : metrics.variacion.color === 'rojo'
-            ? 'red'
-            : 'yellow',
+      tone: metrics.variacion.color === 'verde' ? 'green' : metrics.variacion.color === 'rojo' ? 'red' : 'yellow',
       icon: '=',
     },
   ]
@@ -128,22 +130,47 @@ function TrendArrow({ direction }: { direction: DashboardMetrics['variacion']['d
     <span
       className={cn(
         'h-0 w-0 border-x-[6px] border-x-transparent',
-        direction === 'mejora'
-          ? 'border-b-[10px] border-b-emerald-600'
-          : 'border-t-[10px] border-t-rose-600',
+        direction === 'mejora' ? 'border-b-[10px] border-b-emerald-600' : 'border-t-[10px] border-t-rose-600',
       )}
       aria-hidden="true"
     />
   )
 }
 
-function MetricCard({
-  card,
-  theme,
-}: {
-  card: KpiCard
-  theme: 'light' | 'dark'
-}) {
+function RevenueLineChart({ metrics, theme }: { metrics: DashboardMetrics; theme: 'light' | 'dark' }) {
+  const values = metrics.historicoRecaudacion
+  const max = Math.max(...values.map((point) => point.total), 1)
+  const points = values.map((point, index) => {
+    const x = values.length === 1 ? 50 : (index / (values.length - 1)) * 100
+    const y = 90 - (point.total / max) * 75
+    return { ...point, x, y }
+  })
+  const polyline = points.map((point) => `${point.x},${point.y}`).join(' ')
+
+  return (
+    <Card className={cn('shadow-sm', theme === 'dark' ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200/80 bg-white/95')}>
+      <CardHeader>
+        <CardTitle>Recaudacion historica</CardTitle>
+        <CardDescription>Ultimos 6 meses registrados.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <svg viewBox="0 0 100 100" className="h-64 w-full overflow-visible" role="img" aria-label="Grafica de recaudacion de los ultimos 6 meses">
+          <polyline points={polyline} fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          {points.map((point) => (
+            <g key={point.periodo}>
+              <circle cx={point.x} cy={point.y} r="2.5" className="fill-[#0f3042] dark:fill-sky-300" />
+              <text x={point.x} y="98" textAnchor="middle" className="fill-slate-500 text-[4px]">
+                {point.periodo.slice(5)}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </CardContent>
+    </Card>
+  )
+}
+
+function MetricCard({ card, theme }: { card: KpiCard; theme: 'light' | 'dark' }) {
   const toneClasses: Record<KpiTone, string> = {
     green:
       theme === 'dark'
@@ -154,22 +181,15 @@ function MetricCard({
         ? 'border-amber-900/60 bg-amber-950/60 text-amber-200'
         : 'border-amber-200 bg-amber-50 text-amber-800',
     red:
-      theme === 'dark'
-        ? 'border-rose-900/60 bg-rose-950/60 text-rose-200'
-        : 'border-rose-200 bg-rose-50 text-rose-800',
-    blue:
-      theme === 'dark'
-        ? 'border-sky-900/60 bg-sky-950/60 text-sky-200'
-        : 'border-sky-200 bg-sky-50 text-sky-800',
+      theme === 'dark' ? 'border-rose-900/60 bg-rose-950/60 text-rose-200' : 'border-rose-200 bg-rose-50 text-rose-800',
+    blue: theme === 'dark' ? 'border-sky-900/60 bg-sky-950/60 text-sky-200' : 'border-sky-200 bg-sky-50 text-sky-800',
   }
 
   return (
     <Card
       className={cn(
         'shadow-sm',
-        theme === 'dark'
-          ? 'border-slate-800 bg-slate-900/90 text-slate-100'
-          : 'border-slate-200/80 bg-white/95',
+        theme === 'dark' ? 'border-slate-800 bg-slate-900/90 text-slate-100' : 'border-slate-200/80 bg-white/95',
       )}
     >
       <CardContent className="flex min-h-40 items-start justify-between gap-4 p-5">
@@ -190,12 +210,7 @@ function MetricCard({
           >
             {card.value}
           </p>
-          <p
-            className={cn(
-              'mt-3 text-sm leading-6',
-              theme === 'dark' ? 'text-slate-300' : 'text-slate-600',
-            )}
-          >
+          <p className={cn('mt-3 text-sm leading-6', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
             {card.detail}
           </p>
         </div>
@@ -218,12 +233,16 @@ function DashboardContent({
   onExport,
   exportFormat,
   exportMessage,
+  period,
+  onPeriodChange,
   theme,
 }: {
   metrics: DashboardMetrics
   onExport: (format: ExportFormat) => void
   exportFormat: ExportFormat | null
   exportMessage: string | null
+  period: string
+  onPeriodChange: (period: string) => void
   theme: 'light' | 'dark'
 }) {
   const cards = useMemo(() => buildCards(metrics), [metrics])
@@ -233,9 +252,7 @@ function DashboardContent({
       <Card
         className={cn(
           'shadow-sm animate-scale-in',
-          theme === 'dark'
-            ? 'border-slate-800 bg-slate-900/90 text-slate-100'
-            : 'border-slate-200/80 bg-white/95',
+          theme === 'dark' ? 'border-slate-800 bg-slate-900/90 text-slate-100' : 'border-slate-200/80 bg-white/95',
         )}
       >
         <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -252,33 +269,25 @@ function DashboardContent({
               Descarga el periodo {metrics.periodo} en PDF institucional o como Excel para análisis.
             </p>
             {exportMessage ? (
-              <p
-                className={cn(
-                  'text-sm font-medium',
-                  theme === 'dark' ? 'text-emerald-300' : 'text-emerald-700',
-                )}
-              >
+              <p className={cn('text-sm font-medium', theme === 'dark' ? 'text-emerald-300' : 'text-emerald-700')}>
                 {exportMessage}
               </p>
             ) : null}
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onExport('pdf')}
-              disabled={exportFormat !== null}
-            >
-              {exportFormat === 'pdf' ? 'Generando PDF...' : 'Exportar PDF'}
+            <Input
+              type="month"
+              value={period}
+              onChange={(event) => onPeriodChange(event.target.value)}
+              className="w-44"
+              aria-label="Filtrar periodo"
+            />
+            <Button type="button" variant="outline" onClick={() => onExport('pdf')} disabled={exportFormat !== null}>
+              {exportFormat === 'pdf' ? 'Generando documento...' : 'Exportar PDF'}
             </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => onExport('xlsx')}
-              disabled={exportFormat !== null}
-            >
-              {exportFormat === 'xlsx' ? 'Generando Excel...' : 'Exportar Excel'}
+            <Button type="button" variant="secondary" onClick={() => onExport('xlsx')} disabled={exportFormat !== null}>
+              {exportFormat === 'xlsx' ? 'Generando documento...' : 'Exportar Excel'}
             </Button>
           </div>
         </CardContent>
@@ -290,12 +299,12 @@ function DashboardContent({
         ))}
       </div>
 
+      <RevenueLineChart metrics={metrics} theme={theme} />
+
       <Card
         className={cn(
           'shadow-sm',
-          theme === 'dark'
-            ? 'border-slate-800 bg-slate-900/90 text-slate-100'
-            : 'border-slate-200/80 bg-white/95',
+          theme === 'dark' ? 'border-slate-800 bg-slate-900/90 text-slate-100' : 'border-slate-200/80 bg-white/95',
         )}
       >
         <CardHeader>
@@ -312,12 +321,9 @@ function DashboardContent({
               <span
                 className={cn(
                   'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold',
-                  metrics.variacion.color === 'verde' &&
-                    'border-emerald-200 bg-emerald-50 text-emerald-800',
-                  metrics.variacion.color === 'rojo' &&
-                    'border-rose-200 bg-rose-50 text-rose-800',
-                  metrics.variacion.color === 'amarillo' &&
-                    'border-amber-200 bg-amber-50 text-amber-800',
+                  metrics.variacion.color === 'verde' && 'border-emerald-200 bg-emerald-50 text-emerald-800',
+                  metrics.variacion.color === 'rojo' && 'border-rose-200 bg-rose-50 text-rose-800',
+                  metrics.variacion.color === 'amarillo' && 'border-amber-200 bg-amber-50 text-amber-800',
                 )}
               >
                 <TrendArrow direction={metrics.variacion.direccion} />
@@ -335,9 +341,7 @@ function DashboardContent({
           <div
             className={cn(
               'rounded-xl border px-4 py-3 text-right',
-              theme === 'dark'
-                ? 'border-slate-700 bg-slate-950/60'
-                : 'border-slate-200 bg-slate-50',
+              theme === 'dark' ? 'border-slate-700 bg-slate-950/60' : 'border-slate-200 bg-slate-50',
             )}
           >
             <p
@@ -365,11 +369,25 @@ export default function DashboardPage() {
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
   const [exportFormat, setExportFormat] = useState<ExportFormat | null>(null)
   const [exportMessage, setExportMessage] = useState<string | null>(null)
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  })
   const { theme } = useTheme()
 
-  const handleLogout = () => {
-    clearAuthSession()
-    window.location.assign('/login')
+  const handleLogout = async () => {
+    const session = readAuthSession()
+
+    try {
+      if (session) {
+        await logout(session.token)
+      }
+    } catch {
+      // La sesión local debe cerrarse aunque el backend ya no acepte el token.
+    } finally {
+      clearAuthSession()
+      window.location.assign('/login')
+    }
   }
 
   const handleExport = async (format: ExportFormat) => {
@@ -393,13 +411,9 @@ export default function DashboardPage() {
       document.body.appendChild(anchor)
       anchor.click()
       anchor.remove()
-      setExportMessage(
-        `Exportación ${format === 'pdf' ? 'PDF' : 'Excel'} lista para ${exportResult.periodo}.`,
-      )
+      setExportMessage(`Exportación ${format === 'pdf' ? 'PDF' : 'Excel'} lista para ${exportResult.periodo}.`)
     } catch (error) {
-      setExportMessage(
-        error instanceof Error ? error.message : 'No fue posible generar la exportación.',
-      )
+      setExportMessage(error instanceof Error ? error.message : 'No fue posible generar la exportación.')
     } finally {
       setExportFormat(null)
     }
@@ -416,20 +430,19 @@ export default function DashboardPage() {
       return
     }
 
-    fetchDashboardMetrics(session.token)
+    setState({ kind: 'loading' })
+
+    fetchDashboardMetrics(session.token, selectedPeriod)
       .then((metrics) => {
         setState({ kind: 'ready', metrics })
       })
       .catch((error: unknown) => {
         setState({
           kind: 'error',
-          message:
-            error instanceof Error
-              ? error.message
-              : 'No fue posible cargar las metricas.',
+          message: error instanceof Error ? error.message : 'No fue posible cargar las metricas.',
         })
       })
-  }, [])
+  }, [selectedPeriod])
 
   return (
     <main
@@ -454,12 +467,15 @@ export default function DashboardPage() {
             SC
           </div>
           <div className="text-left">
-            <p className={cn('text-xs font-semibold uppercase tracking-[0.35em]', theme === 'dark' ? 'text-sky-300' : 'text-[#0f3042]')}>
+            <p
+              className={cn(
+                'text-xs font-semibold uppercase tracking-[0.35em]',
+                theme === 'dark' ? 'text-sky-300' : 'text-[#0f3042]',
+              )}
+            >
               SiCoSe
             </p>
-            <p className={cn('text-sm', theme === 'dark' ? 'text-slate-300' : 'text-slate-500')}>
-              Panel financiero
-            </p>
+            <p className={cn('text-sm', theme === 'dark' ? 'text-slate-300' : 'text-slate-500')}>Panel financiero</p>
           </div>
         </a>
 
@@ -484,9 +500,7 @@ export default function DashboardPage() {
       <section
         className={cn(
           'border-b backdrop-blur animate-fade-up',
-          theme === 'dark'
-            ? 'border-slate-800 bg-slate-950/75'
-            : 'border-slate-200/80 bg-white/75',
+          theme === 'dark' ? 'border-slate-800 bg-slate-950/75' : 'border-slate-200/80 bg-white/75',
         )}
       >
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -501,12 +515,16 @@ export default function DashboardPage() {
             Dashboard
           </span>
           <div className="mt-5 max-w-3xl space-y-3">
-            <h1 className={cn('text-4xl font-semibold tracking-tight sm:text-5xl', theme === 'dark' ? 'text-white' : 'text-slate-950')}>
+            <h1
+              className={cn(
+                'text-4xl font-semibold tracking-tight sm:text-5xl',
+                theme === 'dark' ? 'text-white' : 'text-slate-950',
+              )}
+            >
               Situacion financiera del mes
             </h1>
             <p className={cn('text-base leading-7', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
-              KPIs de recaudacion, cobertura y morosidad para la planeacion de
-              la junta auxiliar.
+              KPIs de recaudacion, cobertura y morosidad para la planeacion de la junta auxiliar.
             </p>
           </div>
         </div>
@@ -517,9 +535,7 @@ export default function DashboardPage() {
           <Card
             className={cn(
               'shadow-sm animate-scale-in',
-              theme === 'dark'
-                ? 'border-slate-800 bg-slate-900/90 text-slate-100'
-                : 'border-slate-200/80 bg-white/95',
+              theme === 'dark' ? 'border-slate-800 bg-slate-900/90 text-slate-100' : 'border-slate-200/80 bg-white/95',
             )}
           >
             <CardContent className={cn('p-6 text-sm', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
@@ -549,6 +565,8 @@ export default function DashboardPage() {
             onExport={handleExport}
             exportFormat={exportFormat}
             exportMessage={exportMessage}
+            period={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
             theme={theme}
           />
         ) : null}

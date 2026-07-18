@@ -16,6 +16,17 @@ export type GeneratedDebtItem = {
   vencimiento: Date
 }
 
+export type ListPendingDebtsInput = {
+  pagina?: number
+  limite?: number
+  ciudadanoId?: string
+  zona?: string
+  servicioId?: string
+  anio?: number
+  mes?: number
+  estado?: string
+}
+
 function getCurrentPeriod(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
@@ -107,4 +118,95 @@ export async function generateMonthlyDebts(
       omitidos: existingDebts.length,
     }
   })
+}
+
+function buildPeriodFilter(year?: number, month?: number) {
+  if (!year && !month) {
+    return undefined
+  }
+
+  if (year && month) {
+    return `${year}-${String(month).padStart(2, '0')}`
+  }
+
+  if (year) {
+    return {
+      startsWith: `${year}-`,
+    }
+  }
+
+  return {
+    endsWith: `-${String(month).padStart(2, '0')}`,
+  }
+}
+
+export async function listPendingDebts(
+  input: ListPendingDebtsInput = {},
+  client: Pick<typeof prisma, 'adeudo' | '$transaction'> = prisma,
+) {
+  const pagina = input.pagina ?? 1
+  const limite = input.limite ?? 20
+  const periodFilter = buildPeriodFilter(input.anio, input.mes)
+  const where: Prisma.AdeudoWhereInput = {
+    pagado: false,
+    NOT: {
+      estado: 'pagado',
+    },
+  }
+
+  if (input.estado) {
+    where.estado = input.estado
+  }
+
+  if (input.ciudadanoId) {
+    where.ciudadanoId = input.ciudadanoId
+  }
+
+  if (input.servicioId) {
+    where.servicioId = input.servicioId
+  }
+
+  if (periodFilter) {
+    where.periodo = periodFilter
+  }
+
+  if (input.zona) {
+    where.ciudadano = {
+      zona: {
+        contains: input.zona,
+        mode: 'insensitive',
+      },
+    }
+  }
+
+  const [total, cartera, adeudos] = await client.$transaction([
+    client.adeudo.count({ where }),
+    client.adeudo.aggregate({
+      where,
+      _sum: {
+        monto: true,
+      },
+    }),
+    client.adeudo.findMany({
+      where,
+      include: {
+        ciudadano: true,
+        servicio: true,
+      },
+      orderBy: [{ vencimiento: 'asc' }, { created_at: 'desc' }],
+      skip: (pagina - 1) * limite,
+      take: limite,
+    }),
+  ])
+
+  return {
+    data: adeudos,
+    metadata: {
+      total,
+      pagina,
+      limite,
+      totalPaginas: Math.ceil(total / limite),
+      totalPendiente: cartera._sum.monto ?? 0,
+    },
+  }
 }

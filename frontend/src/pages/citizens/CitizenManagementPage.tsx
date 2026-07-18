@@ -1,16 +1,30 @@
 import RoutePills from '../../components/RoutePills'
 import ThemeToggle from '../../components/ThemeToggle'
 import CitizenManagementPanel from '../../features/citizens/CitizenManagementPanel'
-import { clearAuthSession } from '../../features/auth/auth.session'
+import { logout } from '../../features/auth/auth.api'
+import {
+  clearAuthSession,
+  readAuthSession,
+} from '../../features/auth/auth.session'
 import { useTheme } from '../../features/theme/theme'
 import { cn } from '../../lib/utils'
 
 export default function CitizenManagementPage() {
   const { theme } = useTheme()
 
-  const handleLogout = () => {
-    clearAuthSession()
-    window.location.assign('/login')
+  const handleLogout = async () => {
+    const session = readAuthSession()
+
+    try {
+      if (session) {
+        await logout(session.token)
+      }
+    } catch {
+      // La sesión local debe cerrarse aunque el backend ya no acepte el token.
+    } finally {
+      clearAuthSession()
+      window.location.assign('/login')
+    }
   }
 
   return (

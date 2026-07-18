@@ -29,6 +29,11 @@ function createDashboardClient() {
     },
     adeudo: {
       count: async (args: { where: { OR?: unknown } }) => (args.where.OR ? 8 : 10),
+      aggregate: async () => ({
+        _sum: {
+          monto: 250,
+        },
+      }),
       groupBy: async () => [
         { ciudadanoId: 'ciudadano-1' },
         { ciudadanoId: 'ciudadano-2' },
@@ -78,7 +83,10 @@ describe('getDashboardMetrics', () => {
     assert.equal(result.numeroMorosos, 2)
     assert.equal(result.comparativoMesAnterior, 25)
     assert.equal(result.totalAdeudosMes, 10)
+    assert.equal(result.adeudosPagadosMes, 8)
+    assert.equal(result.totalPendienteMes, 250)
     assert.equal(result.pagosRegistradosMes, 7)
+    assert.equal(result.historicoRecaudacion.length, 6)
     assert.equal(result.variacion.direccion, 'mejora')
     assert.equal(result.variacion.color, 'verde')
     assert.equal(result.cache.hit, false)
@@ -90,11 +98,21 @@ describe('getDashboardMetrics', () => {
     const cached = {
       periodo: '2026-06',
       totalRecaudadoMes: 900,
+      totalPendienteMes: 500,
       porcentajeCobertura: 60,
       numeroMorosos: 4,
       comparativoMesAnterior: -10,
       totalAdeudosMes: 20,
+      adeudosPagadosMes: 12,
       pagosRegistradosMes: 3,
+      historicoRecaudacion: [
+        { periodo: '2026-01', total: 500 },
+        { periodo: '2026-02', total: 600 },
+        { periodo: '2026-03', total: 700 },
+        { periodo: '2026-04', total: 800 },
+        { periodo: '2026-05', total: 1000 },
+        { periodo: '2026-06', total: 900 },
+      ],
       variacion: {
         direccion: 'empeora',
         color: 'rojo',

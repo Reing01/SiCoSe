@@ -4,7 +4,8 @@
 
 - `admin` tiene acceso a todas las rutas protegidas.
 - `tesorero` tiene acceso a `dashboard`, `cobranza` y `reportes`.
-- `secretaria` tiene acceso a `ciudadanos` y consultas operativas asociadas.
+- `secretaria` tiene acceso a la consulta y mantenimiento de `ciudadanos`
+  (alta, edición y desactivación).
 - Un token con rol invalido responde `401`.
 - Un rol autentico sin permiso suficiente responde `403` con `Insufficient role`.
 

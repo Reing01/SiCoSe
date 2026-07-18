@@ -1,6 +1,13 @@
-export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ?? '/api'
-).replace(/\/+$/, '')
+import {
+  clearAuthSession,
+  persistAuthSession,
+  readAuthSession,
+} from '../features/auth/auth.session'
+
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(
+  /\/+$/,
+  '',
+)
 
 export type ApiErrorPayload = {
   error?: string
@@ -31,6 +38,73 @@ function buildUrl(path: string) {
   return `${API_BASE_URL}${normalizedPath}`
 }
 
+type RefreshResponse = {
+  data?: {
+    token?: string
+  }
+}
+
+let refreshRequest: Promise<string | null> | null = null
+
+function isAuthPath(path: string, action: 'login' | 'refresh' | 'logout') {
+  return path.replace(/\/+$/, '').endsWith(`/api/auth/${action}`)
+}
+
+function redirectToLogin() {
+  clearAuthSession()
+
+  if (
+    typeof window !== 'undefined' &&
+    window.location.pathname.replace(/\/+$/, '') !== '/login'
+  ) {
+    window.location.assign('/login')
+  }
+}
+
+async function requestNewAccessToken(): Promise<string | null> {
+  const session = readAuthSession()
+
+  if (!session) {
+    return null
+  }
+
+  const response = await fetch(buildUrl('/api/auth/refresh'), {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  const payload = (await response.json()) as RefreshResponse
+  const token = payload.data?.token
+
+  if (!token?.trim()) {
+    return null
+  }
+
+  persistAuthSession({
+    ...session,
+    token,
+  })
+
+  return token
+}
+
+async function refreshAccessToken() {
+  refreshRequest ??= requestNewAccessToken()
+    .catch(() => null)
+    .finally(() => {
+      refreshRequest = null
+    })
+
+  return refreshRequest
+}
+
 function isJsonRequestBody(body: unknown): body is JsonRequestBody {
   if (body == null || typeof body !== 'object') {
     return false
@@ -42,10 +116,7 @@ function isJsonRequestBody(body: unknown): body is JsonRequestBody {
     !(body instanceof Blob) &&
     !(body instanceof FormData) &&
     !(body instanceof URLSearchParams) &&
-    !(
-      typeof ReadableStream !== 'undefined' &&
-      body instanceof ReadableStream
-    )
+    !(typeof ReadableStream !== 'undefined' && body instanceof ReadableStream)
   )
 }
 
@@ -84,15 +155,37 @@ export async function apiRequest<T>(
     headers.set('Accept', 'application/json')
   }
 
-  if (body != null && !headers.has('Content-Type')) {
+  if (body != null && !(body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 
-  const response = await fetch(buildUrl(path), {
-    ...init,
-    body,
-    headers,
-  })
+  const executeRequest = () =>
+    fetch(buildUrl(path), {
+      ...init,
+      body,
+      credentials: init.credentials ?? 'include',
+      headers,
+    })
+
+  let response = await executeRequest()
+
+  const canRefresh =
+    response.status === 401 &&
+    headers.has('Authorization') &&
+    !isAuthPath(path, 'login') &&
+    !isAuthPath(path, 'refresh') &&
+    !isAuthPath(path, 'logout')
+
+  if (canRefresh) {
+    const token = await refreshAccessToken()
+
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`)
+      response = await executeRequest()
+    } else {
+      redirectToLogin()
+    }
+  }
 
   if (!response.ok) {
     const payload = await readErrorPayload(response)
@@ -100,6 +193,10 @@ export async function apiRequest<T>(
       payload?.error ??
       payload?.message ??
       `Request failed with status ${response.status}`
+
+    if (response.status === 401 && !isAuthPath(path, 'login')) {
+      redirectToLogin()
+    }
 
     throw new ApiError(response.status, message, payload)
   }

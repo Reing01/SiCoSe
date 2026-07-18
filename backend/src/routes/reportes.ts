@@ -7,6 +7,7 @@ import {
   generateMonthlyReport,
 } from "../services/reportes.js";
 import type { AuthenticatedRequest } from "../types/auth.js";
+import { createPrivateStorageSignedUrl } from "../lib/supabase-storage.js";
 
 const generateReportSchema = z.object({
   periodo: z
@@ -44,6 +45,9 @@ reportesRouter.post(
         periodo: parsed.data.periodo,
         usuarioId: request.user?.id ?? "",
       });
+      const downloadUrl = await createPrivateStorageSignedUrl(
+        result.storage.path,
+      );
 
       return response.status(201).json({
         message: "Monthly report generated",
@@ -53,7 +57,7 @@ reportesRouter.post(
           titulo: result.report.titulo,
           tipo: result.report.tipo,
           estado: result.report.estado,
-          archivo_url: result.report.archivo_url,
+          archivo_url: downloadUrl,
           archivo_path: result.report.archivo_path,
           resumen_json: result.report.resumen_json,
           fecha: result.report.fecha,
@@ -96,6 +100,9 @@ reportesRouter.post(
         undefined,
         parsed.data.formato,
       );
+      const downloadUrl = await createPrivateStorageSignedUrl(
+        result.storage.path,
+      );
 
       return response.status(201).json({
         message: "Monthly report export generated",
@@ -106,7 +113,7 @@ reportesRouter.post(
           titulo: result.report.titulo,
           tipo: result.report.tipo,
           estado: result.report.estado,
-          archivo_url: result.report.archivo_url,
+          archivo_url: downloadUrl,
           archivo_path: result.report.archivo_path,
           resumen_json: result.report.resumen_json,
           fecha: result.report.fecha,

@@ -3,6 +3,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { authStorageKeys } from '../features/auth/auth.session'
 
+function mockCitizenListRequest() {
+  vi.spyOn(window, 'fetch').mockResolvedValue(
+    Response.json({
+      data: [],
+      metadata: {
+        total: 0,
+        pagina: 1,
+        limite: 100,
+        totalPaginas: 0,
+      },
+    }),
+  )
+}
+
 afterEach(() => {
   window.history.replaceState({}, '', '/')
   window.sessionStorage.clear()
@@ -52,11 +66,21 @@ describe('App routing', () => {
           data: {
             periodo: '2026-06',
             totalRecaudadoMes: 1250,
+            totalPendienteMes: 250,
             porcentajeCobertura: 80,
             numeroMorosos: 2,
             comparativoMesAnterior: 25,
             totalAdeudosMes: 10,
+            adeudosPagadosMes: 8,
             pagosRegistradosMes: 7,
+            historicoRecaudacion: [
+              { periodo: '2026-01', total: 700 },
+              { periodo: '2026-02', total: 800 },
+              { periodo: '2026-03', total: 900 },
+              { periodo: '2026-04', total: 1000 },
+              { periodo: '2026-05', total: 1000 },
+              { periodo: '2026-06', total: 1250 },
+            ],
             variacion: {
               direccion: 'mejora',
               color: 'verde',
@@ -104,6 +128,7 @@ describe('App routing', () => {
         rol: 'secretaria',
       }),
     )
+    mockCitizenListRequest()
 
     render(<App />)
 
@@ -126,6 +151,7 @@ describe('App routing', () => {
         rol: 'secretaria',
       }),
     )
+    mockCitizenListRequest()
 
     render(<App />)
 
@@ -152,11 +178,21 @@ describe('App routing', () => {
           data: {
             periodo: '2026-06',
             totalRecaudadoMes: 1250,
+            totalPendienteMes: 250,
             porcentajeCobertura: 80,
             numeroMorosos: 2,
             comparativoMesAnterior: 25,
             totalAdeudosMes: 10,
+            adeudosPagadosMes: 8,
             pagosRegistradosMes: 7,
+            historicoRecaudacion: [
+              { periodo: '2026-01', total: 700 },
+              { periodo: '2026-02', total: 800 },
+              { periodo: '2026-03', total: 900 },
+              { periodo: '2026-04', total: 1000 },
+              { periodo: '2026-05', total: 1000 },
+              { periodo: '2026-06', total: 1250 },
+            ],
             variacion: {
               direccion: 'mejora',
               color: 'verde',
