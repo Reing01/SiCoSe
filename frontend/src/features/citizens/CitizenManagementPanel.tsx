@@ -1,6 +1,6 @@
-import type { ChangeEvent, FormEvent } from 'react'
-import { useEffect, useId, useState } from 'react'
-import { Button } from '../../components/ui/button'
+import type { ChangeEvent, FormEvent } from "react";
+import { useEffect, useId, useState, useCallback, useMemo, memo } from "react";
+import { Button } from "../../components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,51 +8,58 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '../../components/ui/card'
-import { Input } from '../../components/ui/input'
-import { Label } from '../../components/ui/label'
-import { useToast } from '../../components/ui/toast'
-import { cn } from '../../lib/utils'
-import { readAuthSession } from '../auth/auth.session'
+} from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { useToast } from "../../components/ui/toast";
+import { cn } from "../../lib/utils";
+import { readAuthSession } from "../auth/auth.session";
 import {
   createCitizen,
   deactivateCitizen,
   fetchCitizens,
   updateCitizen,
-} from './citizen.api'
+} from "./citizen.api";
 import type {
   CitizenFieldErrors,
   CitizenFieldName,
   CitizenFilter,
   CitizenFormValues,
   CitizenRecord,
-} from './citizen.types'
+} from "./citizen.types";
 
 type SubmissionState =
-  | { kind: 'idle' }
-  | { kind: 'success'; message: string }
-  | { kind: 'error'; message: string }
+  | { kind: "idle" }
+  | { kind: "success"; message: string }
+  | { kind: "error"; message: string };
 
-type StatusTone = 'success' | 'warning'
+type StatusTone = "success" | "warning";
 
 type SummaryCardProps = {
-  label: string
-  value: string
-  detail: string
-}
+  label: string;
+  value: string;
+  detail: string;
+};
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PHONE_PATTERN = /^[+]?[\d\s()-]{7,}$/
-const CATASTRAL_PATTERN = /^[A-Z0-9-]{6,}$/
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^[+]?[\d\s()-]{7,}$/;
+const CATASTRAL_PATTERN = /^[A-Z0-9-]{6,}$/;
+
+const STATUS_TONE_CLASSES: Record<StatusTone, string> = {
+  success:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200",
+  warning:
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-200",
+};
 
 const DEFAULT_FORM_VALUES: CitizenFormValues = {
-  nombre: '',
-  apellido: '',
-  email: '',
-  telefono: '',
-  direccion: '',
-  claveCatastral: '',
-}
+  nombre: "",
+  apellido: "",
+  email: "",
+  telefono: "",
+  direccion: "",
+  claveCatastral: "",
+};
 
 const DEFAULT_TOUCHED: Record<CitizenFieldName, boolean> = {
   nombre: false,
@@ -61,19 +68,19 @@ const DEFAULT_TOUCHED: Record<CitizenFieldName, boolean> = {
   telefono: false,
   direccion: false,
   claveCatastral: false,
-}
+};
 
 const FILTER_OPTIONS: Array<{
-  value: CitizenFilter
-  label: string
+  value: CitizenFilter;
+  label: string;
 }> = [
-  { value: 'all', label: 'Todos' },
-  { value: 'complete', label: 'Completos' },
-  { value: 'attention', label: 'Requieren atencion' },
-]
+  { value: "all", label: "Todos" },
+  { value: "complete", label: "Completos" },
+  { value: "attention", label: "Requieren atencion" },
+];
 
 function createEmptyFormValues(): CitizenFormValues {
-  return { ...DEFAULT_FORM_VALUES }
+  return { ...DEFAULT_FORM_VALUES };
 }
 
 export function normalizeCitizenForm(
@@ -86,45 +93,45 @@ export function normalizeCitizenForm(
     telefono: values.telefono.trim(),
     direccion: values.direccion.trim(),
     claveCatastral: values.claveCatastral.trim().toUpperCase(),
-  }
+  };
 }
 
 export function validateCitizenForm(
   values: CitizenFormValues,
 ): CitizenFieldErrors {
-  const normalized = normalizeCitizenForm(values)
-  const errors: CitizenFieldErrors = {}
+  const normalized = normalizeCitizenForm(values);
+  const errors: CitizenFieldErrors = {};
 
   if (normalized.nombre.length < 2) {
-    errors.nombre = 'Ingresa un nombre valido.'
+    errors.nombre = "Ingresa un nombre valido.";
   }
 
   if (normalized.apellido.length < 2) {
-    errors.apellido = 'Ingresa un apellido valido.'
+    errors.apellido = "Ingresa un apellido valido.";
   }
 
   if (!normalized.email) {
-    errors.email = 'Ingresa un correo electronico.'
+    errors.email = "Ingresa un correo electronico.";
   } else if (!EMAIL_PATTERN.test(normalized.email)) {
-    errors.email = 'Ingresa un correo valido.'
+    errors.email = "Ingresa un correo valido.";
   }
 
   if (normalized.telefono && !PHONE_PATTERN.test(normalized.telefono)) {
-    errors.telefono = 'Ingresa un telefono valido o deja el campo vacio.'
+    errors.telefono = "Ingresa un telefono valido o deja el campo vacio.";
   }
 
   if (normalized.direccion && normalized.direccion.length < 6) {
-    errors.direccion = 'La direccion debe tener al menos 6 caracteres.'
+    errors.direccion = "La direccion debe tener al menos 6 caracteres.";
   }
 
   if (!normalized.claveCatastral) {
-    errors.claveCatastral = 'Ingresa la clave catastral.'
+    errors.claveCatastral = "Ingresa la clave catastral.";
   } else if (!CATASTRAL_PATTERN.test(normalized.claveCatastral)) {
     errors.claveCatastral =
-      'Usa al menos 6 caracteres con letras, numeros o guiones.'
+      "Usa al menos 6 caracteres con letras, numeros o guiones.";
   }
 
-  return errors
+  return errors;
 }
 
 function recordToFormValues(record: CitizenRecord): CitizenFormValues {
@@ -135,36 +142,38 @@ function recordToFormValues(record: CitizenRecord): CitizenFormValues {
     telefono: record.telefono,
     direccion: record.direccion,
     claveCatastral: record.claveCatastral,
-  }
+  };
 }
 
 function isCitizenComplete(record: CitizenRecord) {
-  return record.telefono.trim().length > 0 && record.direccion.trim().length > 0
+  return (
+    record.telefono.trim().length > 0 && record.direccion.trim().length > 0
+  );
 }
 
 function getCitizenStatus(record: CitizenRecord): {
-  tone: StatusTone
-  label: string
-  detail: string
+  tone: StatusTone;
+  label: string;
+  detail: string;
 } {
   if (isCitizenComplete(record)) {
     return {
-      tone: 'success',
-      label: 'Completo',
-      detail: 'Telefono y direccion registrados',
-    }
+      tone: "success",
+      label: "Completo",
+      detail: "Telefono y direccion registrados",
+    };
   }
 
   return {
-    tone: 'warning',
-    label: 'Requiere atencion',
-    detail: 'Faltan datos de contacto',
-  }
+    tone: "warning",
+    label: "Requiere atencion",
+    detail: "Faltan datos de contacto",
+  };
 }
 
 function matchesSearch(record: CitizenRecord, searchTerm: string) {
   if (!searchTerm) {
-    return true
+    return true;
   }
 
   const searchableValues = [
@@ -175,14 +184,18 @@ function matchesSearch(record: CitizenRecord, searchTerm: string) {
     record.telefono,
     record.direccion,
     record.claveCatastral,
-  ]
+  ];
 
   return searchableValues.some((value) =>
     value.toLowerCase().includes(searchTerm),
-  )
+  );
 }
 
-function SummaryCard({ label, value, detail }: SummaryCardProps) {
+const SummaryCard = memo(function SummaryCard({
+  label,
+  value,
+  detail,
+}: SummaryCardProps) {
   return (
     <Card className="border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
       <CardContent className="flex items-start justify-between gap-4 p-5">
@@ -199,57 +212,242 @@ function SummaryCard({ label, value, detail }: SummaryCardProps) {
         </span>
       </CardContent>
     </Card>
-  )
-}
+  );
+});
+
+type CitizenTableProps = {
+  paginatedCitizens: CitizenRecord[];
+  selectedCitizenId: string | null;
+  deletingCitizenId: string | null;
+  isLoading: boolean;
+  loadError: string | null;
+  onRetry: () => void;
+  onSelectCitizen: (record: CitizenRecord) => void;
+  onDeleteCitizen: (record: CitizenRecord) => void;
+};
+
+const CitizenTable = memo(function CitizenTable({
+  paginatedCitizens,
+  selectedCitizenId,
+  deletingCitizenId,
+  isLoading,
+  loadError,
+  onRetry,
+  onSelectCitizen,
+  onDeleteCitizen,
+}: CitizenTableProps) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-[760px] text-left text-sm">
+        <thead className="bg-slate-50 text-xs uppercase tracking-[0.25em] text-slate-500 dark:bg-slate-950/80 dark:text-slate-400">
+          <tr>
+            <th scope="col" className="px-5 py-3 font-semibold">
+              Ciudadano
+            </th>
+            <th scope="col" className="px-5 py-3 font-semibold">
+              Contacto
+            </th>
+            <th scope="col" className="px-5 py-3 font-semibold">
+              Dirección
+            </th>
+            <th scope="col" className="px-5 py-3 font-semibold">
+              Clave catastral
+            </th>
+            <th scope="col" className="px-5 py-3 font-semibold">
+              Estado
+            </th>
+            <th scope="col" className="px-5 py-3 font-semibold">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {isLoading ? (
+            <tr>
+              <td
+                colSpan={6}
+                className="px-5 py-16 text-center text-sm text-slate-500 dark:text-slate-400 animate-pulse"
+              >
+                Cargando ciudadanos...
+              </td>
+            </tr>
+          ) : null}
+
+          {loadError ? (
+            <tr>
+              <td
+                colSpan={6}
+                className="px-5 py-16 text-center text-sm text-slate-500 dark:text-slate-400"
+              >
+                <p className="font-semibold text-rose-600 dark:text-rose-400">
+                  {loadError}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={onRetry}
+                >
+                  Reintentar
+                </Button>
+              </td>
+            </tr>
+          ) : null}
+
+          {!isLoading &&
+            !loadError &&
+            paginatedCitizens.map((record) => {
+              const status = getCitizenStatus(record);
+              const isSelected = selectedCitizenId === record.id;
+
+              return (
+                <tr
+                  key={record.id}
+                  className={cn(
+                    "border-b border-slate-100 last:border-b-0 dark:border-slate-800",
+                    isSelected && "bg-[#f97316]/5 dark:bg-[#f97316]/10",
+                  )}
+                >
+                  <td className="px-5 py-4 align-top">
+                    <p className="font-semibold text-slate-950 dark:text-white">
+                      {record.nombre} {record.apellido}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {record.id}
+                    </p>
+                    <button
+                      type="button"
+                      className="mt-2 text-xs font-semibold text-[#0f3042] transition-colors hover:text-[#f97316] dark:text-sky-300 dark:hover:text-orange-300"
+                      onClick={() => onSelectCitizen(record)}
+                    >
+                      Editar registro
+                    </button>
+                  </td>
+                  <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
+                    <p>{record.email}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {record.telefono || "Sin teléfono"}
+                    </p>
+                  </td>
+                  <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
+                    {record.direccion || (
+                      <span className="text-slate-400 dark:text-slate-500">
+                        Sin dirección
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 align-top font-mono text-xs font-semibold text-[#0f3042] dark:text-sky-300">
+                    {record.claveCatastral}
+                  </td>
+                  <td className="px-5 py-4 align-top">
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+                        STATUS_TONE_CLASSES[status.tone],
+                      )}
+                    >
+                      {status.label}
+                    </span>
+                    <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {status.detail}
+                    </p>
+                  </td>
+                  <td className="px-5 py-4 align-top">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onSelectCitizen(record)}
+                        aria-label={`Editar ${record.nombre} ${record.apellido}`}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        disabled={deletingCitizenId === record.id}
+                        onClick={() => onDeleteCitizen(record)}
+                        aria-label={`Eliminar ${record.nombre} ${record.apellido}`}
+                      >
+                        {deletingCitizenId === record.id
+                          ? "Eliminando..."
+                          : "Eliminar"}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+
+          {!isLoading && !loadError && paginatedCitizens.length === 0 ? (
+            <tr>
+              <td
+                colSpan={6}
+                className="px-5 py-16 text-center text-sm text-slate-500 dark:text-slate-400"
+              >
+                No se encontraron ciudadanos con los filtros actuales.
+              </td>
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  );
+});
 
 export default function CitizenManagementPanel() {
-  const searchId = useId()
-  const nombreId = useId()
-  const apellidoId = useId()
-  const emailId = useId()
-  const telefonoId = useId()
-  const direccionId = useId()
-  const claveCatastralId = useId()
-  const statusId = useId()
-  const { addToast } = useToast()
+  const searchId = useId();
+  const nombreId = useId();
+  const apellidoId = useId();
+  const emailId = useId();
+  const telefonoId = useId();
+  const direccionId = useId();
+  const claveCatastralId = useId();
+  const statusId = useId();
+  const { addToast } = useToast();
 
-  const [citizens, setCitizens] = useState<CitizenRecord[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const [citizens, setCitizens] = useState<CitizenRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [deletingCitizenId, setDeletingCitizenId] = useState<string | null>(
     null,
-  )
-  const [reloadKey, setReloadKey] = useState(0)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [activeFilter, setActiveFilter] = useState<CitizenFilter>('all')
+  );
+  const [reloadKey, setReloadKey] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilter, setActiveFilter] = useState<CitizenFilter>("all");
   const [selectedCitizenId, setSelectedCitizenId] = useState<string | null>(
     null,
-  )
-  const [values, setValues] = useState<CitizenFormValues>(createEmptyFormValues)
+  );
+  const [values, setValues] = useState<CitizenFormValues>(
+    createEmptyFormValues,
+  );
   const [touched, setTouched] =
-    useState<Record<CitizenFieldName, boolean>>(DEFAULT_TOUCHED)
+    useState<Record<CitizenFieldName, boolean>>(DEFAULT_TOUCHED);
   const [submissionState, setSubmissionState] = useState<SubmissionState>({
-    kind: 'idle',
-  })
+    kind: "idle",
+  });
 
   useEffect(() => {
-    const session = readAuthSession()
+    const session = readAuthSession();
 
     if (!session) {
-      setIsLoading(false)
-      setLoadError('Inicia sesión para consultar el padrón de ciudadanos.')
-      return
+      setIsLoading(false);
+      setLoadError("Inicia sesión para consultar el padrón de ciudadanos.");
+      return;
     }
 
-    let cancelled = false
-    setIsLoading(true)
-    setLoadError(null)
+    let cancelled = false;
+    setIsLoading(true);
+    setLoadError(null);
 
     fetchCitizens(session.token)
       .then((records) => {
         if (!cancelled) {
-          setCitizens(records)
+          setCitizens(records);
         }
       })
       .catch((error: unknown) => {
@@ -257,44 +455,71 @@ export default function CitizenManagementPanel() {
           setLoadError(
             error instanceof Error
               ? error.message
-              : 'No fue posible cargar el padrón de ciudadanos.',
-          )
+              : "No fue posible cargar el padrón de ciudadanos.",
+          );
         }
       })
       .finally(() => {
         if (!cancelled) {
-          setIsLoading(false)
+          setIsLoading(false);
         }
-      })
+      });
 
     return () => {
-      cancelled = true
-    }
-  }, [reloadKey])
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
-  const selectedCitizen =
-    selectedCitizenId == null
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const PAGE_SIZE = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilter]);
+
+  const selectedCitizen = useMemo(() => {
+    return selectedCitizenId == null
       ? null
-      : (citizens.find((record) => record.id === selectedCitizenId) ?? null)
+      : (citizens.find((record) => record.id === selectedCitizenId) ?? null);
+  }, [citizens, selectedCitizenId]);
 
-  const fieldErrors = validateCitizenForm(values)
-  const visibleCitizens = citizens.filter((record) => {
-    const status = isCitizenComplete(record)
-    const matchesFilter =
-      activeFilter === 'all' ||
-      (activeFilter === 'complete' && status) ||
-      (activeFilter === 'attention' && !status)
+  const fieldErrors = useMemo(() => {
+    return validateCitizenForm(values);
+  }, [values]);
 
-    return (
-      matchesFilter && matchesSearch(record, searchTerm.trim().toLowerCase())
-    )
-  })
+  const visibleCitizens = useMemo(() => {
+    const searchLower = searchTerm.trim().toLowerCase();
+    return citizens.filter((record) => {
+      const status = isCitizenComplete(record);
+      const matchesFilter =
+        activeFilter === "all" ||
+        (activeFilter === "complete" && status) ||
+        (activeFilter === "attention" && !status);
 
-  const completeCitizens = citizens.filter(isCitizenComplete)
-  const attentionCitizens = citizens.length - completeCitizens.length
-  const citizensWithPhone = citizens.filter(
-    (record) => record.telefono.trim().length > 0,
-  ).length
+      return matchesFilter && matchesSearch(record, searchLower);
+    });
+  }, [citizens, activeFilter, searchTerm]);
+
+  const paginatedCitizens = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    return visibleCitizens.slice(start, end);
+  }, [visibleCitizens, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleCitizens.length / PAGE_SIZE));
+
+  const completeCitizens = useMemo(() => {
+    return citizens.filter(isCitizenComplete);
+  }, [citizens]);
+
+  const attentionCitizens = useMemo(() => {
+    return citizens.length - completeCitizens.length;
+  }, [citizens, completeCitizens]);
+
+  const citizensWithPhone = useMemo(() => {
+    return citizens.filter((record) => record.telefono.trim().length > 0)
+      .length;
+  }, [citizens]);
 
   const hasVisibleErrors = Boolean(
     (touched.nombre && fieldErrors.nombre) ||
@@ -303,104 +528,111 @@ export default function CitizenManagementPanel() {
     (touched.telefono && fieldErrors.telefono) ||
     (touched.direccion && fieldErrors.direccion) ||
     (touched.claveCatastral && fieldErrors.claveCatastral),
-  )
+  );
 
   const handleFieldChange =
     (field: CitizenFieldName) => (event: ChangeEvent<HTMLInputElement>) => {
-      const nextValue = event.target.value
+      const nextValue = event.target.value;
 
       setValues((current) => ({
         ...current,
         [field]: nextValue,
-      }))
+      }));
 
-      if (submissionState.kind !== 'idle') {
-        setSubmissionState({ kind: 'idle' })
+      if (submissionState.kind !== "idle") {
+        setSubmissionState({ kind: "idle" });
       }
-    }
+    };
 
   const handleFieldBlur = (field: CitizenFieldName) => () => {
     setTouched((current) => ({
       ...current,
       [field]: true,
-    }))
-  }
+    }));
+  };
 
-  const resetForm = (message?: string) => {
-    setSelectedCitizenId(null)
-    setValues(createEmptyFormValues())
-    setTouched(DEFAULT_TOUCHED)
+  const resetForm = useCallback((message?: string) => {
+    setSelectedCitizenId(null);
+    setValues(createEmptyFormValues());
+    setTouched(DEFAULT_TOUCHED);
     setSubmissionState(
       message
         ? {
-            kind: 'success',
+            kind: "success",
             message,
           }
-        : { kind: 'idle' },
-    )
-  }
+        : { kind: "idle" },
+    );
+  }, []);
 
-  const handleSelectCitizen = (record: CitizenRecord) => {
-    setSelectedCitizenId(record.id)
-    setValues(recordToFormValues(record))
-    setTouched(DEFAULT_TOUCHED)
-    setSubmissionState({ kind: 'idle' })
-  }
+  const handleSelectCitizen = useCallback((record: CitizenRecord) => {
+    setSelectedCitizenId(record.id);
+    setValues(recordToFormValues(record));
+    setTouched(DEFAULT_TOUCHED);
+    setSubmissionState({ kind: "idle" });
+  }, []);
 
-  const handleDeleteCitizen = async (record: CitizenRecord) => {
-    const session = readAuthSession()
+  const handleDeleteCitizen = useCallback(
+    async (record: CitizenRecord) => {
+      const session = readAuthSession();
 
-    if (!session) {
-      addToast({
-        tone: 'warning',
-        title: 'Sesión requerida',
-        message: 'Inicia sesión para eliminar ciudadanos.',
-      })
-      return
-    }
-
-    if (
-      !window.confirm(
-        `¿Desactivar a ${record.nombre} ${record.apellido} del padrón?`,
-      )
-    ) {
-      return
-    }
-
-    setDeletingCitizenId(record.id)
-
-    try {
-      await deactivateCitizen(session.token, record.id)
-      setCitizens((current) =>
-        current.filter((citizen) => citizen.id !== record.id),
-      )
-
-      const message = 'Ciudadano eliminado correctamente.'
-
-      if (selectedCitizenId === record.id) {
-        resetForm(message)
-      } else {
-        setSubmissionState({ kind: 'success', message })
+      if (!session) {
+        addToast({
+          tone: "warning",
+          title: "Sesión requerida",
+          message: "Inicia sesión para eliminar ciudadanos.",
+        });
+        return;
       }
 
-      addToast({ tone: 'success', title: 'Ciudadano eliminado', message })
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'No fue posible eliminar al ciudadano.'
+      if (
+        !window.confirm(
+          `¿Desactivar a ${record.nombre} ${record.apellido} del padrón?`,
+        )
+      ) {
+        return;
+      }
 
-      setSubmissionState({ kind: 'error', message })
-      addToast({ tone: 'warning', title: 'No se pudo eliminar', message })
-    } finally {
-      setDeletingCitizenId(null)
-    }
-  }
+      setDeletingCitizenId(record.id);
+
+      try {
+        await deactivateCitizen(session.token, record.id);
+        setCitizens((current) =>
+          current.filter((citizen) => citizen.id !== record.id),
+        );
+
+        const message = "Ciudadano eliminado correctamente.";
+
+        if (selectedCitizenId === record.id) {
+          resetForm(message);
+        } else {
+          setSubmissionState({ kind: "success", message });
+        }
+
+        addToast({ tone: "success", title: "Ciudadano eliminado", message });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No fue posible eliminar al ciudadano.";
+
+        setSubmissionState({ kind: "error", message });
+        addToast({ tone: "warning", title: "No se pudo eliminar", message });
+      } finally {
+        setDeletingCitizenId(null);
+      }
+    },
+    [addToast, selectedCitizenId, resetForm],
+  );
+
+  const handleRetry = useCallback(() => {
+    setReloadKey((current) => current + 1);
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const normalizedValues = normalizeCitizenForm(values)
+    const normalizedValues = normalizeCitizenForm(values);
     const nextTouched: Record<CitizenFieldName, boolean> = {
       nombre: true,
       apellido: true,
@@ -408,41 +640,41 @@ export default function CitizenManagementPanel() {
       telefono: true,
       direccion: true,
       claveCatastral: true,
-    }
+    };
 
-    setTouched(nextTouched)
+    setTouched(nextTouched);
 
-    const nextErrors = validateCitizenForm(normalizedValues)
+    const nextErrors = validateCitizenForm(normalizedValues);
 
     if (Object.keys(nextErrors).length > 0) {
       setSubmissionState({
-        kind: 'error',
-        message: 'Corrige los campos marcados para continuar.',
-      })
+        kind: "error",
+        message: "Corrige los campos marcados para continuar.",
+      });
       addToast({
-        tone: 'warning',
-        title: 'Formulario con pendientes',
-        message: 'Completa los campos obligatorios antes de guardar.',
-      })
-      return
+        tone: "warning",
+        title: "Formulario con pendientes",
+        message: "Completa los campos obligatorios antes de guardar.",
+      });
+      return;
     }
 
-    const session = readAuthSession()
+    const session = readAuthSession();
 
     if (!session) {
       setSubmissionState({
-        kind: 'error',
-        message: 'Inicia sesión para guardar ciudadanos.',
-      })
-      return
+        kind: "error",
+        message: "Inicia sesión para guardar ciudadanos.",
+      });
+      return;
     }
 
     const existingCitizen =
       selectedCitizenId == null
         ? null
-        : (citizens.find((record) => record.id === selectedCitizenId) ?? null)
-    const isEditing = existingCitizen !== null
-    setIsSaving(true)
+        : (citizens.find((record) => record.id === selectedCitizenId) ?? null);
+    const isEditing = existingCitizen !== null;
+    setIsSaving(true);
 
     try {
       const savedCitizen =
@@ -452,7 +684,7 @@ export default function CitizenManagementPanel() {
               existingCitizen.id,
               normalizedValues,
             )
-          : await createCitizen(session.token, normalizedValues)
+          : await createCitizen(session.token, normalizedValues);
 
       setCitizens((current) =>
         isEditing
@@ -460,40 +692,40 @@ export default function CitizenManagementPanel() {
               record.id === savedCitizen.id ? savedCitizen : record,
             )
           : [...current, savedCitizen],
-      )
-      setSelectedCitizenId(savedCitizen.id)
-      setValues(recordToFormValues(savedCitizen))
-      setTouched(DEFAULT_TOUCHED)
+      );
+      setSelectedCitizenId(savedCitizen.id);
+      setValues(recordToFormValues(savedCitizen));
+      setTouched(DEFAULT_TOUCHED);
 
       const successMessage = isEditing
-        ? 'Ciudadano actualizado correctamente.'
-        : 'Ciudadano creado correctamente.'
+        ? "Ciudadano actualizado correctamente."
+        : "Ciudadano creado correctamente.";
 
-      setSubmissionState({ kind: 'success', message: successMessage })
+      setSubmissionState({ kind: "success", message: successMessage });
       addToast({
-        tone: 'success',
-        title: isEditing ? 'Ciudadano actualizado' : 'Ciudadano creado',
+        tone: "success",
+        title: isEditing ? "Ciudadano actualizado" : "Ciudadano creado",
         message: successMessage,
-      })
+      });
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : 'No fue posible guardar al ciudadano.'
+          : "No fue posible guardar al ciudadano.";
 
-      setSubmissionState({ kind: 'error', message })
-      addToast({ tone: 'warning', title: 'No se pudo guardar', message })
+      setSubmissionState({ kind: "error", message });
+      addToast({ tone: "warning", title: "No se pudo guardar", message });
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const statusToneClasses: Record<StatusTone, string> = {
     success:
-      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200',
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200",
     warning:
-      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-200',
-  }
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-200",
+  };
 
   return (
     <section className="space-y-6">
@@ -537,7 +769,7 @@ export default function CitizenManagementPanel() {
               <Button
                 key={option.value}
                 type="button"
-                variant={activeFilter === option.value ? 'default' : 'outline'}
+                variant={activeFilter === option.value ? "default" : "outline"}
                 size="sm"
                 className="rounded-full"
                 onClick={() => setActiveFilter(option.value)}
@@ -571,8 +803,8 @@ export default function CitizenManagementPanel() {
               type="button"
               variant="ghost"
               onClick={() => {
-                setSearchTerm('')
-                setActiveFilter('all')
+                setSearchTerm("");
+                setActiveFilter("all");
               }}
             >
               Limpiar filtros
@@ -598,165 +830,46 @@ export default function CitizenManagementPanel() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="min-w-[760px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-500 dark:bg-slate-950/80 dark:text-slate-400">
-                  <tr>
-                    <th scope="col" className="px-5 py-3 font-semibold">
-                      Ciudadano
-                    </th>
-                    <th scope="col" className="px-5 py-3 font-semibold">
-                      Contacto
-                    </th>
-                    <th scope="col" className="px-5 py-3 font-semibold">
-                      Direccion
-                    </th>
-                    <th scope="col" className="px-5 py-3 font-semibold">
-                      Clave catastral
-                    </th>
-                    <th scope="col" className="px-5 py-3 font-semibold">
-                      Estado
-                    </th>
-                    <th scope="col" className="px-5 py-3 font-semibold">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-5 py-16 text-center text-sm text-slate-500 dark:text-slate-400"
-                      >
-                        Cargando padrón de ciudadanos...
-                      </td>
-                    </tr>
-                  ) : null}
-
-                  {!isLoading && loadError ? (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-16 text-center">
-                        <p
-                          role="alert"
-                          className="text-sm font-medium text-rose-600 dark:text-rose-300"
-                        >
-                          {loadError}
-                        </p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="mt-4"
-                          onClick={() => setReloadKey((current) => current + 1)}
-                        >
-                          Reintentar
-                        </Button>
-                      </td>
-                    </tr>
-                  ) : null}
-
-                  {!isLoading &&
-                    !loadError &&
-                    visibleCitizens.map((record) => {
-                      const status = getCitizenStatus(record)
-                      const isSelected = selectedCitizenId === record.id
-
-                      return (
-                        <tr
-                          key={record.id}
-                          className={cn(
-                            'border-b border-slate-100 last:border-b-0 dark:border-slate-800',
-                            isSelected && 'bg-[#f97316]/5 dark:bg-[#f97316]/10',
-                          )}
-                        >
-                          <td className="px-5 py-4 align-top">
-                            <p className="font-semibold text-slate-950 dark:text-white">
-                              {record.nombre} {record.apellido}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                              {record.id}
-                            </p>
-                            <button
-                              type="button"
-                              className="mt-2 text-xs font-semibold text-[#0f3042] transition-colors hover:text-[#f97316] dark:text-sky-300 dark:hover:text-orange-300"
-                              onClick={() => handleSelectCitizen(record)}
-                            >
-                              Editar registro
-                            </button>
-                          </td>
-                          <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
-                            <p>{record.email}</p>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                              {record.telefono || 'Sin telefono'}
-                            </p>
-                          </td>
-                          <td className="px-5 py-4 align-top text-slate-600 dark:text-slate-300">
-                            {record.direccion || (
-                              <span className="text-slate-400 dark:text-slate-500">
-                                Sin direccion
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 align-top font-mono text-xs font-semibold text-[#0f3042] dark:text-sky-300">
-                            {record.claveCatastral}
-                          </td>
-                          <td className="px-5 py-4 align-top">
-                            <span
-                              className={cn(
-                                'inline-flex rounded-full border px-3 py-1 text-xs font-semibold',
-                                statusToneClasses[status.tone],
-                              )}
-                            >
-                              {status.label}
-                            </span>
-                            <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                              {status.detail}
-                            </p>
-                          </td>
-                          <td className="px-5 py-4 align-top">
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleSelectCitizen(record)}
-                                aria-label={`Editar ${record.nombre} ${record.apellido}`}
-                              >
-                                Editar
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                disabled={deletingCitizenId === record.id}
-                                onClick={() => handleDeleteCitizen(record)}
-                                aria-label={`Eliminar ${record.nombre} ${record.apellido}`}
-                              >
-                                {deletingCitizenId === record.id
-                                  ? 'Eliminando...'
-                                  : 'Eliminar'}
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-
-                  {!isLoading && !loadError && visibleCitizens.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-5 py-16 text-center text-sm text-slate-500 dark:text-slate-400"
-                      >
-                        No se encontraron ciudadanos con los filtros actuales.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            <CitizenTable
+              paginatedCitizens={paginatedCitizens}
+              selectedCitizenId={selectedCitizenId}
+              deletingCitizenId={deletingCitizenId}
+              isLoading={isLoading}
+              loadError={loadError}
+              onRetry={handleRetry}
+              onSelectCitizen={handleSelectCitizen}
+              onDeleteCitizen={handleDeleteCitizen}
+            />
           </CardContent>
+          {!isLoading && !loadError && totalPages > 1 ? (
+            <CardFooter className="flex items-center justify-between border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
+                Página {currentPage} de {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((c) => Math.max(1, c - 1))}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    setCurrentPage((c) => Math.min(totalPages, c + 1))
+                  }
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </CardFooter>
+          ) : null}
         </Card>
 
         <Card className="overflow-hidden border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-900/90">
@@ -769,31 +882,31 @@ export default function CitizenManagementPanel() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle>
-                    {selectedCitizen ? 'Editar ciudadano' : 'Nuevo ciudadano'}
+                    {selectedCitizen ? "Editar ciudadano" : "Nuevo ciudadano"}
                   </CardTitle>
                   <CardDescription className="mt-1 max-w-md">
                     {selectedCitizen
-                      ? 'Ajusta la informacion del registro seleccionado y guarda los cambios.'
-                      : 'Llena el formulario para registrar un nuevo ciudadano en el padron.'}
+                      ? "Ajusta la informacion del registro seleccionado y guarda los cambios."
+                      : "Llena el formulario para registrar un nuevo ciudadano en el padron."}
                   </CardDescription>
                 </div>
                 <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
-                  {selectedCitizen ? selectedCitizen.id : 'Modo alta'}
+                  {selectedCitizen ? selectedCitizen.id : "Modo alta"}
                 </span>
               </div>
             </CardHeader>
 
             <CardContent className="flex-1 space-y-5">
-              {submissionState.kind !== 'idle' ? (
+              {submissionState.kind !== "idle" ? (
                 <div
                   id={statusId}
-                  role={submissionState.kind === 'error' ? 'alert' : 'status'}
+                  role={submissionState.kind === "error" ? "alert" : "status"}
                   aria-live="polite"
                   className={cn(
-                    'rounded-2xl border px-4 py-3 text-sm leading-6',
-                    submissionState.kind === 'success'
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-100'
-                      : 'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/60 dark:text-rose-100',
+                    "rounded-2xl border px-4 py-3 text-sm leading-6",
+                    submissionState.kind === "success"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-100"
+                      : "border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/60 dark:text-rose-100",
                   )}
                 >
                   {submissionState.message}
@@ -812,8 +925,8 @@ export default function CitizenManagementPanel() {
                   <Input
                     id={nombreId}
                     value={values.nombre}
-                    onChange={handleFieldChange('nombre')}
-                    onBlur={handleFieldBlur('nombre')}
+                    onChange={handleFieldChange("nombre")}
+                    onBlur={handleFieldBlur("nombre")}
                     placeholder="Mariana"
                     aria-invalid={Boolean(touched.nombre && fieldErrors.nombre)}
                     aria-describedby={
@@ -837,8 +950,8 @@ export default function CitizenManagementPanel() {
                   <Input
                     id={apellidoId}
                     value={values.apellido}
-                    onChange={handleFieldChange('apellido')}
-                    onBlur={handleFieldBlur('apellido')}
+                    onChange={handleFieldChange("apellido")}
+                    onBlur={handleFieldBlur("apellido")}
                     placeholder="Lopez Torres"
                     aria-invalid={Boolean(
                       touched.apellido && fieldErrors.apellido,
@@ -867,8 +980,8 @@ export default function CitizenManagementPanel() {
                     inputMode="email"
                     autoComplete="email"
                     value={values.email}
-                    onChange={handleFieldChange('email')}
-                    onBlur={handleFieldBlur('email')}
+                    onChange={handleFieldChange("email")}
+                    onBlur={handleFieldBlur("email")}
                     placeholder="mariana.lopez@sicose.mx"
                     aria-invalid={Boolean(touched.email && fieldErrors.email)}
                     aria-describedby={
@@ -895,8 +1008,8 @@ export default function CitizenManagementPanel() {
                     inputMode="tel"
                     autoComplete="tel"
                     value={values.telefono}
-                    onChange={handleFieldChange('telefono')}
-                    onBlur={handleFieldBlur('telefono')}
+                    onChange={handleFieldChange("telefono")}
+                    onBlur={handleFieldBlur("telefono")}
                     placeholder="222 111 0101"
                     aria-invalid={Boolean(
                       touched.telefono && fieldErrors.telefono,
@@ -922,8 +1035,8 @@ export default function CitizenManagementPanel() {
                   <Input
                     id={claveCatastralId}
                     value={values.claveCatastral}
-                    onChange={handleFieldChange('claveCatastral')}
-                    onBlur={handleFieldBlur('claveCatastral')}
+                    onChange={handleFieldChange("claveCatastral")}
+                    onBlur={handleFieldBlur("claveCatastral")}
                     placeholder="SDC-72810-001"
                     aria-invalid={Boolean(
                       touched.claveCatastral && fieldErrors.claveCatastral,
@@ -949,8 +1062,8 @@ export default function CitizenManagementPanel() {
                   <Input
                     id={direccionId}
                     value={values.direccion}
-                    onChange={handleFieldChange('direccion')}
-                    onBlur={handleFieldBlur('direccion')}
+                    onChange={handleFieldChange("direccion")}
+                    onBlur={handleFieldBlur("direccion")}
                     placeholder="Av. Hidalgo 14"
                     aria-invalid={Boolean(
                       touched.direccion && fieldErrors.direccion,
@@ -974,16 +1087,16 @@ export default function CitizenManagementPanel() {
 
               <div
                 className={cn(
-                  'rounded-2xl border px-4 py-4',
+                  "rounded-2xl border px-4 py-4",
                   hasVisibleErrors
-                    ? 'border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/60'
-                    : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/60',
+                    ? "border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/60"
+                    : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/60",
                 )}
               >
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {selectedCitizen
-                    ? 'Registro listo para ser actualizado'
-                    : 'Formulario preparado para crear un ciudadano'}
+                    ? "Registro listo para ser actualizado"
+                    : "Formulario preparado para crear un ciudadano"}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                   El formulario prioriza una experiencia clara y evita guardar
@@ -1000,10 +1113,10 @@ export default function CitizenManagementPanel() {
                 disabled={isSaving}
               >
                 {isSaving
-                  ? 'Guardando...'
+                  ? "Guardando..."
                   : selectedCitizen
-                    ? 'Guardar cambios'
-                    : 'Crear ciudadano'}
+                    ? "Guardar cambios"
+                    : "Crear ciudadano"}
               </Button>
               <Button
                 type="button"
@@ -1018,5 +1131,5 @@ export default function CitizenManagementPanel() {
         </Card>
       </div>
     </section>
-  )
+  );
 }

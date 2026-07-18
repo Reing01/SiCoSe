@@ -4,6 +4,20 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes("node_modules/react/") ||
+            id.includes("node_modules/react-dom/")
+          ) {
+            return "vendor";
+          }
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       "/api": {
@@ -15,7 +29,10 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     globals: true,
-    include: ["src/**/*.{test,spec}.{js,jsx,ts,tsx}", "src/**/__tests__/**/*.{js,jsx,ts,tsx}"],
+    include: [
+      "src/**/*.{test,spec}.{js,jsx,ts,tsx}",
+      "src/**/__tests__/**/*.{js,jsx,ts,tsx}",
+    ],
     exclude: ["e2e/**"],
     setupFiles: "./src/test/setup.js",
   },
