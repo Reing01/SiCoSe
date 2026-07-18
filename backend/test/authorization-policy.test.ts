@@ -26,6 +26,10 @@ describe("authorization policy", () => {
     assert.equal(canAccessResource("tesorero", "ciudadanos"), false);
   });
 
+  it("allows secretaria to manage ciudadanos", () => {
+    assert.equal(canAccessResource("secretaria", "ciudadanos"), true);
+  });
+
   it("rejects unknown roles", () => {
     assert.equal(isKnownRole("capturista"), false);
   });

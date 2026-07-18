@@ -5,10 +5,12 @@ import type {
     issueRefreshToken as issueRefreshTokenType,
     revokeRefreshToken as revokeRefreshTokenType,
 } from '../src/lib/refresh-token.js'
+import type { signAuthToken as signAuthTokenType } from '../src/lib/jwt.js'
 
 let issueRefreshToken: typeof issueRefreshTokenType
 let consumeRefreshToken: typeof consumeRefreshTokenType
 let revokeRefreshToken: typeof revokeRefreshTokenType
+let signAuthToken: typeof signAuthTokenType
 
 before(async () => {
   process.env.DATABASE_URL ??= 'postgresql://user:pass@localhost:5432/sicose_test'
@@ -19,6 +21,22 @@ before(async () => {
   ;({ issueRefreshToken, consumeRefreshToken, revokeRefreshToken } = await import(
     '../src/lib/refresh-token.js'
   ))
+  ;({ signAuthToken } = await import('../src/lib/jwt.js'))
+})
+
+describe('access-token', () => {
+  it('genera un token nuevo aunque se emita dos veces en el mismo segundo', async () => {
+    const payload = {
+      sub: 'user-1',
+      email: 'user-1@sicose.test',
+      rol: 'secretaria',
+    }
+
+    const firstToken = await signAuthToken(payload)
+    const secondToken = await signAuthToken(payload)
+
+    assert.notEqual(firstToken, secondToken)
+  })
 })
 
 describe('refresh-token', () => {
