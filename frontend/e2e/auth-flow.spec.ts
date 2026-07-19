@@ -77,7 +77,7 @@ test('login, dashboard and export flow stays connected', async ({ page }) => {
   await expect(page.getByText('Situacion financiera del mes')).toBeVisible()
 
   await page.getByRole('button', { name: 'Exportar Excel' }).click()
-  await expect(page.getByText(/Exportaci/)).toBeVisible()
+  await expect(page.getByText(/Exportaci[oó]n Excel lista/)).toBeVisible()
 
   await page.getByRole('button', { name: /Cerrar sesi/ }).click()
   await expect(page).toHaveURL(/\/login$/)

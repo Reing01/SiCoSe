@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { authStorageKeys } from '../features/auth/auth.session'
@@ -113,7 +113,79 @@ describe('App routing', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('$1,250.00')).toBeInTheDocument()
     expect(screen.getByText('80%')).toBeInTheDocument()
-    expect(screen.getByText('Redis activo')).toBeInTheDocument()
+    expect(screen.getByText('Informacion disponible')).toBeInTheDocument()
+  })
+
+  it('shows a public alert when dashboard export fails', async () => {
+    window.history.pushState({}, '', '/dashboard')
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        id: 'user-1',
+        email: 'admin@sicose.test',
+        nombre: 'Cristian',
+        rol: 'admin',
+      }),
+    )
+    vi.spyOn(window, 'fetch').mockImplementation(async (input) => {
+      const url = String(input)
+
+      if (url.includes('dashboard/metricas')) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              periodo: '2026-06',
+              totalRecaudadoMes: 1250,
+              porcentajeCobertura: 80,
+              numeroMorosos: 2,
+              comparativoMesAnterior: 25,
+              totalAdeudosMes: 10,
+              pagosRegistradosMes: 7,
+              variacion: {
+                direccion: 'mejora',
+                color: 'verde',
+                montoMesAnterior: 1000,
+              },
+              ultimaActualizacion: '2026-06-18T12:00:00.000Z',
+              cache: {
+                hit: true,
+                ttlSegundos: 300,
+              },
+            },
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        )
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: 'private export diagnostic',
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+    })
+
+    render(<App />)
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: /exportar excel/i }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /no fue posible generar la exportacion/i,
+    )
+    expect(screen.queryByText(/private export diagnostic/i)).not.toBeInTheDocument()
   })
 
   it('renders the citizen management page for a secretary session', async () => {

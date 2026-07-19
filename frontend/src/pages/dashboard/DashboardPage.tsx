@@ -24,6 +24,15 @@ type KpiCard = {
 }
 
 type ExportFormat = 'pdf' | 'xlsx'
+type ExportStatus = {
+  tone: 'success' | 'error'
+  message: string
+}
+
+const DASHBOARD_LOAD_ERROR_MESSAGE =
+  'No fue posible cargar la informacion del panel. Intenta de nuevo.'
+const DASHBOARD_EXPORT_ERROR_MESSAGE =
+  'No fue posible generar la exportacion. Intenta de nuevo.'
 
 const currencyFormatter = new Intl.NumberFormat('es-MX', {
   style: 'currency',
@@ -232,7 +241,7 @@ function DashboardContent({
   metrics,
   onExport,
   exportFormat,
-  exportMessage,
+  exportStatus,
   period,
   onPeriodChange,
   theme,
@@ -240,7 +249,7 @@ function DashboardContent({
   metrics: DashboardMetrics
   onExport: (format: ExportFormat) => void
   exportFormat: ExportFormat | null
-  exportMessage: string | null
+  exportStatus: ExportStatus | null
   period: string
   onPeriodChange: (period: string) => void
   theme: 'light' | 'dark'
@@ -268,9 +277,19 @@ function DashboardContent({
             <p className={cn('text-sm', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
               Descarga el periodo {metrics.periodo} en PDF institucional o como Excel para análisis.
             </p>
-            {exportMessage ? (
-              <p className={cn('text-sm font-medium', theme === 'dark' ? 'text-emerald-300' : 'text-emerald-700')}>
-                {exportMessage}
+            {exportStatus ? (
+              <p
+                role={exportStatus.tone === 'error' ? 'alert' : 'status'}
+                aria-live="polite"
+                className={cn(
+                  'text-sm font-medium',
+                  exportStatus.tone === 'success' &&
+                    (theme === 'dark' ? 'text-emerald-300' : 'text-emerald-700'),
+                  exportStatus.tone === 'error' &&
+                    (theme === 'dark' ? 'text-rose-300' : 'text-rose-700'),
+                )}
+              >
+                {exportStatus.message}
               </p>
             ) : null}
           </div>
@@ -350,13 +369,13 @@ function DashboardContent({
                 theme === 'dark' ? 'text-slate-400' : 'text-slate-500',
               )}
             >
-              Cache
+              Estado
             </p>
             <p className={cn('mt-2 text-sm font-semibold', theme === 'dark' ? 'text-white' : 'text-slate-900')}>
-              {metrics.cache.hit ? 'Redis activo' : 'Actualizado'}
+              Informacion disponible
             </p>
             <p className={cn('mt-1 text-xs', theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-              TTL {metrics.cache.ttlSegundos}s
+              Periodo {metrics.periodo}
             </p>
           </div>
         </CardContent>
@@ -368,7 +387,7 @@ function DashboardContent({
 export default function DashboardPage() {
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
   const [exportFormat, setExportFormat] = useState<ExportFormat | null>(null)
-  const [exportMessage, setExportMessage] = useState<string | null>(null)
+  const [exportStatus, setExportStatus] = useState<ExportStatus | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -394,11 +413,14 @@ export default function DashboardPage() {
     const session = readAuthSession()
 
     if (!session || state.kind !== 'ready') {
-      setExportMessage('Inicia sesión para exportar reportes.')
+      setExportStatus({
+        tone: 'error',
+        message: 'Inicia sesión para exportar reportes.',
+      })
       return
     }
 
-    setExportMessage(null)
+    setExportStatus(null)
     setExportFormat(format)
 
     try {
@@ -418,9 +440,15 @@ export default function DashboardPage() {
       anchor.click()
       anchor.remove()
       URL.revokeObjectURL(blobUrl)
-      setExportMessage(`Exportación ${format === 'pdf' ? 'PDF' : 'Excel'} lista para ${exportResult.periodo}.`)
-    } catch (error) {
-      setExportMessage(error instanceof Error ? error.message : 'No fue posible generar la exportación.')
+      setExportStatus({
+        tone: 'success',
+        message: `Exportación ${format === 'pdf' ? 'PDF' : 'Excel'} lista para ${exportResult.periodo}.`,
+      })
+    } catch {
+      setExportStatus({
+        tone: 'error',
+        message: DASHBOARD_EXPORT_ERROR_MESSAGE,
+      })
     } finally {
       setExportFormat(null)
     }
@@ -443,10 +471,10 @@ export default function DashboardPage() {
       .then((metrics) => {
         setState({ kind: 'ready', metrics })
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         setState({
           kind: 'error',
-          message: error instanceof Error ? error.message : 'No fue posible cargar las metricas.',
+          message: DASHBOARD_LOAD_ERROR_MESSAGE,
         })
       })
   }, [selectedPeriod])
@@ -571,7 +599,7 @@ export default function DashboardPage() {
             metrics={state.metrics}
             onExport={handleExport}
             exportFormat={exportFormat}
-            exportMessage={exportMessage}
+            exportStatus={exportStatus}
             period={selectedPeriod}
             onPeriodChange={setSelectedPeriod}
             theme={theme}

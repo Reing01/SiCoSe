@@ -1,20 +1,21 @@
 import { useEffect } from 'react'
 import LoginForm from '../../features/auth/LoginForm'
 import { login } from '../../features/auth/auth.api'
+import { LOGIN_COPY } from '../../features/auth/auth.copy'
 import { getHomeRouteForRole, persistAuthSession, readAuthSession } from '../../features/auth/auth.session'
 import type { LoginRequest } from '../../features/auth/auth.types'
 import RoutePills from '../../components/RoutePills'
 
 const highlights = [
   {
-    title: 'Acceso por roles',
+    title: 'Acceso institucional',
     description:
-      'El panel organiza el acceso para cuentas de tesorería, administración y secretaría.',
+      'El panel esta pensado para que las personas autorizadas trabajen con claridad.',
   },
   {
     title: 'Acceso seguro',
     description:
-      'La pantalla mantiene un flujo claro, consistente y listo para integrarse con el backend.',
+      'La pantalla mantiene una experiencia clara, consistente y enfocada en el usuario.',
   },
   {
     title: 'Experiencia mobile-first',
@@ -23,7 +24,7 @@ const highlights = [
   },
 ]
 
-const signals = ['JWT', 'RBAC', 'Auditoría', 'Responsive']
+const signals = ['Acceso protegido', 'Gestion clara', 'Soporte', 'Responsive']
 
 export default function LoginPage() {
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function LoginPage() {
     persistAuthSession(response.data)
 
     return {
-      message: 'Sesion iniciada correctamente.',
+      message: LOGIN_COPY.success,
       redirectTo: getHomeRouteForRole(response.data.user.rol),
     }
   }
@@ -84,8 +85,8 @@ export default function LoginPage() {
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
                 La pantalla de login concentra una experiencia clara para
-                entrar al sistema y preparar el salto a los módulos protegidos
-                sin sacrificar legibilidad ni enfoque.
+                entrar al sistema y continuar hacia el panel de trabajo sin
+                sacrificar legibilidad ni enfoque.
               </p>
             </div>
           </div>
