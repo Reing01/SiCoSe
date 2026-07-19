@@ -191,8 +191,6 @@ function RevenueLineChart({ metrics, theme }: { metrics: DashboardMetrics; theme
 }
 
 function buildDownloadUrls(sourceUrl: string) {
-  const urls = [sourceUrl]
-
   try {
     const parsedUrl = new URL(sourceUrl)
 
@@ -200,13 +198,16 @@ function buildDownloadUrls(sourceUrl: string) {
       parsedUrl.hostname.endsWith('.supabase.co') &&
       parsedUrl.pathname.startsWith('/storage/v1/object/')
     ) {
-      urls.push(`/api/storage-download?url=${encodeURIComponent(sourceUrl)}`)
+      return [
+        `/api/storage-download?url=${encodeURIComponent(sourceUrl)}`,
+        sourceUrl,
+      ]
     }
   } catch {
     // Si la URL no es absoluta, dejamos que el intento original falle de forma controlada.
   }
 
-  return urls
+  return [sourceUrl]
 }
 
 async function fetchGeneratedFile(sourceUrl: string) {
