@@ -17,6 +17,7 @@ export type CitizenFormValues = {
 
 export type CitizenRecord = CitizenFormValues & {
   id: string
+  activo: boolean
   createdAt: string
   updatedAt: string
 }
@@ -24,3 +25,10 @@ export type CitizenRecord = CitizenFormValues & {
 export type CitizenFieldErrors = Partial<Record<CitizenFieldName, string>>
 
 export type CitizenFilter = 'all' | 'complete' | 'attention'
+
+export type CitizenPageMetadata = {
+  total: number
+  pagina: number
+  limite: number
+  totalPaginas: number
+}

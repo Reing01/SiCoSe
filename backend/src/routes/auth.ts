@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import type { Response } from 'express'
+import type { Request, Response } from 'express'
 import { Router } from 'express'
 import { z } from 'zod'
 import { env } from '../config/env.js'
@@ -16,6 +16,7 @@ import {
   loginRateLimit,
   resetLoginEmailAttempts,
 } from '../middleware/rate-limit.js'
+import { auditLogger } from '../services/audit.js'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -51,6 +52,10 @@ function clearRefreshCookie(response: Response) {
     sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
     path: '/api/auth',
   })
+}
+
+function getRequestIp(request: Request) {
+  return request.ip || request.socket.remoteAddress || 'unknown'
 }
 
 export const authRouter = Router()
@@ -213,11 +218,13 @@ authRouter.post('/refresh', async (request, response) => {
 authRouter.post('/logout', async (request, response, next) => {
   const token = getBearerToken(request.headers.authorization)
   const refreshToken = request.cookies?.[REFRESH_TOKEN_COOKIE]
+  let logoutUserId = ''
 
   try {
     if (token) {
       try {
         const payload = await verifyAuthToken(token)
+        logoutUserId = payload.sub
         await blacklistToken(token, payload.exp)
       } catch {
         // Un access token vencido no debe impedir revocar el refresh token.
@@ -229,6 +236,23 @@ authRouter.post('/logout', async (request, response, next) => {
     }
 
     clearRefreshCookie(response)
+
+    if (logoutUserId) {
+      try {
+        await auditLogger(prisma, {
+          usuarioId: logoutUserId,
+          accion: 'LOGOUT',
+          entidad: 'Usuario',
+          entidadId: logoutUserId,
+          ip: getRequestIp(request),
+          detalles: {
+            refreshTokenRevocado: Boolean(refreshToken),
+          },
+        })
+      } catch {
+        // La auditoria no debe bloquear el cierre de sesion del usuario.
+      }
+    }
 
     return response.json({
       message: 'Logout successful',

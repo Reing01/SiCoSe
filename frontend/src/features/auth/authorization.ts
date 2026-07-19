@@ -1,16 +1,16 @@
 import type { AuthRole, AuthSession } from "./auth.types";
 
-export const APP_ROUTES = ["/", "/login", "/dashboard", "/ciudadanos"] as const;
+export const APP_ROUTES = ["/", "/login", "/dashboard", "/ciudadanos", "/pagos"] as const;
 
 export type AppRoute = (typeof APP_ROUTES)[number];
-export type ProtectedAppRoute = Extract<AppRoute, "/dashboard" | "/ciudadanos">;
+export type ProtectedAppRoute = Extract<AppRoute, "/dashboard" | "/ciudadanos" | "/pagos">;
 
 export const ROLE_ROUTE_PERMISSIONS: Record<
   AuthRole,
   readonly ProtectedAppRoute[]
 > = {
-  admin: ["/dashboard", "/ciudadanos"],
-  tesorero: ["/dashboard"],
+  admin: ["/dashboard", "/ciudadanos", "/pagos"],
+  tesorero: ["/dashboard", "/pagos"],
   secretaria: ["/ciudadanos"],
 };
 

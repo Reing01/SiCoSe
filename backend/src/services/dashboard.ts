@@ -13,11 +13,17 @@ type RedisCache = {
 export type DashboardMetrics = {
   periodo: string
   totalRecaudadoMes: number
+  totalPendienteMes: number
   porcentajeCobertura: number
   numeroMorosos: number
   comparativoMesAnterior: number
   totalAdeudosMes: number
+  adeudosPagadosMes: number
   pagosRegistradosMes: number
+  historicoRecaudacion: Array<{
+    periodo: string
+    total: number
+  }>
   variacion: {
     direccion: 'mejora' | 'empeora' | 'estable'
     color: 'verde' | 'rojo' | 'amarillo'
@@ -127,8 +133,10 @@ async function calculateDashboardMetrics(
     previousPayments,
     totalDebts,
     paidDebts,
+    pendingDebts,
     debtors,
     paymentsRegistered,
+    historicalPayments,
   ] = await Promise.all([
     client.pago.aggregate({
       where: {
@@ -157,6 +165,18 @@ async function calculateDashboardMetrics(
         OR: [{ pagado: true }, { estado: 'pagado' }],
       },
     }),
+    client.adeudo.aggregate({
+      where: {
+        periodo,
+        pagado: false,
+        NOT: {
+          estado: 'pagado',
+        },
+      },
+      _sum: {
+        monto: true,
+      },
+    }),
     client.adeudo.groupBy({
       by: ['ciudadanoId'],
       where: {
@@ -175,6 +195,23 @@ async function calculateDashboardMetrics(
         },
       },
     }),
+    Promise.all(
+      Array.from({ length: 6 }, (_, index) => {
+        const monthDate = new Date(date)
+        monthDate.setMonth(monthDate.getMonth() - (5 - index))
+        const range = getMonthRange(monthDate)
+
+        return client.pago.aggregate({
+          where: {
+            fecha: {
+              gte: range.start,
+              lt: range.end,
+            },
+          },
+          _sum: { monto: true },
+        })
+      }),
+    ),
   ])
 
   const totalRecaudadoMes = roundCurrency(currentPayments._sum.monto ?? 0)
@@ -184,12 +221,23 @@ async function calculateDashboardMetrics(
   return {
     periodo,
     totalRecaudadoMes,
+    totalPendienteMes: roundCurrency(pendingDebts._sum.monto ?? 0),
     porcentajeCobertura:
       totalDebts === 0 ? 0 : roundPercent((paidDebts / totalDebts) * 100),
     numeroMorosos: debtors.length,
     comparativoMesAnterior: variation.comparativoMesAnterior,
     totalAdeudosMes: totalDebts,
+    adeudosPagadosMes: paidDebts,
     pagosRegistradosMes: paymentsRegistered,
+    historicoRecaudacion: historicalPayments.map((payment, index) => {
+      const monthDate = new Date(date)
+      monthDate.setMonth(monthDate.getMonth() - (5 - index))
+
+      return {
+        periodo: buildPeriod(monthDate),
+        total: roundCurrency(payment._sum.monto ?? 0),
+      }
+    }),
     variacion: {
       direccion: variation.direccion,
       color: variation.color,

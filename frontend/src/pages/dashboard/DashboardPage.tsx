@@ -3,6 +3,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 import RoutePills from '../../components/RoutePills'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
+import { Input } from '../../components/ui/input'
 import { clearAuthSession, readAuthSession } from '../../features/auth/auth.session'
 import { logout } from '../../features/auth/auth.api'
 import { exportMonthlyReport, fetchDashboardMetrics } from '../../features/dashboard/dashboard.api'
@@ -85,9 +86,16 @@ function buildCards(metrics: DashboardMetrics): KpiCard[] {
     {
       label: 'Cobertura',
       value: formatPercent(metrics.porcentajeCobertura),
-      detail: `${metrics.totalAdeudosMes} adeudos del periodo`,
+      detail: `${metrics.adeudosPagadosMes} de ${metrics.totalAdeudosMes} adeudos`,
       tone: getCoverageTone(metrics.porcentajeCobertura),
       icon: '%',
+    },
+    {
+      label: 'Pendiente del mes',
+      value: formatCurrency(metrics.totalPendienteMes),
+      detail: 'Monto pendiente por cobrar',
+      tone: metrics.totalPendienteMes === 0 ? 'green' : 'red',
+      icon: 'P',
     },
     {
       label: 'Morosos',
@@ -95,6 +103,13 @@ function buildCards(metrics: DashboardMetrics): KpiCard[] {
       detail: 'Ciudadanos con adeudo pendiente',
       tone: getDebtorTone(metrics.numeroMorosos),
       icon: '!',
+    },
+    {
+      label: 'Pagos capturados',
+      value: String(metrics.pagosRegistradosMes),
+      detail: `Periodo ${metrics.periodo}`,
+      tone: metrics.pagosRegistradosMes > 0 ? 'blue' : 'yellow',
+      icon: '#',
     },
     {
       label: 'Vs mes anterior',
@@ -119,6 +134,39 @@ function TrendArrow({ direction }: { direction: DashboardMetrics['variacion']['d
       )}
       aria-hidden="true"
     />
+  )
+}
+
+function RevenueLineChart({ metrics, theme }: { metrics: DashboardMetrics; theme: 'light' | 'dark' }) {
+  const values = metrics.historicoRecaudacion
+  const max = Math.max(...values.map((point) => point.total), 1)
+  const points = values.map((point, index) => {
+    const x = values.length === 1 ? 50 : (index / (values.length - 1)) * 100
+    const y = 90 - (point.total / max) * 75
+    return { ...point, x, y }
+  })
+  const polyline = points.map((point) => `${point.x},${point.y}`).join(' ')
+
+  return (
+    <Card className={cn('shadow-sm', theme === 'dark' ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200/80 bg-white/95')}>
+      <CardHeader>
+        <CardTitle>Recaudacion historica</CardTitle>
+        <CardDescription>Ultimos 6 meses registrados.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <svg viewBox="0 0 100 100" className="h-64 w-full overflow-visible" role="img" aria-label="Grafica de recaudacion de los ultimos 6 meses">
+          <polyline points={polyline} fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          {points.map((point) => (
+            <g key={point.periodo}>
+              <circle cx={point.x} cy={point.y} r="2.5" className="fill-[#0f3042] dark:fill-sky-300" />
+              <text x={point.x} y="98" textAnchor="middle" className="fill-slate-500 text-[4px]">
+                {point.periodo.slice(5)}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -185,12 +233,16 @@ function DashboardContent({
   onExport,
   exportFormat,
   exportMessage,
+  period,
+  onPeriodChange,
   theme,
 }: {
   metrics: DashboardMetrics
   onExport: (format: ExportFormat) => void
   exportFormat: ExportFormat | null
   exportMessage: string | null
+  period: string
+  onPeriodChange: (period: string) => void
   theme: 'light' | 'dark'
 }) {
   const cards = useMemo(() => buildCards(metrics), [metrics])
@@ -224,11 +276,18 @@ function DashboardContent({
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <Input
+              type="month"
+              value={period}
+              onChange={(event) => onPeriodChange(event.target.value)}
+              className="w-44"
+              aria-label="Filtrar periodo"
+            />
             <Button type="button" variant="outline" onClick={() => onExport('pdf')} disabled={exportFormat !== null}>
-              {exportFormat === 'pdf' ? 'Generando PDF...' : 'Exportar PDF'}
+              {exportFormat === 'pdf' ? 'Generando documento...' : 'Exportar PDF'}
             </Button>
             <Button type="button" variant="secondary" onClick={() => onExport('xlsx')} disabled={exportFormat !== null}>
-              {exportFormat === 'xlsx' ? 'Generando Excel...' : 'Exportar Excel'}
+              {exportFormat === 'xlsx' ? 'Generando documento...' : 'Exportar Excel'}
             </Button>
           </div>
         </CardContent>
@@ -239,6 +298,8 @@ function DashboardContent({
           <MetricCard key={card.label} card={card} theme={theme} />
         ))}
       </div>
+
+      <RevenueLineChart metrics={metrics} theme={theme} />
 
       <Card
         className={cn(
@@ -308,6 +369,10 @@ export default function DashboardPage() {
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
   const [exportFormat, setExportFormat] = useState<ExportFormat | null>(null)
   const [exportMessage, setExportMessage] = useState<string | null>(null)
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  })
   const { theme } = useTheme()
 
   const handleLogout = async () => {
@@ -338,14 +403,21 @@ export default function DashboardPage() {
 
     try {
       const exportResult = await exportMonthlyReport(session.token, state.metrics.periodo, format)
+      const fileResponse = await fetch(exportResult.archivo_url)
+
+      if (!fileResponse.ok) {
+        throw new Error('No fue posible descargar el archivo generado.')
+      }
+
+      const blob = await fileResponse.blob()
+      const blobUrl = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
-      anchor.href = exportResult.archivo_url
+      anchor.href = blobUrl
       anchor.download = exportResult.archivo_path.split('/').pop() ?? `reporte-${format}`
-      anchor.target = '_blank'
-      anchor.rel = 'noreferrer'
       document.body.appendChild(anchor)
       anchor.click()
       anchor.remove()
+      URL.revokeObjectURL(blobUrl)
       setExportMessage(`Exportación ${format === 'pdf' ? 'PDF' : 'Excel'} lista para ${exportResult.periodo}.`)
     } catch (error) {
       setExportMessage(error instanceof Error ? error.message : 'No fue posible generar la exportación.')
@@ -365,7 +437,9 @@ export default function DashboardPage() {
       return
     }
 
-    fetchDashboardMetrics(session.token)
+    setState({ kind: 'loading' })
+
+    fetchDashboardMetrics(session.token, selectedPeriod)
       .then((metrics) => {
         setState({ kind: 'ready', metrics })
       })
@@ -375,7 +449,7 @@ export default function DashboardPage() {
           message: error instanceof Error ? error.message : 'No fue posible cargar las metricas.',
         })
       })
-  }, [])
+  }, [selectedPeriod])
 
   return (
     <main
@@ -498,6 +572,8 @@ export default function DashboardPage() {
             onExport={handleExport}
             exportFormat={exportFormat}
             exportMessage={exportMessage}
+            period={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
             theme={theme}
           />
         ) : null}

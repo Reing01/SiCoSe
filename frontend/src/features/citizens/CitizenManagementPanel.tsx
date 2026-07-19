@@ -17,7 +17,7 @@ import { readAuthSession } from '../auth/auth.session'
 import {
   createCitizen,
   deactivateCitizen,
-  fetchCitizens,
+  fetchCitizenPage,
   updateCitizen,
 } from './citizen.api'
 import type {
@@ -25,6 +25,7 @@ import type {
   CitizenFieldName,
   CitizenFilter,
   CitizenFormValues,
+  CitizenPageMetadata,
   CitizenRecord,
 } from './citizen.types'
 
@@ -33,7 +34,7 @@ type SubmissionState =
   | { kind: 'success'; message: string }
   | { kind: 'error'; message: string }
 
-type StatusTone = 'success' | 'warning'
+type StatusTone = 'success' | 'warning' | 'muted'
 
 type SummaryCardProps = {
   label: string
@@ -71,6 +72,8 @@ const FILTER_OPTIONS: Array<{
   { value: 'complete', label: 'Completos' },
   { value: 'attention', label: 'Requieren atencion' },
 ]
+
+const DEFAULT_PAGE_SIZE = 10
 
 function createEmptyFormValues(): CitizenFormValues {
   return { ...DEFAULT_FORM_VALUES }
@@ -147,6 +150,14 @@ function getCitizenStatus(record: CitizenRecord): {
   label: string
   detail: string
 } {
+  if (!record.activo) {
+    return {
+      tone: 'muted',
+      label: 'Inactivo',
+      detail: 'Baja logica aplicada',
+    }
+  }
+
   if (isCitizenComplete(record)) {
     return {
       tone: 'success',
@@ -162,24 +173,13 @@ function getCitizenStatus(record: CitizenRecord): {
   }
 }
 
-function matchesSearch(record: CitizenRecord, searchTerm: string) {
-  if (!searchTerm) {
-    return true
+function createEmptyMetadata(): CitizenPageMetadata {
+  return {
+    total: 0,
+    pagina: 1,
+    limite: DEFAULT_PAGE_SIZE,
+    totalPaginas: 1,
   }
-
-  const searchableValues = [
-    record.id,
-    record.nombre,
-    record.apellido,
-    record.email,
-    record.telefono,
-    record.direccion,
-    record.claveCatastral,
-  ]
-
-  return searchableValues.some((value) =>
-    value.toLowerCase().includes(searchTerm),
-  )
 }
 
 function SummaryCard({ label, value, detail }: SummaryCardProps) {
@@ -214,6 +214,9 @@ export default function CitizenManagementPanel() {
   const { addToast } = useToast()
 
   const [citizens, setCitizens] = useState<CitizenRecord[]>([])
+  const [metadata, setMetadata] = useState<CitizenPageMetadata>(
+    createEmptyMetadata,
+  )
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -222,6 +225,8 @@ export default function CitizenManagementPanel() {
   )
   const [reloadKey, setReloadKey] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
   const [activeFilter, setActiveFilter] = useState<CitizenFilter>('all')
   const [selectedCitizenId, setSelectedCitizenId] = useState<string | null>(
     null,
@@ -232,6 +237,15 @@ export default function CitizenManagementPanel() {
   const [submissionState, setSubmissionState] = useState<SubmissionState>({
     kind: 'idle',
   })
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm.trim())
+      setCurrentPage(1)
+    }, 300)
+
+    return () => window.clearTimeout(timer)
+  }, [searchTerm])
 
   useEffect(() => {
     const session = readAuthSession()
@@ -246,10 +260,16 @@ export default function CitizenManagementPanel() {
     setIsLoading(true)
     setLoadError(null)
 
-    fetchCitizens(session.token)
-      .then((records) => {
+    fetchCitizenPage(session.token, {
+      pagina: currentPage,
+      limite: DEFAULT_PAGE_SIZE,
+      nombre: debouncedSearchTerm,
+      incluirInactivos: true,
+    })
+      .then(({ records, metadata: nextMetadata }) => {
         if (!cancelled) {
           setCitizens(records)
+          setMetadata(nextMetadata)
         }
       })
       .catch((error: unknown) => {
@@ -270,7 +290,7 @@ export default function CitizenManagementPanel() {
     return () => {
       cancelled = true
     }
-  }, [reloadKey])
+  }, [currentPage, debouncedSearchTerm, reloadKey])
 
   const selectedCitizen =
     selectedCitizenId == null
@@ -282,20 +302,16 @@ export default function CitizenManagementPanel() {
     const status = isCitizenComplete(record)
     const matchesFilter =
       activeFilter === 'all' ||
-      (activeFilter === 'complete' && status) ||
-      (activeFilter === 'attention' && !status)
+      (activeFilter === 'complete' && status && record.activo) ||
+      (activeFilter === 'attention' && !status && record.activo)
 
-    return (
-      matchesFilter && matchesSearch(record, searchTerm.trim().toLowerCase())
-    )
+    return matchesFilter
   })
 
-  const completeCitizens = citizens.filter(isCitizenComplete)
-  const attentionCitizens = citizens.length - completeCitizens.length
-  const citizensWithPhone = citizens.filter(
-    (record) => record.telefono.trim().length > 0,
-  ).length
-
+  const activeCitizens = citizens.filter((record) => record.activo)
+  const inactiveCitizens = citizens.length - activeCitizens.length
+  const completeCitizens = activeCitizens.filter(isCitizenComplete)
+  const attentionCitizens = activeCitizens.length - completeCitizens.length
   const hasVisibleErrors = Boolean(
     (touched.nombre && fieldErrors.nombre) ||
     (touched.apellido && fieldErrors.apellido) ||
@@ -372,7 +388,9 @@ export default function CitizenManagementPanel() {
     try {
       await deactivateCitizen(session.token, record.id)
       setCitizens((current) =>
-        current.filter((citizen) => citizen.id !== record.id),
+        current.map((citizen) =>
+          citizen.id === record.id ? { ...citizen, activo: false } : citizen,
+        ),
       )
 
       const message = 'Ciudadano eliminado correctamente.'
@@ -493,6 +511,8 @@ export default function CitizenManagementPanel() {
       'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200',
     warning:
       'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-200',
+    muted:
+      'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
   }
 
   return (
@@ -500,7 +520,7 @@ export default function CitizenManagementPanel() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           label="Total ciudadanos"
-          value={String(citizens.length)}
+          value={String(metadata.total)}
           detail="Padrón real"
         />
         <SummaryCard
@@ -514,9 +534,9 @@ export default function CitizenManagementPanel() {
           detail="Faltan datos"
         />
         <SummaryCard
-          label="Con telefono"
-          value={String(citizensWithPhone)}
-          detail="Contacto directo"
+          label="Inactivos"
+          value={String(inactiveCitizens)}
+          detail="Baja logica"
         />
       </div>
 
@@ -582,8 +602,14 @@ export default function CitizenManagementPanel() {
 
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
           <span>
-            Mostrando {visibleCitizens.length} de {citizens.length} registros
+            Mostrando {visibleCitizens.length} de {metadata.total} registros
           </span>
+          <span>
+            Pagina {metadata.pagina} de {Math.max(metadata.totalPaginas, 1)}
+          </span>
+          {debouncedSearchTerm ? (
+            <span>Busqueda: {debouncedSearchTerm}</span>
+          ) : null}
           <span className="hidden h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700 sm:inline-flex" />
         </div>
       </div>
@@ -668,6 +694,8 @@ export default function CitizenManagementPanel() {
                           className={cn(
                             'border-b border-slate-100 last:border-b-0 dark:border-slate-800',
                             isSelected && 'bg-[#f97316]/5 dark:bg-[#f97316]/10',
+                            !record.activo &&
+                              'bg-slate-50 text-slate-500 opacity-80 dark:bg-slate-950/60 dark:text-slate-400',
                           )}
                         >
                           <td className="px-5 py-4 align-top">
@@ -679,8 +707,9 @@ export default function CitizenManagementPanel() {
                             </p>
                             <button
                               type="button"
-                              className="mt-2 text-xs font-semibold text-[#0f3042] transition-colors hover:text-[#f97316] dark:text-sky-300 dark:hover:text-orange-300"
+                              className="mt-2 text-xs font-semibold text-[#0f3042] transition-colors hover:text-[#f97316] disabled:cursor-not-allowed disabled:text-slate-400 dark:text-sky-300 dark:hover:text-orange-300"
                               onClick={() => handleSelectCitizen(record)}
+                              disabled={!record.activo}
                             >
                               Editar registro
                             </button>
@@ -720,6 +749,7 @@ export default function CitizenManagementPanel() {
                                 type="button"
                                 variant="outline"
                                 size="sm"
+                                disabled={!record.activo}
                                 onClick={() => handleSelectCitizen(record)}
                                 aria-label={`Editar ${record.nombre} ${record.apellido}`}
                               >
@@ -729,13 +759,15 @@ export default function CitizenManagementPanel() {
                                 type="button"
                                 variant="destructive"
                                 size="sm"
-                                disabled={deletingCitizenId === record.id}
+                                disabled={deletingCitizenId === record.id || !record.activo}
                                 onClick={() => handleDeleteCitizen(record)}
                                 aria-label={`Eliminar ${record.nombre} ${record.apellido}`}
                               >
-                                {deletingCitizenId === record.id
-                                  ? 'Eliminando...'
-                                  : 'Eliminar'}
+                                {!record.activo
+                                  ? 'Inactivo'
+                                  : deletingCitizenId === record.id
+                                    ? 'Eliminando...'
+                                    : 'Eliminar'}
                               </Button>
                             </div>
                           </td>
@@ -757,6 +789,40 @@ export default function CitizenManagementPanel() {
               </table>
             </div>
           </CardContent>
+          <CardFooter className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {metadata.total === 0
+                ? 'No hay paginas disponibles'
+                : `Registros ${(metadata.pagina - 1) * metadata.limite + 1}-${Math.min(
+                    metadata.pagina * metadata.limite,
+                    metadata.total,
+                  )}`}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoading || metadata.pagina <= 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              >
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoading || metadata.pagina >= metadata.totalPaginas}
+                onClick={() =>
+                  setCurrentPage((page) =>
+                    Math.min(metadata.totalPaginas, page + 1),
+                  )
+                }
+              >
+                Siguiente
+              </Button>
+            </div>
+          </CardFooter>
         </Card>
 
         <Card className="overflow-hidden border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-900/90">

@@ -66,11 +66,21 @@ describe('App routing', () => {
           data: {
             periodo: '2026-06',
             totalRecaudadoMes: 1250,
+            totalPendienteMes: 250,
             porcentajeCobertura: 80,
             numeroMorosos: 2,
             comparativoMesAnterior: 25,
             totalAdeudosMes: 10,
+            adeudosPagadosMes: 8,
             pagosRegistradosMes: 7,
+            historicoRecaudacion: [
+              { periodo: '2026-01', total: 700 },
+              { periodo: '2026-02', total: 800 },
+              { periodo: '2026-03', total: 900 },
+              { periodo: '2026-04', total: 1000 },
+              { periodo: '2026-05', total: 1000 },
+              { periodo: '2026-06', total: 1250 },
+            ],
             variacion: {
               direccion: 'mejora',
               color: 'verde',
@@ -168,11 +178,21 @@ describe('App routing', () => {
           data: {
             periodo: '2026-06',
             totalRecaudadoMes: 1250,
+            totalPendienteMes: 250,
             porcentajeCobertura: 80,
             numeroMorosos: 2,
             comparativoMesAnterior: 25,
             totalAdeudosMes: 10,
+            adeudosPagadosMes: 8,
             pagosRegistradosMes: 7,
+            historicoRecaudacion: [
+              { periodo: '2026-01', total: 700 },
+              { periodo: '2026-02', total: 800 },
+              { periodo: '2026-03', total: 900 },
+              { periodo: '2026-04', total: 1000 },
+              { periodo: '2026-05', total: 1000 },
+              { periodo: '2026-06', total: 1250 },
+            ],
             variacion: {
               direccion: 'mejora',
               color: 'verde',
