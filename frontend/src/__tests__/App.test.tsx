@@ -198,6 +198,109 @@ describe('App routing', () => {
     expect(screen.queryByText(/private export diagnostic/i)).not.toBeInTheDocument()
   })
 
+  it('uses the local storage proxy before private Supabase report URLs', async () => {
+    window.history.pushState({}, '', '/dashboard')
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        id: 'user-3',
+        email: 'tesorero@sicose.test',
+        nombre: 'Tesoreria',
+        rol: 'tesorero',
+      }),
+    )
+
+    const privateReportUrl =
+      'https://wruzbnpaiyvmaldkdcmf.supabase.co/storage/v1/object/comprobantes/reportes/2026-07/reporte-mensual.xlsx'
+    const fetchCalls: string[] = []
+
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:reporte')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    vi.spyOn(window, 'fetch').mockImplementation(async (input) => {
+      const url = String(input)
+      fetchCalls.push(url)
+
+      if (url.includes('dashboard/metricas')) {
+        return Response.json({
+          data: {
+            periodo: '2026-07',
+            totalRecaudadoMes: 1250,
+            totalPendienteMes: 250,
+            porcentajeCobertura: 80,
+            numeroMorosos: 2,
+            comparativoMesAnterior: 25,
+            totalAdeudosMes: 10,
+            adeudosPagadosMes: 8,
+            pagosRegistradosMes: 7,
+            historicoRecaudacion: [
+              { periodo: '2026-02', total: 700 },
+              { periodo: '2026-03', total: 800 },
+              { periodo: '2026-04', total: 900 },
+              { periodo: '2026-05', total: 1000 },
+              { periodo: '2026-06', total: 1000 },
+              { periodo: '2026-07', total: 1250 },
+            ],
+            variacion: {
+              direccion: 'mejora',
+              color: 'verde',
+              montoMesAnterior: 1000,
+            },
+            ultimaActualizacion: '2026-07-19T12:00:00.000Z',
+            cache: {
+              hit: true,
+              ttlSegundos: 300,
+            },
+          },
+        })
+      }
+
+      if (url.includes('reportes/exportar')) {
+        return Response.json(
+          {
+            data: {
+              periodo: '2026-07',
+              formato: 'xlsx',
+              archivo_url: privateReportUrl,
+              archivo_path: 'reportes/2026-07/reporte-mensual.xlsx',
+            },
+          },
+          { status: 201 },
+        )
+      }
+
+      if (url.startsWith('/api/storage-download?url=')) {
+        return new Response('xlsx-fixture', {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
+        })
+      }
+
+      return new Response(null, { status: 400 })
+    })
+
+    render(<App />)
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: /exportar excel/i }),
+    )
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /exportaci[oó]n excel lista/i,
+    )
+
+    const directPrivateCalls = fetchCalls.filter((url) =>
+      url.startsWith(privateReportUrl),
+    )
+    expect(directPrivateCalls).toHaveLength(0)
+    expect(fetchCalls).toContain(
+      `/api/storage-download?url=${encodeURIComponent(privateReportUrl)}`,
+    )
+  })
+
   it('renders the citizen management page for a secretary session', async () => {
     window.history.pushState({}, '', '/ciudadanos')
     window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
