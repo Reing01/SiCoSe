@@ -403,14 +403,21 @@ export default function DashboardPage() {
 
     try {
       const exportResult = await exportMonthlyReport(session.token, state.metrics.periodo, format)
+      const fileResponse = await fetch(exportResult.archivo_url)
+
+      if (!fileResponse.ok) {
+        throw new Error('No fue posible descargar el archivo generado.')
+      }
+
+      const blob = await fileResponse.blob()
+      const blobUrl = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
-      anchor.href = exportResult.archivo_url
+      anchor.href = blobUrl
       anchor.download = exportResult.archivo_path.split('/').pop() ?? `reporte-${format}`
-      anchor.target = '_blank'
-      anchor.rel = 'noreferrer'
       document.body.appendChild(anchor)
       anchor.click()
       anchor.remove()
+      URL.revokeObjectURL(blobUrl)
       setExportMessage(`Exportación ${format === 'pdf' ? 'PDF' : 'Excel'} lista para ${exportResult.periodo}.`)
     } catch (error) {
       setExportMessage(error instanceof Error ? error.message : 'No fue posible generar la exportación.')
