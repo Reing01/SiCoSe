@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { LOGIN_COPY } from '../../../features/auth/auth.copy'
 import { authStorageKeys } from '../../../features/auth/auth.session'
 import LoginPage from '../LoginPage'
 
@@ -31,11 +32,11 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText(/correo institucional/i)).toBeInTheDocument()
   })
 
-  it('submits credentials to the backend and stores the auth session', async () => {
+  it('submits credentials and stores the auth session', async () => {
     loginMock.mockResolvedValueOnce({
       message: 'Login successful',
       data: {
-        token: 'jwt-token-123',
+        token: 'session-fixture-123',
         user: {
           email: 'admin@sicose.test',
           rol: 'admin',
@@ -62,13 +63,13 @@ describe('LoginPage', () => {
       })
     })
 
-    expect(sessionStorage.getItem(authStorageKeys.token)).toBe('jwt-token-123')
+    expect(sessionStorage.getItem(authStorageKeys.token)).toBe('session-fixture-123')
     expect(JSON.parse(sessionStorage.getItem(authStorageKeys.user) ?? '{}')).toEqual({
       email: 'admin@sicose.test',
       rol: 'admin',
     })
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /sesion iniciada correctamente/i,
+      LOGIN_COPY.success,
     )
   })
 })

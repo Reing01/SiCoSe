@@ -24,7 +24,7 @@ backend/railway.json
 Build command:
 
 ```bash
-npm install && npm run build
+npm ci && npm run build
 ```
 
 Start command:

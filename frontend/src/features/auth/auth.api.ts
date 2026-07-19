@@ -25,7 +25,7 @@ export async function getCurrentUser(token: string): Promise<AuthSession> {
   })
 
   if (!isKnownAuthRole(response.data.rol)) {
-    throw new Error('El backend devolvió un rol de usuario no soportado.')
+    throw new Error('No fue posible confirmar la sesion.')
   }
 
   return {

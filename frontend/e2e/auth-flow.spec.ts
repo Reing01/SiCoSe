@@ -18,7 +18,7 @@ test('login, dashboard and export flow stays connected', async ({ page }) => {
     })
   })
 
-  await page.route('**/api/dashboard/metricas', async (route) => {
+  await page.route('**/api/dashboard/metricas**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -26,11 +26,21 @@ test('login, dashboard and export flow stays connected', async ({ page }) => {
         data: {
           periodo: '2026-06',
           totalRecaudadoMes: 18450.5,
+          totalPendienteMes: 2950,
           porcentajeCobertura: 86.2,
           numeroMorosos: 4,
           comparativoMesAnterior: 12.5,
           totalAdeudosMes: 28,
+          adeudosPagadosMes: 19,
           pagosRegistradosMes: 19,
+          historicoRecaudacion: [
+            { periodo: '2026-01', total: 12600 },
+            { periodo: '2026-02', total: 13250 },
+            { periodo: '2026-03', total: 14100 },
+            { periodo: '2026-04', total: 15750 },
+            { periodo: '2026-05', total: 16384.2 },
+            { periodo: '2026-06', total: 18450.5 },
+          ],
           variacion: {
             direccion: 'mejora',
             color: 'verde',
@@ -62,6 +72,20 @@ test('login, dashboard and export flow stays connected', async ({ page }) => {
     })
   })
 
+  await page.route('https://example.test/reportes/reporte-mensual-2026-06.xlsx', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      body: 'xlsx-fixture',
+    })
+  })
+
+  await page.route('**/api/auth/logout', async (route) => {
+    await route.fulfill({
+      status: 204,
+    })
+  })
+
   await page.goto('/login')
   await expect(
     page.getByRole('heading', {
@@ -77,7 +101,7 @@ test('login, dashboard and export flow stays connected', async ({ page }) => {
   await expect(page.getByText('Situacion financiera del mes')).toBeVisible()
 
   await page.getByRole('button', { name: 'Exportar Excel' }).click()
-  await expect(page.getByText(/Exportaci/)).toBeVisible()
+  await expect(page.getByText(/Exportaci[oó]n Excel lista/)).toBeVisible()
 
   await page.getByRole('button', { name: /Cerrar sesi/ }).click()
   await expect(page).toHaveURL(/\/login$/)

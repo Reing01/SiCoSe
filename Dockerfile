@@ -2,8 +2,8 @@ FROM node:20-bookworm-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
-COPY frontend/package.json ./
-RUN npm install
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
 
 COPY frontend/ ./
 RUN npm run build
@@ -22,8 +22,8 @@ ENV REDIS_URL=redis://localhost:6379
 ENV JWT_SECRET=placeholder-placeholder-placeholder
 ENV CORS_ORIGIN=https://example.com
 
-COPY backend/package.json ./
-RUN npm install
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci
 
 COPY backend/ ./
 RUN npm run prisma:generate

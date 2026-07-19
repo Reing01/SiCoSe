@@ -13,6 +13,7 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { useToast } from '../../components/ui/toast'
 import { cn } from '../../lib/utils'
+import { LOGIN_COPY, getPublicLoginErrorMessage } from './auth.copy'
 import type { LoginRequest } from './auth.types'
 
 type LoginFieldName = keyof LoginRequest
@@ -48,15 +49,15 @@ export function validateLoginForm(values: LoginRequest): LoginFieldErrors {
   const password = values.password
 
   if (!email) {
-    errors.email = 'Ingresa tu correo institucional.'
+    errors.email = LOGIN_COPY.fieldErrors.emailRequired
   } else if (!EMAIL_PATTERN.test(email)) {
-    errors.email = 'Ingresa un correo valido.'
+    errors.email = LOGIN_COPY.fieldErrors.emailInvalid
   }
 
   if (!password) {
-    errors.password = 'Ingresa tu contraseña.'
+    errors.password = LOGIN_COPY.fieldErrors.passwordRequired
   } else if (password.length < PASSWORD_MIN_LENGTH) {
-    errors.password = `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres.`
+    errors.password = LOGIN_COPY.fieldErrors.passwordInvalid
   }
 
   return errors
@@ -141,12 +142,12 @@ export default function LoginForm({
     if (Object.keys(nextErrors).length > 0) {
       setSubmissionState({
         kind: 'error',
-        message: 'Corrige los campos marcados para continuar.',
+        message: LOGIN_COPY.invalidFields,
       })
       addToast({
         tone: 'warning',
-        title: 'Campos incompletos',
-        message: 'Revisa el correo y la contrasena antes de continuar.',
+        title: LOGIN_COPY.incompleteTitle,
+        message: LOGIN_COPY.invalidFieldsToast,
       })
       return
     }
@@ -163,7 +164,7 @@ export default function LoginForm({
         typeof result.message === 'string' &&
         result.message.trim().length > 0
           ? result.message
-          : 'Sesion iniciada correctamente.'
+          : LOGIN_COPY.success
 
       setSubmissionState({
         kind: 'success',
@@ -171,7 +172,7 @@ export default function LoginForm({
       })
       addToast({
         tone: 'success',
-        title: 'Sesion iniciada',
+        title: LOGIN_COPY.successTitle,
         message: successMessage,
       })
 
@@ -184,11 +185,8 @@ export default function LoginForm({
           }, 900)
         }
       }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'No se pudo procesar el acceso. Intenta de nuevo.'
+    } catch {
+      const errorMessage = getPublicLoginErrorMessage()
 
       setSubmissionState({
         kind: 'error',
@@ -196,7 +194,7 @@ export default function LoginForm({
       })
       addToast({
         tone: 'error',
-        title: 'No se pudo iniciar sesion',
+        title: LOGIN_COPY.accessErrorTitle,
         message: errorMessage,
       })
     } finally {
@@ -309,7 +307,7 @@ export default function LoginForm({
               </Button>
             </div>
             <p id={passwordHintId} className="text-xs leading-5 text-slate-500 dark:text-slate-400">
-              Mínimo {PASSWORD_MIN_LENGTH} caracteres.
+              Usa tu contrasena asignada.
             </p>
             {passwordError ? (
               <p id={`${passwordId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
@@ -322,7 +320,7 @@ export default function LoginForm({
 
         <CardFooter className="flex flex-col items-stretch gap-4 border-t border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
           <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Validando...' : 'Ingresar al panel'}
+            {isSubmitting ? LOGIN_COPY.submitting : 'Ingresar al panel'}
           </Button>
 
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">

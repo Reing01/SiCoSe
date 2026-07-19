@@ -21,7 +21,7 @@ jobs:
           node-version: 20.18.0
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build frontend
         run: npm run build
