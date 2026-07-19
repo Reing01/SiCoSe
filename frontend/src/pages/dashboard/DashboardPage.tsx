@@ -101,9 +101,20 @@ function buildCards(metrics: DashboardMetrics): KpiCard[] {
     },
     {
       label: 'Pendiente del mes',
-      value: formatCurrency(metrics.totalPendienteMes),
-      detail: 'Monto pendiente por cobrar',
-      tone: metrics.totalPendienteMes === 0 ? 'green' : 'red',
+      value:
+        metrics.totalPendienteMes === null
+          ? 'No disponible'
+          : formatCurrency(metrics.totalPendienteMes),
+      detail:
+        metrics.totalPendienteMes === null
+          ? 'El backend actual no expone este monto'
+          : 'Monto pendiente por cobrar',
+      tone:
+        metrics.totalPendienteMes === null
+          ? 'yellow'
+          : metrics.totalPendienteMes === 0
+            ? 'green'
+            : 'red',
       icon: 'P',
     },
     {

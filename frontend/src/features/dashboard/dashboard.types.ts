@@ -7,7 +7,7 @@ export type DashboardTrend = {
 export type DashboardMetrics = {
   periodo: string
   totalRecaudadoMes: number
-  totalPendienteMes: number
+  totalPendienteMes: number | null
   porcentajeCobertura: number
   numeroMorosos: number
   comparativoMesAnterior: number
