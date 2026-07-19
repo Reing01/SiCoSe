@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { API_BASE_URL } from '../../../lib/api'
-import { exportMonthlyReport } from '../dashboard.api'
+import { exportMonthlyReport, fetchDashboardMetrics } from '../dashboard.api'
 
 describe('dashboard.api', () => {
   const fetchMock = vi.fn()
@@ -51,5 +51,50 @@ describe('dashboard.api', () => {
       }),
     )
     expect(response.formato).toBe('xlsx')
+  })
+
+  it('normalizes legacy dashboard metrics without optional production fields', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: {
+            periodo: '2026-07',
+            totalRecaudadoMes: 0,
+            porcentajeCobertura: 0,
+            numeroMorosos: 7,
+            comparativoMesAnterior: -100,
+            totalAdeudosMes: 21,
+            pagosRegistradosMes: 0,
+            variacion: {
+              direccion: 'empeora',
+              color: 'rojo',
+              montoMesAnterior: 1250,
+            },
+            ultimaActualizacion: '2026-07-19T09:30:00.000Z',
+            cache: {
+              hit: false,
+              ttlSegundos: 300,
+            },
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      ),
+    )
+
+    const metrics = await fetchDashboardMetrics('token-demo', '2026-07')
+
+    expect(metrics.totalPendienteMes).toBeNull()
+    expect(metrics.adeudosPagadosMes).toBe(0)
+    expect(metrics.historicoRecaudacion).toEqual([
+      {
+        periodo: '2026-07',
+        total: 0,
+      },
+    ])
   })
 })
