@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/Reing01/SiCoSe#readme",
   "devDependencies": {
-    "concurrently": "^10.0.3",
+    "concurrently": "^9.2.1",
     "eslint": "^8.57.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
