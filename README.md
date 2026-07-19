@@ -20,9 +20,9 @@ SiCoSe es un monorepo para digitalizar la recaudación, el control de adeudos y 
 ## Instalación
 
 ```bash
-npm install
-npm install --prefix frontend
-npm install --prefix backend
+npm ci
+npm ci --prefix frontend
+npm ci --prefix backend
 ```
 
 ## Desarrollo

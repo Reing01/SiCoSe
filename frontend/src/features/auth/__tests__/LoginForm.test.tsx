@@ -1,12 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { LOGIN_COPY } from '../auth.copy'
 import LoginForm, { validateLoginForm } from '../LoginForm'
 
 describe('validateLoginForm', () => {
   it('returns field errors for empty values', () => {
     expect(validateLoginForm({ email: '', password: '' })).toEqual({
-      email: 'Ingresa tu correo institucional.',
-      password: 'Ingresa tu contraseña.',
+      email: LOGIN_COPY.fieldErrors.emailRequired,
+      password: LOGIN_COPY.fieldErrors.passwordRequired,
     })
   })
 
@@ -40,7 +41,9 @@ describe('LoginForm', () => {
     expect(
       screen.getByText('Ingresa tu correo institucional.'),
     ).toBeInTheDocument()
-    expect(screen.getByText('Ingresa tu contraseña.')).toBeInTheDocument()
+    expect(
+      screen.getByText(LOGIN_COPY.fieldErrors.passwordRequired),
+    ).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent(
       /corrige los campos marcados/i,
     )
@@ -48,7 +51,7 @@ describe('LoginForm', () => {
 
   it('normalizes the email and calls onSubmit with valid values', async () => {
     const onSubmit = vi.fn().mockResolvedValue({
-      message: 'Sesión iniciada correctamente.',
+      message: LOGIN_COPY.success,
     })
 
     render(
@@ -73,8 +76,33 @@ describe('LoginForm', () => {
     })
 
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /sesión iniciada correctamente/i,
+      /sesion iniciada correctamente/i,
     )
+  })
+
+  it('shows a public error when access is rejected', async () => {
+    const onSubmit = vi
+      .fn()
+      .mockRejectedValue(new Error('private diagnostic: invalid grant'))
+
+    render(
+      <LoginForm
+        onSubmit={onSubmit}
+        initialValues={{
+          email: 'admin@sicose.test',
+          password: 'SiCoSe2026!',
+        }}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /ingresar al panel/i }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      LOGIN_COPY.accessError,
+    )
+    expect(screen.queryByText(/private diagnostic/i)).not.toBeInTheDocument()
   })
 
   it('toggles password visibility', () => {

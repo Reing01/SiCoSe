@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module'
 import type { Reporte, Prisma } from '@prisma/client'
-import * as XLSX from 'xlsx'
+import writeXlsxFile, { type SheetData } from 'write-excel-file/node'
 import { prisma } from '../lib/prisma.js'
 import { uploadPrivateStorageObject } from '../lib/supabase-storage.js'
 
@@ -441,12 +441,11 @@ async function buildMonthlyReportSnapshot(
   })
 }
 
-function buildMonthlyReportXlsx(snapshot: MonthlyReportSnapshot) {
-  const workbook = XLSX.utils.book_new()
+async function buildMonthlyReportXlsx(snapshot: MonthlyReportSnapshot) {
   const currentTotal = snapshot.currentPayments.reduce((sum, payment) => sum + payment.monto, 0)
   const previousTotal = snapshot.previousPayments.reduce((sum, payment) => sum + payment.monto, 0)
 
-  const summarySheet = XLSX.utils.aoa_to_sheet([
+  const summaryData: SheetData = [
     ['SiCoSe', 'Reporte mensual'],
     ['Periodo', snapshot.periodo],
     ['Periodo anterior', snapshot.previousPeriodo],
@@ -457,53 +456,51 @@ function buildMonthlyReportXlsx(snapshot: MonthlyReportSnapshot) {
     ['Morosos', snapshot.totalMorosos],
     ['Pagos actuales', snapshot.currentPayments.length],
     ['Pagos periodo anterior', snapshot.previousPayments.length],
+  ]
+
+  const serviceRevenueData: SheetData = [
+    ['Servicio', 'Pagos', 'Recaudado', 'Promedio'],
+    ...snapshot.serviceRevenue.map((row) => [
+      row.servicio,
+      row.pagos,
+      row.recaudado,
+      row.promedio,
+    ]),
+  ]
+
+  const morososData: SheetData = [
+    ['Ciudadano', 'ClaveCatastral', 'Zona', 'Servicio', 'Periodo', 'Monto', 'Vencimiento'],
+    ...snapshot.topMorosos.map((row) => [
+      `${row.ciudadano.nombre} ${row.ciudadano.apellido}`,
+      row.ciudadano.clave_catastral,
+      row.ciudadano.zona ?? 'Sin zona',
+      row.servicio.nombre,
+      row.periodo,
+      row.monto,
+      formatDate(row.vencimiento),
+    ]),
+  ]
+
+  const output = await writeXlsxFile([
+    { sheet: 'Resumen', data: summaryData },
+    { sheet: 'Recaudacion', data: serviceRevenueData },
+    { sheet: 'Morosos', data: morososData },
   ])
 
-  const serviceRevenueSheet = XLSX.utils.json_to_sheet(
-    snapshot.serviceRevenue.map((row) => ({
-      Servicio: row.servicio,
-      Pagos: row.pagos,
-      Recaudado: row.recaudado,
-      Promedio: row.promedio,
-    })),
-  )
-
-  const morososSheet = XLSX.utils.json_to_sheet(
-    snapshot.topMorosos.map((row) => ({
-      Ciudadano: `${row.ciudadano.nombre} ${row.ciudadano.apellido}`,
-      ClaveCatastral: row.ciudadano.clave_catastral,
-      Zona: row.ciudadano.zona ?? 'Sin zona',
-      Servicio: row.servicio.nombre,
-      Periodo: row.periodo,
-      Monto: row.monto,
-      Vencimiento: formatDate(row.vencimiento),
-    })),
-  )
-
-  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumen')
-  XLSX.utils.book_append_sheet(workbook, serviceRevenueSheet, 'Recaudacion')
-  XLSX.utils.book_append_sheet(workbook, morososSheet, 'Morosos')
-
-  return Buffer.from(
-    XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'buffer',
-      compression: true,
-    }),
-  )
+  return output.toBuffer()
 }
 
-function buildReportArtifact(
+async function buildReportArtifact(
   snapshot: MonthlyReportSnapshot,
   format: ReportArtifactFormat,
-): ReportArtifact {
+): Promise<ReportArtifact> {
   const currentTotal = snapshot.currentPayments.reduce((sum, payment) => sum + payment.monto, 0)
   const previousTotal = snapshot.previousPayments.reduce((sum, payment) => sum + payment.monto, 0)
   const fileBaseName = `reporte-mensual-${snapshot.periodo}`
 
   if (format === 'xlsx') {
     return {
-      buffer: buildMonthlyReportXlsx(snapshot),
+      buffer: await buildMonthlyReportXlsx(snapshot),
       fileName: `${fileBaseName}.xlsx`,
       contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       tipo: 'MENSUAL_EXCEL',
