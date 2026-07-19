@@ -44,7 +44,13 @@ export async function uploadPrivateStorageObject(
       'Content-Type': input.contentType,
       'x-upsert': 'false',
     },
-    body: new Uint8Array(input.buffer),
+    // Preserve the Buffer view boundaries; its backing ArrayBuffer may contain
+    // unrelated bytes outside this object's byteOffset and byteLength.
+    body: new Uint8Array(
+      input.buffer.buffer,
+      input.buffer.byteOffset,
+      input.buffer.byteLength,
+    ) as unknown as BodyInit,
   })
 
   if (!response.ok) {

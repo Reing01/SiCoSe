@@ -8,6 +8,7 @@ import type {
 let generateMonthlyReport: typeof generateMonthlyReportType
 let exportMonthlyReport: typeof exportMonthlyReportType
 let createPrivateStorageSignedUrl: typeof import('../src/lib/supabase-storage.js').createPrivateStorageSignedUrl
+let uploadPrivateStorageObject: typeof import('../src/lib/supabase-storage.js').uploadPrivateStorageObject
 
 before(async () => {
   process.env.DATABASE_URL ??=
@@ -21,6 +22,8 @@ before(async () => {
   ;({ generateMonthlyReport, exportMonthlyReport } =
     await import('../src/services/reportes.js'))
   ;({ createPrivateStorageSignedUrl } =
+    await import('../src/lib/supabase-storage.js'))
+  ;({ uploadPrivateStorageObject } =
     await import('../src/lib/supabase-storage.js'))
 })
 
@@ -207,6 +210,8 @@ describe('generateMonthlyReport', () => {
     )
     assert.equal(uploadArgs.contentType, 'application/pdf')
     assert.equal(uploadArgs.buffer.length > 0, true)
+    assert.equal(uploadArgs.buffer.subarray(0, 5).toString('ascii'), '%PDF-')
+    assert.match(uploadArgs.buffer.toString('latin1'), /%%EOF\s*$/)
 
     const createArgs = calls.reporteCreate as {
       data: {
@@ -307,6 +312,31 @@ describe('generateMonthlyReport', () => {
         url,
         'https://project.supabase.co/storage/v1/object/sign/comprobantes/reportes/2026-06/reporte.pdf?token=test&download=reporte.pdf',
       )
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('uploads only the Buffer view bytes without corrupting binary files', async () => {
+    const originalFetch = globalThis.fetch
+    let requestInit: RequestInit | undefined
+    const source = Buffer.from([0, 1, 2, 3, 4, 0x25, 0x50, 0x44, 0x46, 0x2d, 0xff])
+    const pdfBuffer = source.subarray(5, 10)
+
+    globalThis.fetch = async (_input, init) => {
+      requestInit = init
+      return new Response(null, { status: 200 })
+    }
+
+    try {
+      await uploadPrivateStorageObject({
+        path: 'reportes/2026-06/reporte.pdf',
+        buffer: pdfBuffer,
+        contentType: 'application/pdf',
+      })
+
+      assert.deepEqual(Buffer.from(requestInit?.body as Uint8Array), pdfBuffer)
+      assert.equal((requestInit?.headers as Record<string, string>)['Content-Type'], 'application/pdf')
     } finally {
       globalThis.fetch = originalFetch
     }
