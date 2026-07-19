@@ -190,6 +190,40 @@ function RevenueLineChart({ metrics, theme }: { metrics: DashboardMetrics; theme
   )
 }
 
+function buildDownloadUrls(sourceUrl: string) {
+  const urls = [sourceUrl]
+
+  try {
+    const parsedUrl = new URL(sourceUrl)
+
+    if (
+      parsedUrl.hostname.endsWith('.supabase.co') &&
+      parsedUrl.pathname.startsWith('/storage/v1/object/')
+    ) {
+      urls.push(`/api/storage-download?url=${encodeURIComponent(sourceUrl)}`)
+    }
+  } catch {
+    // Si la URL no es absoluta, dejamos que el intento original falle de forma controlada.
+  }
+
+  return urls
+}
+
+async function fetchGeneratedFile(sourceUrl: string) {
+  let lastResponse: Response | null = null
+
+  for (const url of buildDownloadUrls(sourceUrl)) {
+    const response = await fetch(url)
+    lastResponse = response
+
+    if (response.ok) {
+      return response
+    }
+  }
+
+  return lastResponse
+}
+
 function MetricCard({ card, theme }: { card: KpiCard; theme: 'light' | 'dark' }) {
   const toneClasses: Record<KpiTone, string> = {
     green:
@@ -436,9 +470,9 @@ export default function DashboardPage() {
 
     try {
       const exportResult = await exportMonthlyReport(session.token, state.metrics.periodo, format)
-      const fileResponse = await fetch(exportResult.archivo_url)
+      const fileResponse = await fetchGeneratedFile(exportResult.archivo_url)
 
-      if (!fileResponse.ok) {
+      if (!fileResponse?.ok) {
         throw new Error('No fue posible descargar el archivo generado.')
       }
 
