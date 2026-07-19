@@ -1,5 +1,9 @@
 import { apiRequest } from '../../lib/api'
-import type { CitizenFormValues, CitizenRecord } from './citizen.types'
+import type {
+  CitizenFormValues,
+  CitizenPageMetadata,
+  CitizenRecord,
+} from './citizen.types'
 
 type CitizenApiRecord = {
   id: string
@@ -10,16 +14,14 @@ type CitizenApiRecord = {
   direccion: string | null
   zona: string | null
   clave_catastral: string
+  activo: boolean
   created_at: string
   updated_at: string
 }
 
 type CitizenListResponse = {
   data: CitizenApiRecord[]
-  metadata: {
-    pagina: number
-    totalPaginas: number
-  }
+  metadata: CitizenPageMetadata
 }
 
 type CitizenResponse = {
@@ -35,6 +37,7 @@ function toCitizenRecord(record: CitizenApiRecord): CitizenRecord {
     telefono: record.telefono ?? '',
     direccion: record.direccion ?? '',
     claveCatastral: record.clave_catastral,
+    activo: record.activo ?? true,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   }
@@ -74,6 +77,43 @@ export async function fetchCitizens(token: string): Promise<CitizenRecord[]> {
   } while (page <= totalPages)
 
   return records.map(toCitizenRecord)
+}
+
+export async function fetchCitizenPage(
+  token: string,
+  {
+    pagina,
+    limite,
+    nombre,
+    incluirInactivos = true,
+  }: {
+    pagina: number
+    limite: number
+    nombre?: string
+    incluirInactivos?: boolean
+  },
+): Promise<{ records: CitizenRecord[]; metadata: CitizenPageMetadata }> {
+  const params = new URLSearchParams({
+    pagina: String(pagina),
+    limite: String(limite),
+    incluir_inactivos: String(incluirInactivos),
+  })
+
+  if (nombre?.trim()) {
+    params.set('nombre', nombre.trim())
+  }
+
+  const response = await apiRequest<CitizenListResponse>(
+    `/api/ciudadanos?${params.toString()}`,
+    {
+      headers: authHeaders(token),
+    },
+  )
+
+  return {
+    records: response.data.map(toCitizenRecord),
+    metadata: response.metadata,
+  }
 }
 
 export async function createCitizen(

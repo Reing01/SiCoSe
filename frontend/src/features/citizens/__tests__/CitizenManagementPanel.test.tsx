@@ -58,13 +58,20 @@ describe('CitizenManagementPanel', () => {
     vi.clearAllMocks()
     window.sessionStorage.clear()
     persistSecretarySession()
-    vi.mocked(citizenApi.fetchCitizens).mockResolvedValue(
-      citizenSeed.map((record) => ({ ...record })),
-    )
+    vi.mocked(citizenApi.fetchCitizenPage).mockResolvedValue({
+      records: citizenSeed.map((record) => ({ ...record, activo: true })),
+      metadata: {
+        total: citizenSeed.length,
+        pagina: 1,
+        limite: 10,
+        totalPaginas: 1,
+      },
+    })
     vi.mocked(citizenApi.createCitizen).mockImplementation(
       async (_token, values) => ({
         id: 'citizen-created',
         ...values,
+        activo: true,
         createdAt: '2026-07-17T12:00:00.000Z',
         updatedAt: '2026-07-17T12:00:00.000Z',
       }),
@@ -73,6 +80,7 @@ describe('CitizenManagementPanel', () => {
       async (_token, id, values) => ({
         id,
         ...values,
+        activo: true,
         createdAt: '2026-05-03T10:00:00.000Z',
         updatedAt: '2026-07-17T12:00:00.000Z',
       }),
@@ -190,8 +198,8 @@ describe('CitizenManagementPanel', () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText(/jose alfredo ramirez hernandez/i),
-      ).not.toBeInTheDocument()
+        screen.getByRole('button', { name: /eliminar jose alfredo ramirez hernandez/i }),
+      ).toHaveTextContent(/inactivo/i)
     })
 
     expect(citizenApi.updateCitizen).toHaveBeenCalled()

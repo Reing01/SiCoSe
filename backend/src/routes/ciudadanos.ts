@@ -3,12 +3,33 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { authenticate, requireResource } from '../middleware/require-role.js'
+import { auditLogger } from '../services/audit.js'
+import type { AuthenticatedRequest } from '../types/auth.js'
+
+const booleanQuerySchema = z.preprocess((value) => {
+  if (value === undefined) {
+    return false
+  }
+
+  if (typeof value === 'string') {
+    return value.toLowerCase() === 'true'
+  }
+
+  return value
+}, z.boolean())
 
 const listQuerySchema = z.object({
   pagina: z.coerce.number().int().min(1).default(1),
   limite: z.coerce.number().int().min(1).max(100).default(20),
   zona: z.string().trim().min(1).optional(),
   nombre: z.string().trim().min(1).optional(),
+  incluir_inactivos: booleanQuerySchema,
+})
+
+const historyQuerySchema = z.object({
+  anio: z.coerce.number().int().min(2000).max(2100).optional(),
+  servicio_id: z.string().uuid().optional(),
+  estado: z.string().trim().min(1).optional(),
 })
 
 const ciudadanoSchema = z.object({
@@ -35,6 +56,10 @@ function getParamId(id: string | string[] | undefined) {
   return Array.isArray(id) ? id[0] : id
 }
 
+function getRequestIp(request: AuthenticatedRequest) {
+  return request.ip || request.socket.remoteAddress || 'unknown'
+}
+
 ciudadanosRouter.get('/', async (request, response, next) => {
   try {
     const parsed = listQuerySchema.safeParse(request.query)
@@ -46,10 +71,12 @@ ciudadanosRouter.get('/', async (request, response, next) => {
       })
     }
 
-    const { pagina, limite, zona, nombre } = parsed.data
-    const where: Prisma.CiudadanoWhereInput = {
-      activo: true,
-    }
+    const { pagina, limite, zona, nombre, incluir_inactivos } = parsed.data
+    const where: Prisma.CiudadanoWhereInput = incluir_inactivos
+      ? {}
+      : {
+          activo: true,
+        }
 
     if (zona) {
       where.zona = {
@@ -95,6 +122,116 @@ ciudadanosRouter.get('/', async (request, response, next) => {
         pagina,
         limite,
         totalPaginas: Math.ceil(total / limite),
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+ciudadanosRouter.get('/:id/historial', async (request, response, next) => {
+  try {
+    const ciudadanoId = getParamId(request.params.id)
+    const parsed = historyQuerySchema.safeParse(request.query)
+
+    if (!ciudadanoId) {
+      return response.status(400).json({
+        error: 'Missing ciudadano id',
+        code: 400,
+      })
+    }
+
+    if (!parsed.success) {
+      return response.status(400).json({
+        error: 'Invalid citizen history query',
+        details: parsed.error.flatten(),
+      })
+    }
+
+    const ciudadano = await prisma.ciudadano.findUnique({
+      where: { id: ciudadanoId },
+      select: { id: true },
+    })
+
+    if (!ciudadano) {
+      return response.status(404).json({
+        error: 'Ciudadano not found',
+        code: 404,
+      })
+    }
+
+    const { anio, servicio_id, estado } = parsed.data
+    const dateFilter = anio
+      ? {
+          gte: new Date(Date.UTC(anio, 0, 1, 0, 0, 0, 0)),
+          lt: new Date(Date.UTC(anio + 1, 0, 1, 0, 0, 0, 0)),
+        }
+      : undefined
+    const periodFilter = anio ? { startsWith: `${anio}-` } : undefined
+
+    const adeudoWhere: Prisma.AdeudoWhereInput = {
+      ciudadanoId,
+      ...(servicio_id ? { servicioId: servicio_id } : {}),
+      ...(estado ? { estado } : {}),
+      ...(periodFilter ? { periodo: periodFilter } : {}),
+    }
+    const pagoAdeudoWhere: Prisma.AdeudoWhereInput = {
+      ...(servicio_id ? { servicioId: servicio_id } : {}),
+      ...(estado ? { estado } : {}),
+    }
+    const pagoWhere: Prisma.PagoWhereInput = {
+      ciudadanoId,
+      ...(Object.keys(pagoAdeudoWhere).length > 0
+        ? { adeudo: pagoAdeudoWhere }
+        : {}),
+      ...(dateFilter ? { fecha: dateFilter } : {}),
+    }
+
+    const [adeudos, pagos] = await prisma.$transaction([
+      prisma.adeudo.findMany({
+        where: adeudoWhere,
+        include: { servicio: true },
+        orderBy: { vencimiento: 'desc' },
+      }),
+      prisma.pago.findMany({
+        where: pagoWhere,
+        include: {
+          adeudo: {
+            include: {
+              servicio: true,
+            },
+          },
+          comprobantes: true,
+        },
+        orderBy: { fecha: 'desc' },
+      }),
+    ])
+
+    const historial = [
+      ...adeudos.map((adeudo) => ({
+        tipo: 'adeudo' as const,
+        fecha: adeudo.vencimiento,
+        data: adeudo,
+      })),
+      ...pagos.map((pago) => ({
+        tipo: 'pago' as const,
+        fecha: pago.fecha,
+        data: pago,
+      })),
+    ].sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
+
+    return response.json({
+      data: {
+        ciudadanoId,
+        adeudos,
+        pagos,
+        historial,
+      },
+      metadata: {
+        totalAdeudos: adeudos.length,
+        totalPagos: pagos.length,
+        totalMovimientos: historial.length,
+        filtros: parsed.data,
       },
     })
   } catch (error) {
@@ -163,7 +300,7 @@ ciudadanosRouter.get('/:id', async (request, response, next) => {
 ciudadanosRouter.post(
   '/',
   requireResource('ciudadanos'),
-  async (request, response, next) => {
+  async (request: AuthenticatedRequest, response, next) => {
     try {
       const parsed = ciudadanoSchema.safeParse(request.body)
 
@@ -174,11 +311,51 @@ ciudadanosRouter.post(
         })
       }
 
-      const ciudadano = await prisma.ciudadano.create({
-        data: {
-          ...parsed.data,
-          activo: true,
+      const inactiveCitizen = await prisma.ciudadano.findFirst({
+        where: {
+          activo: false,
+          OR: [
+            { email: parsed.data.email },
+            { clave_catastral: parsed.data.clave_catastral },
+          ],
         },
+        select: {
+          id: true,
+          email: true,
+          clave_catastral: true,
+        },
+      })
+
+      if (inactiveCitizen) {
+        return response.status(409).json({
+          error: 'Ciudadano exists but is inactive',
+          code: 'CIUDADANO_INACTIVO_EXISTS',
+          data: inactiveCitizen,
+        })
+      }
+
+      const ciudadano = await prisma.$transaction(async (tx) => {
+        const created = await tx.ciudadano.create({
+          data: {
+            ...parsed.data,
+            activo: true,
+          },
+        })
+
+        await auditLogger(tx, {
+          usuarioId: request.user?.id ?? '',
+          accion: 'ALTA_CIUDADANO',
+          entidad: 'Ciudadano',
+          entidadId: created.id,
+          ip: getRequestIp(request),
+          detalles: {
+            email: created.email,
+            claveCatastral: created.clave_catastral,
+            zona: created.zona,
+          },
+        })
+
+        return created
       })
 
       return response.status(201).json({
@@ -205,7 +382,7 @@ ciudadanosRouter.post(
 ciudadanosRouter.put(
   '/:id',
   requireResource('ciudadanos'),
-  async (request, response, next) => {
+  async (request: AuthenticatedRequest, response, next) => {
     try {
       const ciudadanoId = getParamId(request.params.id)
       const parsed = updateCiudadanoSchema.safeParse(request.body)
@@ -224,12 +401,44 @@ ciudadanosRouter.put(
         })
       }
 
-      const ciudadano = await prisma.ciudadano.update({
-        where: {
-          id: ciudadanoId,
-        },
-        data: parsed.data,
+      const ciudadano = await prisma.$transaction(async (tx) => {
+        const previous = await tx.ciudadano.findUnique({
+          where: { id: ciudadanoId },
+        })
+
+        if (!previous) {
+          return null
+        }
+
+        const updated = await tx.ciudadano.update({
+          where: {
+            id: ciudadanoId,
+          },
+          data: parsed.data,
+        })
+
+        await auditLogger(tx, {
+          usuarioId: request.user?.id ?? '',
+          accion: 'ACTUALIZACION_CIUDADANO',
+          entidad: 'Ciudadano',
+          entidadId: ciudadanoId,
+          ip: getRequestIp(request),
+          detalles: {
+            cambios: parsed.data,
+            estadoAnterior: previous.activo ? 'activo' : 'inactivo',
+            estadoNuevo: updated.activo ? 'activo' : 'inactivo',
+          },
+        })
+
+        return updated
       })
+
+      if (!ciudadano) {
+        return response.status(404).json({
+          error: 'Ciudadano not found',
+          code: 404,
+        })
+      }
 
       return response.json({
         message: 'Ciudadano updated',
@@ -265,7 +474,7 @@ ciudadanosRouter.put(
 ciudadanosRouter.put(
   '/:id/desactivar',
   requireResource('ciudadanos'),
-  async (request, response, next) => {
+  async (request: AuthenticatedRequest, response, next) => {
     try {
       const ciudadanoId = getParamId(request.params.id)
 
@@ -276,13 +485,30 @@ ciudadanosRouter.put(
         })
       }
 
-      const ciudadano = await prisma.ciudadano.update({
-        where: {
-          id: ciudadanoId,
-        },
-        data: {
-          activo: false,
-        },
+      const ciudadano = await prisma.$transaction(async (tx) => {
+        const updated = await tx.ciudadano.update({
+          where: {
+            id: ciudadanoId,
+          },
+          data: {
+            activo: false,
+          },
+        })
+
+        await auditLogger(tx, {
+          usuarioId: request.user?.id ?? '',
+          accion: 'DESACTIVACION_CIUDADANO',
+          entidad: 'Ciudadano',
+          entidadId: ciudadanoId,
+          ip: getRequestIp(request),
+          detalles: {
+            email: updated.email,
+            claveCatastral: updated.clave_catastral,
+            estadoNuevo: 'inactivo',
+          },
+        })
+
+        return updated
       })
 
       return response.json({

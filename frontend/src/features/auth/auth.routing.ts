@@ -8,7 +8,8 @@ function normalizeRoute(pathname: string): AppRoute {
   if (
     normalized === "/login" ||
     normalized === "/dashboard" ||
-    normalized === "/ciudadanos"
+    normalized === "/ciudadanos" ||
+    normalized === "/pagos"
   ) {
     return normalized;
   }
@@ -26,7 +27,7 @@ export function resolveAppRoute(
     return session ? getHomeRouteForRole(session.user.rol) : "/login";
   }
 
-  if (route === "/dashboard" || route === "/ciudadanos") {
+  if (route === "/dashboard" || route === "/ciudadanos" || route === "/pagos") {
     if (!session) {
       return "/login";
     }

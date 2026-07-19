@@ -3,7 +3,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { authenticate, requireRole } from '../middleware/require-role.js'
-import { generateMonthlyDebts } from '../services/adeudos.js'
+import { generateMonthlyDebts, listPendingDebts } from '../services/adeudos.js'
 
 const generateDebtsSchema = z.object({
   periodo: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),
@@ -16,6 +16,17 @@ const morososQuerySchema = z.object({
   servicio_id: z.string().uuid().optional(),
   anio: z.coerce.number().int().min(2000).max(2100).optional(),
   mes: z.coerce.number().int().min(1).max(12).optional(),
+})
+
+const pendingQuerySchema = z.object({
+  pagina: z.coerce.number().int().min(1).default(1),
+  limite: z.coerce.number().int().min(1).max(100).default(20),
+  ciudadano_id: z.string().uuid().optional(),
+  zona: z.string().trim().min(1).optional(),
+  servicio_id: z.string().uuid().optional(),
+  anio: z.coerce.number().int().min(2000).max(2100).optional(),
+  mes: z.coerce.number().int().min(1).max(12).optional(),
+  estado: z.string().trim().min(1).optional(),
 })
 
 const PAGE_SIZE = 100
@@ -100,6 +111,43 @@ adeudosRouter.post(
         message: 'Monthly debts generated',
         data: result,
       })
+    } catch (error) {
+      next(error)
+    }
+  },
+)
+
+adeudosRouter.get(
+  '/pendientes',
+  requireRole('admin', 'tesorero', 'secretaria'),
+  async (request, response, next) => {
+    try {
+      const parsed = pendingQuerySchema.safeParse(request.query)
+
+      if (!parsed.success) {
+        return response.status(400).json({
+          error: 'Invalid pending debts query',
+          details: parsed.error.flatten(),
+        })
+      }
+
+      const result = await listPendingDebts({
+        pagina: parsed.data.pagina,
+        limite: parsed.data.limite,
+        ciudadanoId: parsed.data.ciudadano_id,
+        zona: parsed.data.zona,
+        servicioId: parsed.data.servicio_id,
+        anio: parsed.data.anio,
+        mes: parsed.data.mes,
+        estado: parsed.data.estado,
+      })
+
+      response.setHeader(
+        'X-Total-Adeudos-Pendientes',
+        String(result.metadata.totalPendiente),
+      )
+
+      return response.json(result)
     } catch (error) {
       next(error)
     }

@@ -16,8 +16,9 @@ type MonthlyReportExportResponse = {
   }
 }
 
-export async function fetchDashboardMetrics(token: string) {
-  const response = await apiRequest<DashboardMetricsResponse>('/api/dashboard/metricas', {
+export async function fetchDashboardMetrics(token: string, periodo?: string) {
+  const params = periodo ? `?periodo=${encodeURIComponent(periodo)}` : ''
+  const response = await apiRequest<DashboardMetricsResponse>(`/api/dashboard/metricas${params}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

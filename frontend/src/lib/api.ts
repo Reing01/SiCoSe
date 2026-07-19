@@ -155,7 +155,7 @@ export async function apiRequest<T>(
     headers.set('Accept', 'application/json')
   }
 
-  if (body != null && !headers.has('Content-Type')) {
+  if (body != null && !(body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 
