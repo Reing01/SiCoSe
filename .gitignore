@@ -20,6 +20,7 @@ dist-ssr/
 .env.test.local
 .env.production.local
 .env.docker
+.env.swarm
 
 # Editor directories and files
 .vscode/*

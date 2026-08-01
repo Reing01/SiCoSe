@@ -1,8 +1,7 @@
-import { Redis } from 'ioredis'
-import { env } from '../config/env.js'
+import { Redis } from "ioredis";
+import { env } from "../config/env.js";
 
-let redisClient: Redis | null = null
-let redisUnavailable = false
+let redisClient: Redis | null = null;
 
 export function getRedisClient() {
   if (!redisClient) {
@@ -11,47 +10,44 @@ export function getRedisClient() {
       maxRetriesPerRequest: 1,
       connectTimeout: 1000,
       enableOfflineQueue: false,
-      retryStrategy: () => null,
-    })
+      retryStrategy: (attempt) =>
+        attempt <= 3 ? Math.min(attempt * 100, 500) : null,
+    });
 
-    redisClient.on('error', () => {
-      redisUnavailable = true
-    })
+    // ioredis emite `error` aunque el consumidor maneje el rechazo de la
+    // operacion. El listener evita errores sin manejar mientras la estrategia
+    // de reintento conserva la capacidad de recuperarse.
+    redisClient.on("error", () => undefined);
   }
 
-  return redisClient
+  return redisClient;
 }
 
 export async function withRedis<T>(operation: (redis: Redis) => Promise<T>) {
-  if (redisUnavailable) {
-    throw new Error('Redis unavailable')
+  const redis = getRedisClient();
+
+  if (redis.status === "wait" || redis.status === "end") {
+    await redis.connect();
   }
 
-  const redis = getRedisClient()
-
-  if (redis.status === 'wait') {
-    await redis.connect()
-  }
-
-  return operation(redis)
+  return operation(redis);
 }
 
 export async function closeRedisClient() {
   if (!redisClient) {
-    return
+    return;
   }
 
-  const client = redisClient
-  redisClient = null
-  redisUnavailable = false
+  const client = redisClient;
+  redisClient = null;
 
-  if (client.status === 'end') {
-    return
+  if (client.status === "end") {
+    return;
   }
 
   try {
-    await client.quit()
+    await client.quit();
   } catch {
-    client.disconnect()
+    client.disconnect();
   }
 }

@@ -1,87 +1,126 @@
 # Práctica de clúster de 4 nodos - SiCoSe
 
-Este perfil prepara SiCoSe para una práctica multi-máquina con Docker + Kubernetes vía Helm.
+Este perfil despliega SiCoSe en cuatro máquinas con Docker Swarm. El puerto HTTP se publica en modo `ingress`, por lo que el routing mesh acepta conexiones en cualquier nodo y las dirige a una réplica disponible del proxy.
 
 Las imágenes se publican automáticamente en GHCR cuando se hace `push` a `main`:
 
 - `ghcr.io/reing01/sicose-backend`
 - `ghcr.io/reing01/sicose-frontend`
 
-## Objetivo
+## Arquitectura
 
-- 4 máquinas físicas
-- 1 nodo principal para control y despliegue
-- 3 nodos de trabajo para distribución de carga
-- 12 réplicas totales para `backend` y `frontend`
-- 3 réplicas por máquina, distribuidas por el orquestador con `topologySpreadConstraints`
+- Un nodo manager, que también debe permanecer disponible para ejecutar cargas.
+- Tres nodos worker.
+- Cuatro réplicas del proxy de entrada, como máximo una por nodo.
+- Doce réplicas del backend y doce del frontend, como máximo tres por nodo.
+- PostgreSQL y Redis en el manager, con volúmenes persistentes locales.
+- Redes `overlay` separadas y cifradas para tráfico web y datos.
+- El puerto `80` publicado con `mode: ingress`; puede cambiarse con `SICOSE_HTTP_PORT`.
+- Enrutamiento `/api/*` al backend y el resto al frontend.
 
-## Qué resuelve
+El límite de réplicas por nodo mantiene la distribución 3 + 3 + 3 + 3. Si un nodo deja de estar disponible, tres réplicas de cada aplicación quedarán pendientes hasta que el nodo vuelva o se amplíe el clúster; las nueve restantes siguen atendiendo tráfico.
 
-- Balanceo de carga entre nodos
-- Reubicación automática de pods cuando un nodo falla
-- Despliegue repetible desde Git
-- Un solo comando para levantar o actualizar el entorno
-- Distribución estricta de pods por hostname en el perfil de práctica
+## Preparar el Swarm
 
-## Comando de despliegue
-
-Desde el nodo principal:
+En el nodo principal:
 
 ```bash
-git pull
+docker swarm init --advertise-addr IP_DEL_MANAGER
+```
+
+El comando muestra el `docker swarm join` que debe ejecutarse en cada worker. Antes del despliegue, verifica desde el manager:
+
+```bash
+docker node ls
+```
+
+Los cuatro nodos deben figurar como `Ready` y el manager debe estar en disponibilidad `Active`.
+
+Abre estos puertos entre nodos:
+
+- `2377/tcp` para administración del clúster.
+- `7946/tcp` y `7946/udp` para descubrimiento entre nodos.
+- `4789/udp` para las redes overlay.
+- El puerto HTTP publicado, `80/tcp` por defecto, para los clientes.
+
+## Configurar secretos y desplegar
+
+Copia `.env.swarm.example` a un archivo local fuera del repositorio o exporta sus valores directamente en la sesión. El script requiere:
+
+- `SICOSE_POSTGRES_PASSWORD`
+- `SICOSE_JWT_SECRET` con al menos 32 caracteres
+- `SICOSE_SUPABASE_URL`
+- `SICOSE_SUPABASE_SERVICE_KEY`
+
+En Bash, un ejemplo para cargar un archivo local es:
+
+```bash
+set -a
+source /ruta/segura/sicose.swarm.env
+set +a
 npm run deploy:cluster:4nodos
 ```
 
-Ese comando aplica el release de Helm con:
+El comando:
 
-- `backend` en 12 réplicas
-- `frontend` en 12 réplicas
-- autoscaling desactivado para que la práctica sea estable
-- `PodDisruptionBudget` reforzado
-- `imagePullPolicy: Always` para tomar la versión más reciente de `main`
-- `topologySpreadConstraints` estrictas para evitar sobrecarga de un mismo nodo
+1. valida que se ejecute desde un manager;
+2. crea secretos versionados de Docker sin escribirlos en el repositorio;
+3. crea PostgreSQL, Redis y las redes en el primer despliegue;
+4. ejecuta una sola tarea de migración antes de actualizar la aplicación;
+5. despliega el proxy, 12 backends y 12 frontends;
+6. espera hasta que todos los servicios converjan;
+7. comprueba por HTTP el routing mesh, el frontend y la disponibilidad del backend, PostgreSQL y Redis.
 
-## Notas operativas
-
-- Las 4 máquinas deben estar unidas al mismo clúster de Kubernetes.
-- El nodo principal puede quedar como control plane y punto de despliegue.
-- Las imágenes de `backend` y `frontend` deben estar disponibles para el clúster, ya sea en un registry compartido, en GHCR público o pre-cargadas en los nodos.
-- Si el registry es privado, el chart ya soporta `imagePullSecrets`.
-- La comunicación entre servicios se hace por `Service`, así que las réplicas se descubren automáticamente dentro del clúster.
-- Si quieres afinar aún más la colocación, el chart acepta `nodeSelector`, `tolerations` y `affinity` por componente.
-
-Ejemplo de `imagePullSecret` si usas un registry privado:
+También está disponible el nombre explícito:
 
 ```bash
-kubectl create secret docker-registry ghcr-secret \
-  --namespace sicose-prod \
-  --docker-server=ghcr.io \
-  --docker-username=TU_USUARIO \
-  --docker-password=TU_TOKEN \
-  --docker-email=TU_CORREO
+npm run deploy:swarm:4nodos
 ```
 
-## Recomendación
+Si GHCR es privado, define juntos `GHCR_USERNAME` y `GHCR_TOKEN`. El script inicia sesión y distribuye la autorización a los nodos del Swarm.
 
-Si quieres un entorno todavía más formal, lo ideal es publicar las imágenes en un registry privado y dejar este despliegue como GitOps ligero: `git pull` + `npm run deploy:cluster:4nodos`.
+`SICOSE_VERIFY_URL` permite cambiar la URL usada en la comprobación final. Por defecto se consulta `http://127.0.0.1:SICOSE_HTTP_PORT` desde el manager.
 
-## Bootstrap con secretos locales
+El script configura la cookie de renovación de sesión según `SICOSE_PUBLIC_ORIGIN`: en HTTP usa una cookie local `SameSite=Lax`, y en HTTPS habilita `Secure` y `SameSite=None`. Esto evita que el navegador descarte la cookie en la práctica HTTP y mantiene el comportamiento seguro detrás de TLS.
 
-Si ya definiste los secretos en tu sesión local, puedes usar el bootstrap para crear el `imagePullSecret` y aplicar un override temporal sin guardar nada en el repo:
+`SICOSE_TRUST_PROXY_HOPS` vale `1` porque normalmente solo existe el proxy `edge` delante del backend. Si un balanceador externo termina TLS antes de `edge`, configúralo en `2`; no uses un valor mayor al número real de proxies porque permitiría falsificar la IP usada por el rate limit y la auditoría.
+
+## Verificación
+
+Desde el manager:
 
 ```bash
-npm run deploy:cluster:4nodos:bootstrap
+docker stack services sicose
+docker stack ps sicose
 ```
 
-Variables esperadas:
+Desde cualquier máquina que alcance el clúster, prueba la IP de cada nodo:
 
-- `SICOSE_JWT_SECRET`
-- `SICOSE_POSTGRES_PASSWORD`
-- `SICOSE_SUPABASE_URL`
-- `SICOSE_SUPABASE_SERVICE_KEY`
-- `SICOSE_INGRESS_HOST` opcional
-- `SICOSE_CORS_ORIGIN` opcional
-- `GHCR_USERNAME` opcional
-- `GHCR_TOKEN` opcional
+```bash
+curl http://IP_DE_CUALQUIER_NODO/routing-mesh-health
+curl http://IP_DE_CUALQUIER_NODO/api/health
+```
 
-El bootstrap valida `kubectl` y `helm`, crea el namespace si hace falta y limpia el archivo temporal al terminar.
+La primera respuesta debe ser `ok`; la segunda confirma la API. No hace falta que el nodo consultado tenga una réplica concreta: el routing mesh envía la conexión a una tarea activa.
+
+## Actualizaciones y rollback
+
+Vuelve a ejecutar el mismo comando para actualizar las imágenes. Las tareas se reemplazan gradualmente en modo `stop-first`, necesario porque el límite de tres réplicas por nodo deja ocupados los doce espacios disponibles. Swarm revierte automáticamente una actualización que no supera sus comprobaciones de salud.
+
+Para volver manualmente a la especificación anterior de un servicio:
+
+```bash
+docker service rollback sicose_backend
+docker service rollback sicose_frontend
+docker service rollback sicose_edge
+```
+
+## Persistencia
+
+PostgreSQL y Redis están fijados al manager porque sus volúmenes usan almacenamiento local. Esto es apropiado para la práctica, pero el routing mesh no convierte esos volúmenes en almacenamiento distribuido. Para alta disponibilidad real de datos se necesita almacenamiento compartido o servicios externos administrados.
+
+El script bloquea cambios directos de `SICOSE_POSTGRES_DB`, `SICOSE_POSTGRES_USER` o `SICOSE_POSTGRES_PASSWORD` cuando ya existe un volumen. También conserva un metadato no secreto de identidad para validar un volumen cuando el stack fue retirado pero sus datos permanecen. Cambiar variables en el manifiesto no modifica las credenciales guardadas dentro de PostgreSQL; primero debe realizarse una migración o rotación explícita.
+
+El proxy integrado publica HTTP. En una instalación expuesta a Internet se debe terminar TLS delante del routing mesh mediante un balanceador o proxy confiable y configurar `SICOSE_PUBLIC_ORIGIN` con la URL HTTPS.
+
+Los manifiestos `k8s/` y el chart `helm/` quedan como referencia histórica; el flujo activo de cuatro nodos es `swarm/stack.yml` y ya no requiere Kubernetes, `kubectl` ni Helm.

@@ -16,6 +16,7 @@ SiCoSe es un monorepo para digitalizar la recaudación, el control de adeudos y 
 - `backend/` API, servicios y Prisma
 - `Docs/` evidencias, guías y contexto del proyecto
 - `docker-compose.yml` entorno local con PostgreSQL y Redis
+- `swarm/` despliegue multi-máquina con Docker Swarm y routing mesh
 
 ## Instalación
 
@@ -54,16 +55,10 @@ docker compose up -d
 
 Levantará PostgreSQL 16 y Redis 7 con volúmenes persistentes y variables de entorno separadas en `.env.docker`.
 
-Para una práctica multi-máquina de 4 nodos con Helm:
+Para una práctica multi-máquina de 4 nodos con Docker Swarm y routing mesh:
 
 ```bash
 npm run deploy:cluster:4nodos
-```
-
-Si ya tienes los secretos locales definidos, usa el bootstrap:
-
-```bash
-npm run deploy:cluster:4nodos:bootstrap
 ```
 
 La guía completa está en `Docs/practica-cluster-4-nodos.md`.
