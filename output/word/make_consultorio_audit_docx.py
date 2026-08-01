@@ -423,7 +423,7 @@ def add_methodology_page(doc: Document) -> None:
 
     bullets = [
         "Visión general, público objetivo y módulos principales.",
-        "Stack tecnologico y justificacion (Angular, Supabase, PostgreSQL, Vercel/Netlify, JWT y RBAC/ABAC).",
+        "Stack tecnologico y justificacion (Angular, Supabase, PostgreSQL, Vercel, JWT y RBAC/ABAC).",
         "Modelo de datos, autenticacion y gestion de sesion.",
         "Seguridad, infraestructura, flujo del sistema y plan de pruebas.",
     ]
@@ -457,7 +457,7 @@ def add_technical_page(doc: Document) -> None:
         ("Lógica", "Supabase con Edge Functions para OTP, refresh token, citas y notificaciones."),
         ("Datos", "PostgreSQL con RLS activado y modelo de entidades para usuarios, pacientes, citas e historiales."),
         ("Acceso", "RBAC para roles y ABAC para restricciones por doctor/paciente."),
-        ("Infraestructura", "Vercel/Netlify para hosting y GitHub Actions para CI/CD."),
+        ("Infraestructura", "Vercel para hosting y GitHub Actions para CI/CD."),
     ]
     table = doc.add_table(rows=1, cols=2)
     table.style = "Table Grid"
