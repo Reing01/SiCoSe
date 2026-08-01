@@ -34,7 +34,7 @@
     "globals": "^17.8.0",
     "happy-dom": "^20.10.3",
     "tailwindcss": "^4.3.0",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "vite": "^6.0.0",
     "vitest": "^4.1.8"
   }
