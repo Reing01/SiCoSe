@@ -32,6 +32,7 @@
   },
   "homepage": "https://github.com/Reing01/SiCoSe#readme",
   "devDependencies": {
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",
     "concurrently": "^9.2.1",
@@ -43,7 +44,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.9.6",
-    "typescript": "^5.8.3"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "lint-staged": {
     "**/*.{ts,tsx,js,jsx}": [
