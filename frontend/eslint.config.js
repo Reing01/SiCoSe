@@ -12,6 +12,15 @@ export default [
   },
   js.configs.recommended,
   {
+    files: ["api/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.es2022,
+      },
+    },
+  },
+  {
     files: ["src/**/*.{ts,tsx}", "e2e/**/*.ts"],
     languageOptions: {
       parser: tsParser,
