@@ -1,208 +1,215 @@
-import { createRequire } from 'node:module'
-import type { Reporte, Prisma } from '@prisma/client'
-import writeXlsxFile, { type SheetData } from 'write-excel-file/node'
-import { prisma } from '../lib/prisma.js'
-import { uploadPrivateStorageObject } from '../lib/supabase-storage.js'
+import { createRequire } from "node:module";
+import type { Reporte, Prisma } from "@prisma/client";
+import writeXlsxFile, { type SheetData } from "write-excel-file/node";
+import { prisma } from "../lib/prisma.js";
+import { uploadPrivateStorageObject } from "../lib/supabase-storage.js";
 
-const require = createRequire(import.meta.url)
-const PDFDocument = require('pdfkit') as new (options?: Record<string, unknown>) => PdfDocument
+const require = createRequire(import.meta.url);
+const PDFDocument = require("pdfkit") as new (
+  options?: Record<string, unknown>,
+) => PdfDocument;
 
-const INSTITUTIONAL_BLUE = '#0B4F8A'
-const TEAL = '#008C8C'
-const DARK_TEXT = '#1F2937'
-const MUTED_TEXT = '#6B7280'
-const LIGHT_FILL = '#F3F7FA'
-const TABLE_HEADER_FILL = '#DCEAF5'
-const TABLE_BORDER = '#D8E3EC'
+const INSTITUTIONAL_BLUE = "#0B4F8A";
+const TEAL = "#008C8C";
+const DARK_TEXT = "#1F2937";
+const MUTED_TEXT = "#6B7280";
+const LIGHT_FILL = "#F3F7FA";
+const TABLE_HEADER_FILL = "#DCEAF5";
+const TABLE_BORDER = "#D8E3EC";
 
 type PdfDocument = {
-  fontSize(size: number): PdfDocument
-  font(name: string): PdfDocument
-  fillColor(color: string): PdfDocument
-  rect(x: number, y: number, width: number, height: number): PdfDocument
-  fill(color?: string): PdfDocument
-  strokeColor(color: string): PdfDocument
-  lineWidth(width: number): PdfDocument
-  moveTo(x: number, y: number): PdfDocument
-  lineTo(x: number, y: number): PdfDocument
-  stroke(): PdfDocument
-  text(text: string, x?: number, y?: number, options?: Record<string, unknown>): PdfDocument
-  moveDown(lines?: number): PdfDocument
-  addPage(): PdfDocument
-  end(): void
-  on(event: 'data', callback: (chunk: Buffer) => void): void
-  on(event: 'end', callback: () => void): void
-  on(event: 'error', callback: (error: Error) => void): void
+  fontSize(size: number): PdfDocument;
+  font(name: string): PdfDocument;
+  fillColor(color: string): PdfDocument;
+  rect(x: number, y: number, width: number, height: number): PdfDocument;
+  fill(color?: string): PdfDocument;
+  strokeColor(color: string): PdfDocument;
+  lineWidth(width: number): PdfDocument;
+  moveTo(x: number, y: number): PdfDocument;
+  lineTo(x: number, y: number): PdfDocument;
+  stroke(): PdfDocument;
+  text(
+    text: string,
+    x?: number,
+    y?: number,
+    options?: Record<string, unknown>,
+  ): PdfDocument;
+  moveDown(lines?: number): PdfDocument;
+  addPage(): PdfDocument;
+  end(): void;
+  on(event: "data", callback: (chunk: Buffer) => void): void;
+  on(event: "end", callback: () => void): void;
+  on(event: "error", callback: (error: Error) => void): void;
   page: {
-    height: number
-    width: number
-    margins: { top: number; bottom: number; left: number; right: number }
-  }
-  y: number
-}
+    height: number;
+    width: number;
+    margins: { top: number; bottom: number; left: number; right: number };
+  };
+  y: number;
+};
 
-type PrismaClientLike = Pick<typeof prisma, '$transaction'>
-type StorageUploader = typeof uploadPrivateStorageObject
+type PrismaClientLike = Pick<typeof prisma, "$transaction">;
+type StorageUploader = typeof uploadPrivateStorageObject;
 
 export type GenerateMonthlyReportInput = {
-  periodo?: string
-  usuarioId: string
-}
+  periodo?: string;
+  usuarioId: string;
+};
 
 type PaymentRow = {
-  monto: number
-  fecha: Date
+  monto: number;
+  fecha: Date;
   adeudo: {
     servicio: {
-      id: string
-      nombre: string
-    }
-  }
-}
+      id: string;
+      nombre: string;
+    };
+  };
+};
 
 type OverdueDebtRow = {
-  id: string
+  id: string;
   ciudadano: {
-    nombre: string
-    apellido: string
-    clave_catastral: string
-    zona: string | null
-  }
+    nombre: string;
+    apellido: string;
+    clave_catastral: string;
+    zona: string | null;
+  };
   servicio: {
-    nombre: string
-  }
-  periodo: string
-  monto: number
-  vencimiento: Date
-}
+    nombre: string;
+  };
+  periodo: string;
+  monto: number;
+  vencimiento: Date;
+};
 
 type ServiceRevenueRow = {
-  servicioId: string
-  servicio: string
-  pagos: number
-  recaudado: number
-  promedio: number
-}
+  servicioId: string;
+  servicio: string;
+  pagos: number;
+  recaudado: number;
+  promedio: number;
+};
 
 type MonthlyReportSnapshot = {
-  periodo: string
-  previousPeriodo: string
-  generatedAt: Date
-  currentPayments: PaymentRow[]
-  previousPayments: PaymentRow[]
-  serviceRevenue: ServiceRevenueRow[]
-  topMorosos: OverdueDebtRow[]
-  totalMorosos: number
-  carteraVencida: number
-}
+  periodo: string;
+  previousPeriodo: string;
+  generatedAt: Date;
+  currentPayments: PaymentRow[];
+  previousPayments: PaymentRow[];
+  serviceRevenue: ServiceRevenueRow[];
+  topMorosos: OverdueDebtRow[];
+  totalMorosos: number;
+  carteraVencida: number;
+};
 
-type ReportArtifactFormat = 'pdf' | 'xlsx'
+type ReportArtifactFormat = "pdf" | "xlsx";
 
 type ReportArtifact = {
-  buffer: Buffer
-  fileName: string
-  contentType: string
-  descripcion: string
-  tipo: string
-}
+  buffer: Buffer;
+  fileName: string;
+  contentType: string;
+  descripcion: string;
+  tipo: string;
+};
 
 export class ReportError extends Error {
   constructor(
     public readonly statusCode: number,
     message: string,
   ) {
-    super(message)
+    super(message);
   }
 }
 
 function normalizePeriod(periodo?: string) {
-  const normalized = periodo?.trim() || getCurrentPeriod()
+  const normalized = periodo?.trim() || getCurrentPeriod();
 
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(normalized)) {
-    throw new ReportError(400, 'Invalid period format. Expected YYYY-MM')
+    throw new ReportError(400, "Invalid period format. Expected YYYY-MM");
   }
 
-  return normalized
+  return normalized;
 }
 
 function getCurrentPeriod(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function getPreviousPeriod(periodo: string) {
-  const [yearText, monthText] = periodo.split('-')
-  const year = Number(yearText)
-  const month = Number(monthText)
-  const previousMonth = month - 1
+  const [yearText, monthText] = periodo.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const previousMonth = month - 1;
 
   if (previousMonth >= 1) {
-    return `${year}-${String(previousMonth).padStart(2, '0')}`
+    return `${year}-${String(previousMonth).padStart(2, "0")}`;
   }
 
-  return `${year - 1}-12`
+  return `${year - 1}-12`;
 }
 
 function getPeriodRange(periodo: string) {
-  const [yearText, monthText] = periodo.split('-')
-  const year = Number(yearText)
-  const month = Number(monthText)
-  const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
-  const end = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999))
+  const [yearText, monthText] = periodo.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+  const end = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
 
-  return { start, end }
+  return { start, end };
 }
 
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-  }).format(amount)
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  }).format(amount);
 }
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat('es-MX', {
-    dateStyle: 'medium',
-    timeZone: 'America/Mexico_City',
-  }).format(date)
+  return new Intl.DateTimeFormat("es-MX", {
+    dateStyle: "medium",
+    timeZone: "America/Mexico_City",
+  }).format(date);
 }
 
 function formatPeriod(periodo: string) {
-  const [yearText, monthText] = periodo.split('-')
-  const monthIndex = Number(monthText) - 1
-  const monthLabel = new Intl.DateTimeFormat('es-MX', {
-    month: 'long',
-    timeZone: 'UTC',
-  }).format(new Date(Date.UTC(Number(yearText), monthIndex, 1)))
+  const [yearText, monthText] = periodo.split("-");
+  const monthIndex = Number(monthText) - 1;
+  const monthLabel = new Intl.DateTimeFormat("es-MX", {
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(Number(yearText), monthIndex, 1)));
 
-  return `${monthLabel} ${yearText}`
+  return `${monthLabel} ${yearText}`;
 }
 
 function addPageIfNeeded(doc: PdfDocument, requiredHeight: number) {
   if (doc.y + requiredHeight <= doc.page.height - doc.page.margins.bottom) {
-    return
+    return;
   }
 
-  doc.addPage()
+  doc.addPage();
 }
 
 function addHeader(doc: PdfDocument, periodo: string) {
-  doc.rect(0, 0, doc.page.width, 104).fill(INSTITUTIONAL_BLUE)
+  doc.rect(0, 0, doc.page.width, 104).fill(INSTITUTIONAL_BLUE);
   doc
-    .fillColor('#FFFFFF')
-    .font('Helvetica-Bold')
+    .fillColor("#FFFFFF")
+    .font("Helvetica-Bold")
     .fontSize(20)
-    .text('SiCoSe - Reporte Mensual', 54, 28)
+    .text("SiCoSe - Reporte Mensual", 54, 28);
   doc
-    .font('Helvetica')
+    .font("Helvetica")
     .fontSize(10)
-    .text('Recaudacion, cartera vencida y comparativo operativo', 54, 56)
+    .text("Recaudacion, cartera vencida y comparativo operativo", 54, 56);
   doc
-    .font('Helvetica-Bold')
+    .font("Helvetica-Bold")
     .fontSize(11)
     .text(`Periodo: ${formatPeriod(periodo)}`, 404, 32, {
       width: 154,
-      align: 'right',
-    })
+      align: "right",
+    });
 }
 
 function addSummaryCard(
@@ -215,88 +222,108 @@ function addSummaryCard(
   value: string,
   note: string,
 ) {
-  doc.rect(x, y, width, height).fill(LIGHT_FILL)
-  doc.rect(x, y, width, height).strokeColor(TABLE_BORDER).lineWidth(1).stroke()
+  doc.rect(x, y, width, height).fill(LIGHT_FILL);
+  doc.rect(x, y, width, height).strokeColor(TABLE_BORDER).lineWidth(1).stroke();
   doc
     .fillColor(MUTED_TEXT)
-    .font('Helvetica-Bold')
+    .font("Helvetica-Bold")
     .fontSize(9)
-    .text(label, x + 14, y + 12, { width: width - 28 })
-  doc.fillColor(DARK_TEXT).font('Helvetica-Bold').fontSize(18).text(value, x + 14, y + 30, {
-    width: width - 28,
-  })
-  doc.fillColor(MUTED_TEXT).font('Helvetica').fontSize(8.5).text(note, x + 14, y + 56, {
-    width: width - 28,
-  })
+    .text(label, x + 14, y + 12, { width: width - 28 });
+  doc
+    .fillColor(DARK_TEXT)
+    .font("Helvetica-Bold")
+    .fontSize(18)
+    .text(value, x + 14, y + 30, {
+      width: width - 28,
+    });
+  doc
+    .fillColor(MUTED_TEXT)
+    .font("Helvetica")
+    .fontSize(8.5)
+    .text(note, x + 14, y + 56, {
+      width: width - 28,
+    });
 }
 
 function drawSectionTitle(doc: PdfDocument, title: string) {
-  addPageIfNeeded(doc, 42)
-  doc.fillColor(INSTITUTIONAL_BLUE).font('Helvetica-Bold').fontSize(13).text(title)
+  addPageIfNeeded(doc, 42);
+  doc
+    .fillColor(INSTITUTIONAL_BLUE)
+    .font("Helvetica-Bold")
+    .fontSize(13)
+    .text(title);
   doc
     .strokeColor(TABLE_BORDER)
     .lineWidth(1)
     .moveTo(doc.page.margins.left, doc.y + 4)
     .lineTo(doc.page.width - doc.page.margins.right, doc.y + 4)
-    .stroke()
-  doc.moveDown(1)
+    .stroke();
+  doc.moveDown(1);
 }
 
 function drawTable<T>(
   doc: PdfDocument,
   columns: Array<{
-    header: string
-    width: number
-    align?: 'left' | 'right' | 'center'
-    render: (row: T) => string
+    header: string;
+    width: number;
+    align?: "left" | "right" | "center";
+    render: (row: T) => string;
   }>,
   rows: T[],
   rowHeight = 30,
 ) {
-  const xStart = doc.page.margins.left
-  const totalWidth = columns.reduce((sum, column) => sum + column.width, 0)
+  const xStart = doc.page.margins.left;
+  const totalWidth = columns.reduce((sum, column) => sum + column.width, 0);
 
   const drawHeaderRow = () => {
-    doc.rect(xStart, doc.y, totalWidth, 26).fill(TABLE_HEADER_FILL)
-    doc.rect(xStart, doc.y, totalWidth, 26).strokeColor(TABLE_BORDER).lineWidth(1).stroke()
+    doc.rect(xStart, doc.y, totalWidth, 26).fill(TABLE_HEADER_FILL);
+    doc
+      .rect(xStart, doc.y, totalWidth, 26)
+      .strokeColor(TABLE_BORDER)
+      .lineWidth(1)
+      .stroke();
 
-    let x = xStart
+    let x = xStart;
     for (const column of columns) {
       doc
         .fillColor(DARK_TEXT)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .fontSize(9)
         .text(column.header, x + 6, doc.y + 8, {
           width: column.width - 12,
-          align: column.align ?? 'left',
-        })
-      x += column.width
+          align: column.align ?? "left",
+        });
+      x += column.width;
     }
 
-    doc.y += 26
-  }
+    doc.y += 26;
+  };
 
-  drawHeaderRow()
+  drawHeaderRow();
 
   for (const row of rows) {
-    addPageIfNeeded(doc, rowHeight + 8)
+    addPageIfNeeded(doc, rowHeight + 8);
 
-    const rowY = doc.y
-    doc.rect(xStart, rowY, totalWidth, rowHeight).strokeColor(TABLE_BORDER).lineWidth(1).stroke()
+    const rowY = doc.y;
+    doc
+      .rect(xStart, rowY, totalWidth, rowHeight)
+      .strokeColor(TABLE_BORDER)
+      .lineWidth(1)
+      .stroke();
 
-    let x = xStart
+    let x = xStart;
     for (const column of columns) {
-      doc.fillColor(DARK_TEXT).font('Helvetica').fontSize(9)
+      doc.fillColor(DARK_TEXT).font("Helvetica").fontSize(9);
       doc.text(column.render(row), x + 6, rowY + 7, {
         width: column.width - 12,
         height: rowHeight - 10,
-        align: column.align ?? 'left',
+        align: column.align ?? "left",
         ellipsis: true,
-      })
-      x += column.width
+      });
+      x += column.width;
     }
 
-    doc.y = rowY + rowHeight
+    doc.y = rowY + rowHeight;
   }
 }
 
@@ -304,23 +331,23 @@ function createServiceRevenue(rows: PaymentRow[]): ServiceRevenueRow[] {
   const grouped = new Map<
     string,
     {
-      servicio: string
-      pagos: number
-      recaudado: number
+      servicio: string;
+      pagos: number;
+      recaudado: number;
     }
-  >()
+  >();
 
   for (const payment of rows) {
-    const service = payment.adeudo.servicio
+    const service = payment.adeudo.servicio;
     const current = grouped.get(service.id) ?? {
       servicio: service.nombre,
       pagos: 0,
       recaudado: 0,
-    }
+    };
 
-    current.pagos += 1
-    current.recaudado += payment.monto
-    grouped.set(service.id, current)
+    current.pagos += 1;
+    current.recaudado += payment.monto;
+    grouped.set(service.id, current);
   }
 
   return Array.from(grouped.entries())
@@ -331,101 +358,102 @@ function createServiceRevenue(rows: PaymentRow[]): ServiceRevenueRow[] {
       recaudado: value.recaudado,
       promedio: value.pagos > 0 ? value.recaudado / value.pagos : 0,
     }))
-    .sort((left, right) => right.recaudado - left.recaudado)
+    .sort((left, right) => right.recaudado - left.recaudado);
 }
 
 async function buildMonthlyReportSnapshot(
   input: GenerateMonthlyReportInput,
   client: PrismaClientLike,
 ) {
-  const periodo = normalizePeriod(input.periodo)
-  const previousPeriodo = getPreviousPeriod(periodo)
-  const currentRange = getPeriodRange(periodo)
-  const previousRange = getPeriodRange(previousPeriodo)
+  const periodo = normalizePeriod(input.periodo);
+  const previousPeriodo = getPreviousPeriod(periodo);
+  const currentRange = getPeriodRange(periodo);
+  const previousRange = getPeriodRange(previousPeriodo);
 
   return client.$transaction(async (tx) => {
-    const [currentPayments, previousPayments, topMorososResult] = await Promise.all([
-      tx.pago.findMany({
-        where: {
-          fecha: {
-            gte: currentRange.start,
-            lte: currentRange.end,
-          },
-        },
-        include: {
-          adeudo: {
-            include: {
-              servicio: true,
+    const [currentPayments, previousPayments, topMorososResult] =
+      await Promise.all([
+        tx.pago.findMany({
+          where: {
+            fecha: {
+              gte: currentRange.start,
+              lte: currentRange.end,
             },
           },
-        },
-        orderBy: {
-          fecha: 'asc',
-        },
-      }) as Promise<PaymentRow[]>,
-      tx.pago.findMany({
-        where: {
-          fecha: {
-            gte: previousRange.start,
-            lte: previousRange.end,
-          },
-        },
-        include: {
-          adeudo: {
-            include: {
-              servicio: true,
-            },
-          },
-        },
-        orderBy: {
-          fecha: 'asc',
-        },
-      }) as Promise<PaymentRow[]>,
-      (async () => {
-        const { end } = getPeriodRange(periodo)
-        const where: Prisma.AdeudoWhereInput = {
-          pagado: false,
-          OR: [
-            {
-              estado: 'vencido',
-            },
-            {
-              vencimiento: {
-                lt: end,
+          include: {
+            adeudo: {
+              include: {
+                servicio: true,
               },
             },
-          ],
-        }
-
-        const [total, cartera] = await Promise.all([
-          tx.adeudo.count({ where }),
-          tx.adeudo.aggregate({
-            where,
-            _sum: {
-              monto: true,
-            },
-          }),
-        ])
-
-        const rows = await tx.adeudo.findMany({
-          where,
-          include: {
-            ciudadano: true,
-            servicio: true,
           },
           orderBy: {
-            monto: 'desc',
+            fecha: "asc",
           },
-          take: 10,
-        })
+        }) as Promise<PaymentRow[]>,
+        tx.pago.findMany({
+          where: {
+            fecha: {
+              gte: previousRange.start,
+              lte: previousRange.end,
+            },
+          },
+          include: {
+            adeudo: {
+              include: {
+                servicio: true,
+              },
+            },
+          },
+          orderBy: {
+            fecha: "asc",
+          },
+        }) as Promise<PaymentRow[]>,
+        (async () => {
+          const { end } = getPeriodRange(periodo);
+          const where: Prisma.AdeudoWhereInput = {
+            pagado: false,
+            OR: [
+              {
+                estado: "vencido",
+              },
+              {
+                vencimiento: {
+                  lt: end,
+                },
+              },
+            ],
+          };
 
-        return {
-          total,
-          carteraVencida: cartera._sum.monto ?? 0,
-          rows: rows as OverdueDebtRow[],
-        }
-      })(),
-    ])
+          const [total, cartera] = await Promise.all([
+            tx.adeudo.count({ where }),
+            tx.adeudo.aggregate({
+              where,
+              _sum: {
+                monto: true,
+              },
+            }),
+          ]);
+
+          const rows = await tx.adeudo.findMany({
+            where,
+            include: {
+              ciudadano: true,
+              servicio: true,
+            },
+            orderBy: {
+              monto: "desc",
+            },
+            take: 10,
+          });
+
+          return {
+            total,
+            carteraVencida: cartera._sum.monto ?? 0,
+            rows: rows as OverdueDebtRow[],
+          };
+        })(),
+      ]);
 
     return {
       periodo,
@@ -437,137 +465,164 @@ async function buildMonthlyReportSnapshot(
       topMorosos: topMorososResult.rows,
       totalMorosos: topMorososResult.total,
       carteraVencida: topMorososResult.carteraVencida,
-    } satisfies MonthlyReportSnapshot
-  })
+    } satisfies MonthlyReportSnapshot;
+  });
 }
 
 async function buildMonthlyReportXlsx(snapshot: MonthlyReportSnapshot) {
-  const currentTotal = snapshot.currentPayments.reduce((sum, payment) => sum + payment.monto, 0)
-  const previousTotal = snapshot.previousPayments.reduce((sum, payment) => sum + payment.monto, 0)
+  const currentTotal = snapshot.currentPayments.reduce(
+    (sum, payment) => sum + payment.monto,
+    0,
+  );
+  const previousTotal = snapshot.previousPayments.reduce(
+    (sum, payment) => sum + payment.monto,
+    0,
+  );
 
   const summaryData: SheetData = [
-    ['SiCoSe', 'Reporte mensual'],
-    ['Periodo', snapshot.periodo],
-    ['Periodo anterior', snapshot.previousPeriodo],
-    ['Generado el', snapshot.generatedAt.toISOString()],
-    ['Recaudado actual', currentTotal],
-    ['Recaudado anterior', previousTotal],
-    ['Cartera vencida', snapshot.carteraVencida],
-    ['Morosos', snapshot.totalMorosos],
-    ['Pagos actuales', snapshot.currentPayments.length],
-    ['Pagos periodo anterior', snapshot.previousPayments.length],
-  ]
+    ["SiCoSe", "Reporte mensual"],
+    ["Periodo", snapshot.periodo],
+    ["Periodo anterior", snapshot.previousPeriodo],
+    ["Generado el", snapshot.generatedAt.toISOString()],
+    ["Recaudado actual", currentTotal],
+    ["Recaudado anterior", previousTotal],
+    ["Cartera vencida", snapshot.carteraVencida],
+    ["Morosos", snapshot.totalMorosos],
+    ["Pagos actuales", snapshot.currentPayments.length],
+    ["Pagos periodo anterior", snapshot.previousPayments.length],
+  ];
 
   const serviceRevenueData: SheetData = [
-    ['Servicio', 'Pagos', 'Recaudado', 'Promedio'],
+    ["Servicio", "Pagos", "Recaudado", "Promedio"],
     ...snapshot.serviceRevenue.map((row) => [
       row.servicio,
       row.pagos,
       row.recaudado,
       row.promedio,
     ]),
-  ]
+  ];
 
   const morososData: SheetData = [
-    ['Ciudadano', 'ClaveCatastral', 'Zona', 'Servicio', 'Periodo', 'Monto', 'Vencimiento'],
+    [
+      "Ciudadano",
+      "ClaveCatastral",
+      "Zona",
+      "Servicio",
+      "Periodo",
+      "Monto",
+      "Vencimiento",
+    ],
     ...snapshot.topMorosos.map((row) => [
       `${row.ciudadano.nombre} ${row.ciudadano.apellido}`,
       row.ciudadano.clave_catastral,
-      row.ciudadano.zona ?? 'Sin zona',
+      row.ciudadano.zona ?? "Sin zona",
       row.servicio.nombre,
       row.periodo,
       row.monto,
       formatDate(row.vencimiento),
     ]),
-  ]
+  ];
 
   const output = await writeXlsxFile([
-    { sheet: 'Resumen', data: summaryData },
-    { sheet: 'Recaudacion', data: serviceRevenueData },
-    { sheet: 'Morosos', data: morososData },
-  ])
+    { sheet: "Resumen", data: summaryData },
+    { sheet: "Recaudacion", data: serviceRevenueData },
+    { sheet: "Morosos", data: morososData },
+  ]);
 
-  return output.toBuffer()
+  return output.toBuffer();
 }
 
 async function buildReportArtifact(
   snapshot: MonthlyReportSnapshot,
   format: ReportArtifactFormat,
 ): Promise<ReportArtifact> {
-  const currentTotal = snapshot.currentPayments.reduce((sum, payment) => sum + payment.monto, 0)
-  const previousTotal = snapshot.previousPayments.reduce((sum, payment) => sum + payment.monto, 0)
-  const fileBaseName = `reporte-mensual-${snapshot.periodo}`
+  const fileBaseName = `reporte-mensual-${snapshot.periodo}`;
 
-  if (format === 'xlsx') {
+  if (format === "xlsx") {
     return {
       buffer: await buildMonthlyReportXlsx(snapshot),
       fileName: `${fileBaseName}.xlsx`,
-      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      tipo: 'MENSUAL_EXCEL',
+      contentType:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      tipo: "MENSUAL_EXCEL",
       descripcion:
-        'Exportacion Excel con resumen operativo, recaudacion por servicio y cartera vencida.',
-    }
+        "Exportacion Excel con resumen operativo, recaudacion por servicio y cartera vencida.",
+    };
   }
 
   return {
     buffer: Buffer.alloc(0),
     fileName: `${fileBaseName}.pdf`,
-    contentType: 'application/pdf',
-    tipo: 'MENSUAL_PDF',
+    contentType: "application/pdf",
+    tipo: "MENSUAL_PDF",
     descripcion:
-      'PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.',
-  }
+      "PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.",
+  };
 }
 
 async function buildMonthlyReportPdf(input: {
-  periodo: string
-  generatedAt: Date
-  currentPayments: PaymentRow[]
-  previousPayments: PaymentRow[]
-  serviceRevenue: ServiceRevenueRow[]
-  topMorosos: OverdueDebtRow[]
-  totalMorosos: number
-  carteraVencida: number
+  periodo: string;
+  generatedAt: Date;
+  currentPayments: PaymentRow[];
+  previousPayments: PaymentRow[];
+  serviceRevenue: ServiceRevenueRow[];
+  topMorosos: OverdueDebtRow[];
+  totalMorosos: number;
+  carteraVencida: number;
 }) {
-  const chunks: Buffer[] = []
+  const chunks: Buffer[] = [];
   const doc = new PDFDocument({
-    size: 'LETTER',
+    size: "LETTER",
     margin: 54,
     info: {
       Title: `Reporte mensual ${input.periodo}`,
-      Author: 'SiCoSe',
-      Subject: 'Reporte mensual de recaudacion',
+      Author: "SiCoSe",
+      Subject: "Reporte mensual de recaudacion",
     },
-  })
+  });
 
   return await new Promise<Buffer>((resolve, reject) => {
-    doc.on('data', (chunk) => chunks.push(chunk))
-    doc.on('end', () => resolve(Buffer.concat(chunks)))
-    doc.on('error', reject)
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
 
-    addHeader(doc, input.periodo)
-    doc.y = 126
+    addHeader(doc, input.periodo);
+    doc.y = 126;
 
-    doc.fillColor(DARK_TEXT).font('Helvetica').fontSize(10.5).text(
-      'Este documento resume la recaudacion mensual, los principales adeudos vencidos y el comportamiento frente al mes anterior.',
-      doc.page.margins.left,
-      doc.y,
-      { width: doc.page.width - doc.page.margins.left - doc.page.margins.right },
-    )
+    doc
+      .fillColor(DARK_TEXT)
+      .font("Helvetica")
+      .fontSize(10.5)
+      .text(
+        "Este documento resume la recaudacion mensual, los principales adeudos vencidos y el comportamiento frente al mes anterior.",
+        doc.page.margins.left,
+        doc.y,
+        {
+          width:
+            doc.page.width - doc.page.margins.left - doc.page.margins.right,
+        },
+      );
 
-    doc.moveDown(2)
+    doc.moveDown(2);
 
-    const currentTotal = input.currentPayments.reduce((sum, payment) => sum + payment.monto, 0)
-    const previousTotal = input.previousPayments.reduce((sum, payment) => sum + payment.monto, 0)
-    const difference = currentTotal - previousTotal
-    const percentChange = previousTotal > 0 ? (difference / previousTotal) * 100 : null
+    const currentTotal = input.currentPayments.reduce(
+      (sum, payment) => sum + payment.monto,
+      0,
+    );
+    const previousTotal = input.previousPayments.reduce(
+      (sum, payment) => sum + payment.monto,
+      0,
+    );
+    const difference = currentTotal - previousTotal;
+    const percentChange =
+      previousTotal > 0 ? (difference / previousTotal) * 100 : null;
 
-    drawSectionTitle(doc, 'Resumen ejecutivo')
-    const cardWidth = 159
-    const cardHeight = 82
-    const gap = 13
-    const startX = doc.page.margins.left
-    const rowY = doc.y
+    drawSectionTitle(doc, "Resumen ejecutivo");
+    const cardWidth = 159;
+    const cardHeight = 82;
+    const gap = 13;
+    const startX = doc.page.margins.left;
+    const rowY = doc.y;
 
     addSummaryCard(
       doc,
@@ -575,32 +630,34 @@ async function buildMonthlyReportPdf(input: {
       rowY,
       cardWidth,
       cardHeight,
-      'Recaudado mes',
+      "Recaudado mes",
       formatCurrency(currentTotal),
       `${input.currentPayments.length} pagos registrados`,
-    )
+    );
     addSummaryCard(
       doc,
       startX + cardWidth + gap,
       rowY,
       cardWidth,
       cardHeight,
-      'Mes anterior',
+      "Mes anterior",
       formatCurrency(previousTotal),
       `${input.previousPayments.length} pagos en el periodo previo`,
-    )
+    );
     addSummaryCard(
       doc,
       startX + (cardWidth + gap) * 2,
       rowY,
       cardWidth,
       cardHeight,
-      'Variacion',
-      `${difference >= 0 ? '+' : ''}${formatCurrency(difference)}`,
-      percentChange === null ? 'Sin base comparativa' : `${percentChange.toFixed(1)}% vs mes anterior`,
-    )
+      "Variacion",
+      `${difference >= 0 ? "+" : ""}${formatCurrency(difference)}`,
+      percentChange === null
+        ? "Sin base comparativa"
+        : `${percentChange.toFixed(1)}% vs mes anterior`,
+    );
 
-    doc.y = rowY + cardHeight + 18
+    doc.y = rowY + cardHeight + 18;
 
     addSummaryCard(
       doc,
@@ -608,135 +665,141 @@ async function buildMonthlyReportPdf(input: {
       doc.y,
       cardWidth,
       cardHeight,
-      'Cartera vencida',
+      "Cartera vencida",
       formatCurrency(input.carteraVencida),
       `${input.totalMorosos} adeudos morosos detectados`,
-    )
+    );
     addSummaryCard(
       doc,
       startX + cardWidth + gap,
       doc.y,
       cardWidth,
       cardHeight,
-      'Cobranza actual',
+      "Cobranza actual",
       `${input.serviceRevenue.length} servicios`,
-      'Distribucion por servicio facturado',
-    )
+      "Distribucion por servicio facturado",
+    );
     addSummaryCard(
       doc,
       startX + (cardWidth + gap) * 2,
       doc.y,
       cardWidth,
       cardHeight,
-      'Fecha de corte',
+      "Fecha de corte",
       formatDate(input.generatedAt),
-      'Generado automaticamente por SiCoSe',
-    )
+      "Generado automaticamente por SiCoSe",
+    );
 
-    doc.y += cardHeight + 18
+    doc.y += cardHeight + 18;
 
-    drawSectionTitle(doc, 'Recaudacion por servicio')
+    drawSectionTitle(doc, "Recaudacion por servicio");
     drawTable(
       doc,
       [
         {
-          header: 'Servicio',
+          header: "Servicio",
           width: 250,
           render: (row: ServiceRevenueRow) => row.servicio,
         },
         {
-          header: 'Pagos',
+          header: "Pagos",
           width: 70,
-          align: 'right',
+          align: "right",
           render: (row: ServiceRevenueRow) => String(row.pagos),
         },
         {
-          header: 'Recaudado',
+          header: "Recaudado",
           width: 110,
-          align: 'right',
+          align: "right",
           render: (row: ServiceRevenueRow) => formatCurrency(row.recaudado),
         },
         {
-          header: 'Promedio',
+          header: "Promedio",
           width: 74,
-          align: 'right',
+          align: "right",
           render: (row: ServiceRevenueRow) => formatCurrency(row.promedio),
         },
       ],
       input.serviceRevenue,
-    )
+    );
 
-    const serviceTotal = input.serviceRevenue.reduce((sum, row) => sum + row.recaudado, 0)
+    const serviceTotal = input.serviceRevenue.reduce(
+      (sum, row) => sum + row.recaudado,
+      0,
+    );
     doc
       .fillColor(TEAL)
-      .font('Helvetica-Bold')
+      .font("Helvetica-Bold")
       .fontSize(10)
       .text(
         `Total recaudado: ${formatCurrency(serviceTotal)}`,
         doc.page.margins.left,
         doc.y,
         {
-          width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
-          align: 'right',
+          width:
+            doc.page.width - doc.page.margins.left - doc.page.margins.right,
+          align: "right",
         },
-      )
+      );
 
-    doc.moveDown(1.4)
+    doc.moveDown(1.4);
 
-    drawSectionTitle(doc, 'Top 10 morosos')
+    drawSectionTitle(doc, "Top 10 morosos");
     drawTable(
       doc,
       [
         {
-          header: 'Ciudadano',
+          header: "Ciudadano",
           width: 190,
-          render: (row: OverdueDebtRow) => `${row.ciudadano.nombre} ${row.ciudadano.apellido}`.trim(),
+          render: (row: OverdueDebtRow) =>
+            `${row.ciudadano.nombre} ${row.ciudadano.apellido}`.trim(),
         },
         {
-          header: 'Servicio',
+          header: "Servicio",
           width: 130,
           render: (row: OverdueDebtRow) => row.servicio.nombre,
         },
         {
-          header: 'Periodo',
+          header: "Periodo",
           width: 66,
-          align: 'center',
+          align: "center",
           render: (row: OverdueDebtRow) => row.periodo,
         },
         {
-          header: 'Vencimiento',
+          header: "Vencimiento",
           width: 74,
-          align: 'center',
+          align: "center",
           render: (row: OverdueDebtRow) => formatDate(row.vencimiento),
         },
         {
-          header: 'Monto',
+          header: "Monto",
           width: 72,
-          align: 'right',
+          align: "right",
           render: (row: OverdueDebtRow) => formatCurrency(row.monto),
         },
       ],
       input.topMorosos,
       34,
-    )
+    );
 
-    doc.moveDown(1.2)
+    doc.moveDown(1.2);
     doc
       .fillColor(MUTED_TEXT)
-      .font('Helvetica')
+      .font("Helvetica")
       .fontSize(9)
       .text(
         `Reporte almacenado con folio de periodo ${input.periodo}. La version historica queda disponible para consulta permanente en el sistema.`,
         doc.page.margins.left,
         doc.y,
         {
-          width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
-          align: 'left',
+          width:
+            doc.page.width - doc.page.margins.left - doc.page.margins.right,
+          align: "left",
         },
-      )
+      );
 
-    doc.end()
-  })
+    doc.end();
+  });
 }
 
 async function buildMonthlyReportPdfBuffer(snapshot: MonthlyReportSnapshot) {
@@ -749,56 +812,56 @@ async function buildMonthlyReportPdfBuffer(snapshot: MonthlyReportSnapshot) {
     topMorosos: snapshot.topMorosos,
     totalMorosos: snapshot.totalMorosos,
     carteraVencida: snapshot.carteraVencida,
-  })
+  });
 }
 
 async function buildMonthlyReportFile(
   snapshot: MonthlyReportSnapshot,
   format: ReportArtifactFormat,
 ) {
-  if (format === 'xlsx') {
-    return buildReportArtifact(snapshot, 'xlsx')
+  if (format === "xlsx") {
+    return buildReportArtifact(snapshot, "xlsx");
   }
 
-  const pdfBuffer = await buildMonthlyReportPdfBuffer(snapshot)
+  const pdfBuffer = await buildMonthlyReportPdfBuffer(snapshot);
 
   return {
     buffer: pdfBuffer,
     fileName: `reporte-mensual-${snapshot.periodo}.pdf`,
-    contentType: 'application/pdf',
-    tipo: 'MENSUAL_PDF',
+    contentType: "application/pdf",
+    tipo: "MENSUAL_PDF",
     descripcion:
-      'PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.',
-  }
+      "PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.",
+  };
 }
 
 export async function exportMonthlyReport(
-  input: GenerateMonthlyReportInput = { usuarioId: '' },
+  input: GenerateMonthlyReportInput = { usuarioId: "" },
   client: PrismaClientLike = prisma,
   storageUploader: StorageUploader = uploadPrivateStorageObject,
-  format: ReportArtifactFormat = 'pdf',
+  format: ReportArtifactFormat = "pdf",
 ) {
   if (!input.usuarioId.trim()) {
-    throw new ReportError(400, 'User id is required to generate the report')
+    throw new ReportError(400, "User id is required to generate the report");
   }
 
-  const snapshot = await buildMonthlyReportSnapshot(input, client)
-  const artifact = await buildMonthlyReportFile(snapshot, format)
-  const storagePath = `reportes/${snapshot.periodo}/${Date.now()}-${artifact.fileName}`
+  const snapshot = await buildMonthlyReportSnapshot(input, client);
+  const artifact = await buildMonthlyReportFile(snapshot, format);
+  const storagePath = `reportes/${snapshot.periodo}/${Date.now()}-${artifact.fileName}`;
 
   return client.$transaction(async (tx) => {
     const storage = await storageUploader({
       path: storagePath,
       buffer: artifact.buffer,
       contentType: artifact.contentType,
-    })
+    });
 
     const report = await tx.reporte.create({
       data: {
         titulo: `Reporte mensual ${formatPeriod(snapshot.periodo)}`,
         descripcion: artifact.descripcion,
         tipo: artifact.tipo,
-        estado: 'GENERADO',
+        estado: "GENERADO",
         periodo: snapshot.periodo,
         archivo_url: storage.url,
         archivo_path: storage.path,
@@ -807,15 +870,21 @@ export async function exportMonthlyReport(
           periodo: snapshot.periodo,
           periodoAnterior: snapshot.previousPeriodo,
           formato: format,
-          recaudadoActual: snapshot.currentPayments.reduce((sum, payment) => sum + payment.monto, 0),
-          recaudadoAnterior: snapshot.previousPayments.reduce((sum, payment) => sum + payment.monto, 0),
+          recaudadoActual: snapshot.currentPayments.reduce(
+            (sum, payment) => sum + payment.monto,
+            0,
+          ),
+          recaudadoAnterior: snapshot.previousPayments.reduce(
+            (sum, payment) => sum + payment.monto,
+            0,
+          ),
           carteraVencida: snapshot.carteraVencida,
           morosos: snapshot.totalMorosos,
           recaudacionPorServicio: snapshot.serviceRevenue,
           topMorosos: snapshot.topMorosos,
         },
       },
-    })
+    });
 
     return {
       report: report as Reporte,
@@ -827,14 +896,14 @@ export async function exportMonthlyReport(
       carteraVencida: snapshot.carteraVencida,
       fileName: artifact.fileName,
       format,
-    }
-  })
+    };
+  });
 }
 
 export async function generateMonthlyReport(
-  input: GenerateMonthlyReportInput = { usuarioId: '' },
+  input: GenerateMonthlyReportInput = { usuarioId: "" },
   client: PrismaClientLike = prisma,
   storageUploader: StorageUploader = uploadPrivateStorageObject,
 ) {
-  return exportMonthlyReport(input, client, storageUploader, 'pdf')
+  return exportMonthlyReport(input, client, storageUploader, "pdf");
 }

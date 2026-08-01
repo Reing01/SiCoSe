@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from "react";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import RoutePills from "../../components/RoutePills";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Button } from "../../components/ui/button";
