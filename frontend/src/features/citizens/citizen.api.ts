@@ -61,9 +61,8 @@ function authHeaders(token: string) {
 export async function fetchCitizens(token: string): Promise<CitizenRecord[]> {
   const records: CitizenApiRecord[] = []
   let page = 1
-  let totalPages = 1
 
-  do {
+  while (true) {
     const response = await apiRequest<CitizenListResponse>(
       `/api/ciudadanos?pagina=${page}&limite=100`,
       {
@@ -72,9 +71,11 @@ export async function fetchCitizens(token: string): Promise<CitizenRecord[]> {
     )
 
     records.push(...response.data)
-    totalPages = response.metadata.totalPaginas
+    if (page >= response.metadata.totalPaginas) {
+      break
+    }
     page += 1
-  } while (page <= totalPages)
+  }
 
   return records.map(toCitizenRecord)
 }
