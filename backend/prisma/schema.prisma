@@ -155,3 +155,11 @@ model Reporte {
   @@index([periodo])
   @@index([tipo])
 }
+
+model Lead {
+  id        String   @id @default(uuid())
+  nombre    String
+  comite    String
+  contacto  String
+  createdAt DateTime @default(now())
+}

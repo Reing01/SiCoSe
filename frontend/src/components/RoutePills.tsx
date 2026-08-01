@@ -124,7 +124,7 @@ export default function RoutePills({
                 isOpen && "justify-center",
               )}
             >
-              {ROUTE_LABELS[route]}
+              {ROUTE_LABELS[route as keyof typeof ROUTE_LABELS]}
             </a>
           );
         })}

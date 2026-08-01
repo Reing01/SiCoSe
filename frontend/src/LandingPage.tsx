@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 
 // ============================================================
 // SiCoSe — Sistema de Cobros de Servicios
@@ -8,7 +8,7 @@
 
 // ------ Sub-componentes ------
 
-import RoutePills from './components/RoutePills'
+import RoutePills from "./components/RoutePills";
 
 const NAV_LINKS = [
   { label: "El Problema", href: "#problema" },
@@ -186,9 +186,9 @@ function Hero() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {[
-            { step: '01', label: 'Explora el proyecto', href: '#modulos' },
-            { step: '02', label: 'Entra al panel', href: '/login' },
-            { step: '03', label: 'Opera el flujo', href: '#contacto' },
+            { step: "01", label: "Explora el proyecto", href: "#modulos" },
+            { step: "02", label: "Entra al panel", href: "/login" },
+            { step: "03", label: "Opera el flujo", href: "#contacto" },
           ].map((item, index) => (
             <a
               key={item.step}
@@ -199,7 +199,9 @@ function Hero() {
               <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#f97316]">
                 {item.step}
               </p>
-              <p className="mt-2 text-sm font-semibold text-white">{item.label}</p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {item.label}
+              </p>
             </a>
           ))}
         </div>
@@ -252,7 +254,10 @@ function ProblemaBanner() {
   ];
 
   return (
-    <section id="problema" className="py-20 bg-slate-900 text-white animate-fade-up">
+    <section
+      id="problema"
+      className="py-20 bg-slate-900 text-white animate-fade-up"
+    >
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-14">
           <span className="inline-block bg-red-500/20 border border-red-500/40 text-red-400 text-xs font-semibold tracking-widest uppercase px-4 py-1.5 rounded-full mb-4">
@@ -319,8 +324,8 @@ function Modulos() {
       nombre: "Dashboard Principal",
       desc: "Visualiza en tiempo real la recaudación del período: efectivo vs. SPEI, total cobrado, adeudos pendientes y cobertura del padrón.",
       tag: "Métricas en tiempo real",
-      href: '/dashboard',
-      cta: 'Abrir dashboard',
+      href: "/dashboard",
+      cta: "Abrir dashboard",
     },
     {
       icon: (
@@ -339,8 +344,8 @@ function Modulos() {
       nombre: "Login Seguro",
       desc: "Acceso protegido por usuario y contraseña. Solo el comité autorizado puede consultar y editar el padrón — sin riesgo de filtraciones.",
       tag: "Acceso controlado",
-      href: '/login',
-      cta: 'Ir al login',
+      href: "/login",
+      cta: "Ir al login",
     },
     {
       icon: (
@@ -362,8 +367,8 @@ function Modulos() {
       nombre: "Padrón Digital",
       desc: "Base de datos de cada usuario con su ID, nombre completo, dirección exacta (Zona, Calle, CP) y foto de referencia opcional.",
       tag: "Dirección exacta",
-      href: '/ciudadanos',
-      cta: 'Abrir padrón',
+      href: "/ciudadanos",
+      cta: "Abrir padrón",
     },
     {
       icon: (
@@ -386,8 +391,8 @@ function Modulos() {
       nombre: "Historial Logístico",
       desc: "Consulta de un vistazo cuántos periodos pagó cada usuario y cuántos adeuda. Exportable para rendición de cuentas ante el municipio.",
       tag: "Períodos pagados / adeudados",
-      href: '/dashboard',
-      cta: 'Ver historial',
+      href: "/dashboard",
+      cta: "Ver historial",
     },
   ];
 
@@ -650,14 +655,14 @@ function FormularioContacto() {
   const [formMessage, setFormMessage] = useState("");
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
-  function handleChange(e) {
+  function handleChange(e: ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (formMessage) setFormMessage("");
     if (error) setError(false);
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setAttemptedSubmit(true);
 
@@ -691,7 +696,7 @@ function FormularioContacto() {
       setEnviado(true);
       setFormData(INITIAL_FORM);
       setAttemptedSubmit(false);
-    } catch (_) {
+    } catch {
       // Si hay un error de red real lo mostramos
       setError(true);
       setFormMessage("Ocurrió un problema al enviar. Intenta de nuevo.");
@@ -716,7 +721,7 @@ function FormularioContacto() {
           </p>
         </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
           {enviado ? (
             /* ── Estado de éxito ── */
             <div className="text-center py-8">
@@ -766,7 +771,10 @@ function FormularioContacto() {
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
                 {attemptedSubmit && !formData.nombre.trim() ? (
-                  <p id="landing-contact-nombre-error" className="mt-1 text-xs text-red-600">
+                  <p
+                    id="landing-contact-nombre-error"
+                    className="mt-1 text-xs text-red-600"
+                  >
                     Ingresa tu nombre completo.
                   </p>
                 ) : null}
@@ -798,7 +806,10 @@ function FormularioContacto() {
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
                 {attemptedSubmit && !formData.comite.trim() ? (
-                  <p id="landing-contact-comite-error" className="mt-1 text-xs text-red-600">
+                  <p
+                    id="landing-contact-comite-error"
+                    className="mt-1 text-xs text-red-600"
+                  >
                     Ingresa el comité o junta auxiliar.
                   </p>
                 ) : null}
@@ -830,15 +841,23 @@ function FormularioContacto() {
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#f97316] focus:border-transparent text-base sm:text-sm transition"
                 />
                 {attemptedSubmit && !formData.contacto.trim() ? (
-                  <p id="landing-contact-contacto-error" className="mt-1 text-xs text-red-600">
+                  <p
+                    id="landing-contact-contacto-error"
+                    className="mt-1 text-xs text-red-600"
+                  >
                     Ingresa un teléfono o correo de contacto.
                   </p>
                 ) : null}
               </div>
 
               {(formMessage || error) && (
-                <p role="alert" aria-live="polite" className="text-center text-xs text-red-600">
-                  {formMessage || "Ocurrió un problema al enviar. Intenta de nuevo."}
+                <p
+                  role="alert"
+                  aria-live="polite"
+                  className="text-center text-xs text-red-600"
+                >
+                  {formMessage ||
+                    "Ocurrió un problema al enviar. Intenta de nuevo."}
                 </p>
               )}
 
