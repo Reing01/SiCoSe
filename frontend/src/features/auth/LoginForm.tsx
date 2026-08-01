@@ -11,14 +11,11 @@ import {
 } from '../../components/ui/card'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
-import { useToast } from '../../components/ui/toast'
+import { useToast } from '../../components/ui/toast-context'
 import { cn } from '../../lib/utils'
 import { LOGIN_COPY, getPublicLoginErrorMessage } from './auth.copy'
 import type { LoginRequest } from './auth.types'
-
-type LoginFieldName = keyof LoginRequest
-
-type LoginFieldErrors = Partial<Record<LoginFieldName, string>>
+import { type LoginFieldName, validateLoginForm } from './login-form.validation'
 
 type SubmissionState =
   | { kind: 'idle' }
@@ -30,9 +27,6 @@ export type LoginSubmissionResult = {
   redirectTo?: string
 }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PASSWORD_MIN_LENGTH = 8
-
 const DEFAULT_VALUES: LoginRequest = {
   email: '',
   password: '',
@@ -41,26 +35,6 @@ const DEFAULT_VALUES: LoginRequest = {
 const DEFAULT_TOUCHED: Record<LoginFieldName, boolean> = {
   email: false,
   password: false,
-}
-
-export function validateLoginForm(values: LoginRequest): LoginFieldErrors {
-  const errors: LoginFieldErrors = {}
-  const email = values.email.trim()
-  const password = values.password
-
-  if (!email) {
-    errors.email = LOGIN_COPY.fieldErrors.emailRequired
-  } else if (!EMAIL_PATTERN.test(email)) {
-    errors.email = LOGIN_COPY.fieldErrors.emailInvalid
-  }
-
-  if (!password) {
-    errors.password = LOGIN_COPY.fieldErrors.passwordRequired
-  } else if (password.length < PASSWORD_MIN_LENGTH) {
-    errors.password = LOGIN_COPY.fieldErrors.passwordInvalid
-  }
-
-  return errors
 }
 
 export interface LoginFormProps {

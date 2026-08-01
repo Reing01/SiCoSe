@@ -1,8 +1,7 @@
 import type { PropsWithChildren } from 'react'
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { cn } from '../../lib/utils'
-
-type ToastTone = 'success' | 'error' | 'warning'
+import { ToastContext, type ToastInput, type ToastTone } from './toast-context'
 
 type Toast = {
   id: number
@@ -11,18 +10,8 @@ type Toast = {
   message?: string
 }
 
-type ToastInput = Omit<Toast, 'id'>
-
-type ToastContextValue = {
-  addToast: (toast: ToastInput) => void
-}
-
 const MAX_VISIBLE_TOASTS = 3
 const TOAST_DURATION_MS = 4000
-
-const ToastContext = createContext<ToastContextValue>({
-  addToast: () => undefined,
-})
 
 const toneClasses: Record<ToastTone, string> = {
   success: 'border-emerald-200 bg-emerald-50 text-emerald-950',
@@ -114,8 +103,4 @@ function ToastViewport({
       ))}
     </div>
   )
-}
-
-export function useToast() {
-  return useContext(ToastContext)
 }

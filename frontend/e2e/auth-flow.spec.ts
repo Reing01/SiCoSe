@@ -98,9 +98,16 @@ test.describe("E2E Integration Flows", () => {
 
   test("leads submission from the landing page", async ({ page }) => {
     // Mock leads persistence endpoint
-    let leadPayload: any = null;
+    type LeadPayload = {
+      nombre: string;
+      comite: string;
+      contacto: string;
+    };
+
+    const capturedLead: { payload?: LeadPayload } = {};
     await page.route("**/api/leads", async (route) => {
-      leadPayload = route.request().postDataJSON();
+      const requestPayload = route.request().postDataJSON() as LeadPayload;
+      capturedLead.payload = requestPayload;
       await route.fulfill({
         status: 201,
         contentType: "application/json",
@@ -108,7 +115,7 @@ test.describe("E2E Integration Flows", () => {
           message: "Lead received",
           data: {
             id: "lead-uuid-123",
-            ...leadPayload,
+            ...requestPayload,
             createdAt: new Date().toISOString(),
           },
         }),
@@ -133,7 +140,8 @@ test.describe("E2E Integration Flows", () => {
 
     // 4. Verify Success message and payload
     await expect(page.getByText(/¡Datos recibidos!/i)).toBeVisible();
-    expect(leadPayload).not.toBeNull();
+    const leadPayload = capturedLead.payload;
+    if (!leadPayload) throw new Error("The leads request was not captured");
     expect(leadPayload.nombre).toBe("Vecino Vigilante");
     expect(leadPayload.contacto).toBe("2223334455");
   });

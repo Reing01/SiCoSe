@@ -9,7 +9,7 @@ import { logout } from '../../features/auth/auth.api'
 import { exportMonthlyReport, fetchDashboardMetrics } from '../../features/dashboard/dashboard.api'
 import type { DashboardMetrics } from '../../features/dashboard/dashboard.types'
 import { cn } from '../../lib/utils'
-import { useTheme } from '../../features/theme/theme'
+import { useTheme } from '../../features/theme/theme-context'
 
 type LoadState = { kind: 'loading' } | { kind: 'ready'; metrics: DashboardMetrics } | { kind: 'error'; message: string }
 

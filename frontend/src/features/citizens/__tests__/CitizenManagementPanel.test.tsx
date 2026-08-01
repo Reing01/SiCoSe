@@ -3,9 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { authStorageKeys } from '../../auth/auth.session'
 import { citizenSeed } from '../citizen.seed'
 import * as citizenApi from '../citizen.api'
-import CitizenManagementPanel, {
-  validateCitizenForm,
-} from '../CitizenManagementPanel'
+import CitizenManagementPanel from '../CitizenManagementPanel'
+import { validateCitizenForm } from '../citizen-form.validation'
 
 vi.mock('../citizen.api')
 

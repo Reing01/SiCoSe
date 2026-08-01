@@ -17,7 +17,7 @@ import {
   clearAuthSession,
   readAuthSession,
 } from "../../features/auth/auth.session";
-import { useTheme } from "../../features/theme/theme";
+import { useTheme } from "../../features/theme/theme-context";
 import {
   fetchPendingDebts,
   registerPayment,

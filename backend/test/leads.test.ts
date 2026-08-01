@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
+import type { Lead, Prisma } from "@prisma/client";
 import { prisma } from "../src/lib/prisma.js";
 
 describe("Leads API & Service", () => {
@@ -13,16 +14,21 @@ describe("Leads API & Service", () => {
   });
 
   it("correctly inserts a lead into the database when a valid payload is provided", async () => {
-    const createdData: any[] = [];
+    const createdData: Prisma.LeadCreateArgs["data"][] = [];
+    const originalCreate = prisma.lead.create;
 
-    (prisma.lead.create as any) = async (args: any) => {
+    prisma.lead.create = (async (
+      args: Prisma.LeadCreateArgs,
+    ): Promise<Lead> => {
       createdData.push(args.data);
       return {
         id: "lead-uuid-1",
-        ...args.data,
+        nombre: args.data.nombre,
+        comite: args.data.comite,
+        contacto: args.data.contacto,
         createdAt: new Date(),
       };
-    };
+    }) as unknown as typeof prisma.lead.create;
 
     const payload = {
       nombre: "Vecino Vigilante",
@@ -30,15 +36,17 @@ describe("Leads API & Service", () => {
       contacto: "2224445566",
     };
 
-    const lead = await prisma.lead.create({
-      data: payload,
-    });
+    try {
+      const lead = await prisma.lead.create({ data: payload });
 
-    assert.equal(lead.id, "lead-uuid-1");
-    assert.equal(lead.nombre, "Vecino Vigilante");
-    assert.equal(lead.comite, "Agua Potable");
-    assert.equal(lead.contacto, "2224445566");
-    assert.equal(createdData.length, 1);
-    assert.deepEqual(createdData[0], payload);
+      assert.equal(lead.id, "lead-uuid-1");
+      assert.equal(lead.nombre, "Vecino Vigilante");
+      assert.equal(lead.comite, "Agua Potable");
+      assert.equal(lead.contacto, "2224445566");
+      assert.equal(createdData.length, 1);
+      assert.deepEqual(createdData[0], payload);
+    } finally {
+      prisma.lead.create = originalCreate;
+    }
   });
 });
