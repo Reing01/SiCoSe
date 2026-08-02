@@ -174,14 +174,14 @@ describe("registerCashPayment", () => {
       ),
       {
         name: "Error",
-        message: "Payment amount cannot be greater than pending debt",
+        message: "Payment amount cannot exceed the pending debt balance of 75",
         statusCode: 400,
       },
     );
   });
 
-  it("handles partial payments correctly without marking the debt as fully paid", async () => {
-    const { client, calls } = createPaymentClient();
+  it("keeps the debt partial and records the remaining balance for a partial payment", async () => {
+    const { client, calls } = createPaymentClient({ existingPaymentsTotal: 25 });
 
     const payment = await registerCashPayment(
       {
@@ -195,12 +195,42 @@ describe("registerCashPayment", () => {
       client as never,
     );
 
-    assert.equal(payment.monto, 100); // Mock returns full cash payment payload
+    assert.equal(payment.monto, 100);
     const updateCallArgs = calls.debtUpdate as {
       data: { pagado: boolean; estado: string };
     };
     assert.equal(updateCallArgs.data.pagado, false);
     assert.equal(updateCallArgs.data.estado, "parcial");
+
+    const auditDetails = (calls.auditCreated as { data: { detalles: string } }).data.detalles;
+    assert.match(auditDetails, /"saldoPendienteAnterior":75/);
+    assert.match(auditDetails, /"saldoRestante":35/);
+  });
+
+  it("marks the debt as paid and records zero remaining balance for a full payment", async () => {
+    const { client, calls } = createPaymentClient({ existingPaymentsTotal: 60 });
+
+    await registerCashPayment(
+      {
+        metodo: "efectivo",
+        ciudadanoId: "00000000-0000-4000-8000-000000000001",
+        adeudoId: "00000000-0000-4000-8000-000000000002",
+        monto: 40,
+        usuarioId: "00000000-0000-4000-8000-000000000005",
+        ip: "127.0.0.1",
+      },
+      client as never,
+    );
+
+    const updateCallArgs = calls.debtUpdate as {
+      data: { pagado: boolean; estado: string };
+    };
+    assert.equal(updateCallArgs.data.pagado, true);
+    assert.equal(updateCallArgs.data.estado, "pagado");
+
+    const auditDetails = (calls.auditCreated as { data: { detalles: string } }).data.detalles;
+    assert.match(auditDetails, /"saldoPendienteAnterior":40/);
+    assert.match(auditDetails, /"saldoRestante":0/);
   });
 
   it("rejects duplicate cash payments within the 5 seconds lock window", async () => {
@@ -255,6 +285,43 @@ describe("registerCashPayment", () => {
 });
 
 describe("registerTransferPayment", () => {
+  it("keeps the debt partial and records the remaining balance for a transfer partial payment", async () => {
+    const { client, calls } = createPaymentClient({ existingPaymentsTotal: 25 });
+    const validPdfBuffer = Buffer.from("%PDF-1.4 mock pdf contents");
+
+    await registerTransferPayment(
+      {
+        metodo: "transferencia",
+        ciudadanoId: "00000000-0000-4000-8000-000000000001",
+        adeudoId: "00000000-0000-4000-8000-000000000002",
+        monto: 40,
+        referenciaBancaria: "SPEI-123456",
+        comprobante: {
+          buffer: validPdfBuffer,
+          originalName: "comprobante.pdf",
+        },
+        usuarioId: "00000000-0000-4000-8000-000000000005",
+        ip: "127.0.0.1",
+      },
+      client as never,
+      async () => ({
+        url: "http://supabase.test/file.pdf",
+        path: "file.pdf",
+        bucket: "comprobantes",
+      }),
+    );
+
+    const updateCallArgs = calls.debtUpdate as {
+      data: { pagado: boolean; estado: string };
+    };
+    assert.equal(updateCallArgs.data.pagado, false);
+    assert.equal(updateCallArgs.data.estado, "parcial");
+
+    const auditDetails = (calls.auditCreated as { data: { detalles: string } }).data.detalles;
+    assert.match(auditDetails, /"saldoPendienteAnterior":75/);
+    assert.match(auditDetails, /"saldoRestante":35/);
+  });
+
   it("rejects an executable file even when it is uploaded as a receipt", async () => {
     const { client } = createPaymentClient();
     const exeLikeBuffer = Buffer.from("MZ fake executable payload");

@@ -2,8 +2,19 @@ x-backend-common: &backend-common
   build:
     context: ./backend
     dockerfile: Dockerfile
-  env_file:
-    - .env.docker
+  environment:
+    PORT: ${PORT:-3000}
+    CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    DATABASE_URL: ${DATABASE_URL:-postgresql://sicose_user:change-me-local-only@postgres:5432/sicose_dev}
+    DIRECT_URL: ${DIRECT_URL:-postgresql://sicose_user:change-me-local-only@postgres:5432/sicose_dev}
+    REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    JWT_SECRET: ${JWT_SECRET:-change-me-local-only}
+    JWT_ISSUER: ${JWT_ISSUER:-sicose}
+    JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+    RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+    RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-10}
+    RATE_LIMIT_EMAIL_WINDOW_MS: ${RATE_LIMIT_EMAIL_WINDOW_MS:-300000}
+    RATE_LIMIT_EMAIL_MAX: ${RATE_LIMIT_EMAIL_MAX:-5}
   volumes:
     - ./backend:/app
     - backend_node_modules:/app/node_modules
@@ -25,10 +36,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: sicose-frontend
-    env_file:
-      - .env.docker
     environment:
-      VITE_API_BASE_URL: http://localhost:3000
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000}
     restart: unless-stopped
     depends_on:
       backend:
@@ -40,19 +49,21 @@ services:
       - frontend_node_modules:/app/node_modules
     networks:
       - red-publica
+    labels:
+      com.sicose.health.startup: "http://127.0.0.1:5173/"
+      com.sicose.health.readiness: "http://127.0.0.1:5173/"
+      com.sicose.health.liveness: "http://127.0.0.1:5173/"
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:5173').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 6
       start_period: 15s
+      start_interval: 5s
 
   backend:
     <<: *backend-common
     container_name: sicose-backend
-    environment:
-      PORT: 3000
-      CORS_ORIGIN: http://localhost:5173
     restart: unless-stopped
     depends_on:
       migrate:
@@ -67,19 +78,26 @@ services:
       - red-publica
       - red-privada
       - red-datos
+    labels:
+      com.sicose.health.startup: "http://127.0.0.1:3000/health/live"
+      com.sicose.health.readiness: "http://127.0.0.1:3000/health/ready"
+      com.sicose.health.liveness: "http://127.0.0.1:3000/health/live"
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health/ready').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 6
       start_period: 30s
+      start_interval: 5s
 
   postgres:
     image: postgres:16-alpine
     container_name: sicose-postgres
     restart: unless-stopped
-    env_file:
-      - .env.docker
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sicose_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-sicose_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-only}
     ports:
       - "5432:5432"
     volumes:
@@ -97,8 +115,8 @@ services:
     image: redis:7-alpine
     container_name: sicose-redis
     restart: unless-stopped
-    env_file:
-      - .env.docker
+    environment:
+      REDIS_APPENDONLY: ${REDIS_APPENDONLY:-yes}
     command: ["sh", "-c", "exec redis-server --appendonly \"$$REDIS_APPENDONLY\""]
     ports:
       - "6379:6379"

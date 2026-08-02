@@ -16,8 +16,12 @@ ingress:
   className: nginx
   host: sicose-practica.local
 
+cluster:
+  physicalNodes: 4
+  replicasPerNode: 3
+
 backend:
-  replicaCount: 12
+  replicaCount: null
   scheduling:
     topologySpread:
       enabled: true
@@ -26,7 +30,7 @@ backend:
       topologyKey: kubernetes.io/hostname
 
 frontend:
-  replicaCount: 12
+  replicaCount: null
   scheduling:
     topologySpread:
       enabled: true

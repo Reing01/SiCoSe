@@ -3,9 +3,9 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 
 const leadSchema = z.object({
-  nombre: z.string().min(2),
-  comite: z.string().min(2),
-  contacto: z.string().min(3),
+  nombre: z.string().trim().min(2).transform((value) => value.replace(/\s+/g, " ")),
+  comite: z.string().trim().min(2).transform((value) => value.replace(/\s+/g, " ")),
+  contacto: z.string().trim().min(3).transform((value) => value.replace(/\s+/g, " ")),
 });
 
 export const leadsRouter = Router();
@@ -28,6 +28,12 @@ leadsRouter.post("/", async (request, response, next) => {
         contacto: parsed.data.contacto,
       },
     });
+
+    if (!lead?.id) {
+      return response.status(500).json({
+        error: "Lead persistence failed",
+      });
+    }
 
     return response.status(201).json({
       message: "Lead received",

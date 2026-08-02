@@ -21,7 +21,7 @@ metadata:
   name: {{ include "sicose.fullname" . }}-frontend
   namespace: {{ include "sicose.namespace" . }}
 spec:
-  replicas: {{ .Values.frontend.replicaCount }}
+  replicas: {{ include "sicose.frontendReplicas" . }}
   revisionHistoryLimit: 5
   strategy:
     type: RollingUpdate

@@ -26,3 +26,15 @@ app.kubernetes.io/part-of: sicose
 app.kubernetes.io/name: {{ include "sicose.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
+
+{{- define "sicose.targetReplicas" -}}
+{{- mul (int .Values.cluster.physicalNodes) (int .Values.cluster.replicasPerNode) -}}
+{{- end -}}
+
+{{- define "sicose.backendReplicas" -}}
+{{- default (include "sicose.targetReplicas" .) .Values.backend.replicaCount -}}
+{{- end -}}
+
+{{- define "sicose.frontendReplicas" -}}
+{{- default (include "sicose.targetReplicas" .) .Values.frontend.replicaCount -}}
+{{- end -}}
