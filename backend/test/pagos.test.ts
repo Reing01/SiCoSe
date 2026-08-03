@@ -78,6 +78,9 @@ function createPaymentClient(
         };
       },
     },
+    comprobante: {
+      create: async (args: unknown) => args,
+    },
     auditoria: {
       create: async (args: unknown) => {
         calls.auditCreated = args;
