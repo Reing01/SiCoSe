@@ -13,7 +13,7 @@
     "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "deploy:cluster:4nodos": "node ./scripts/deploy-swarm-4nodos.mjs",
     "deploy:swarm:4nodos": "node ./scripts/deploy-swarm-4nodos.mjs",
-    "lint": "eslint .",
+    "lint": "eslint --config eslint.config.js .",
     "typecheck": "npm run typecheck --prefix backend && npm run typecheck --prefix frontend",
     "test": "npm run test --prefix frontend && npm run test --prefix backend && npm run test:swarm",
     "test:swarm": "node --test ./scripts/swarm-deploy-utils.test.mjs",
@@ -32,18 +32,21 @@
   },
   "homepage": "https://github.com/Reing01/SiCoSe#readme",
   "devDependencies": {
+    "@eslint/compat": "^2.1.0",
+    "@eslint/js": "^10.0.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",
-    "concurrently": "^9.2.1",
-    "eslint": "^8.57.0",
+    "concurrently": "^10.0.4",
+    "eslint": "^10.8.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.8.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
-    "prettier": "^3.8.3",
-    "typescript": "^5.8.3"
+    "lint-staged": "^17.2.0",
+    "prettier": "^3.9.6",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "lint-staged": {
     "**/*.{ts,tsx,js,jsx}": [

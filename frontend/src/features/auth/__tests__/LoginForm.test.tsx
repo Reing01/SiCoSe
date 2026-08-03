@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { LOGIN_COPY } from '../auth.copy'
-import LoginForm, { validateLoginForm } from '../LoginForm'
+import LoginForm from '../LoginForm'
+import { validateLoginForm } from '../login-form.validation'
 
 describe('validateLoginForm', () => {
   it('returns field errors for empty values', () => {

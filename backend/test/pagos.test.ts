@@ -236,31 +236,29 @@ describe("registerCashPayment", () => {
   it("rejects duplicate cash payments within the 5 seconds lock window", async () => {
     const { client } = createPaymentClient();
 
+    const customTx = {
+      adeudo: {
+        findFirst: async () => ({
+          id: "adeudo-1",
+          monto: 100,
+          pagado: false,
+          estado: "pendiente",
+        }),
+        update: async () => ({ id: "adeudo-1" }),
+      },
+      pago: {
+        findFirst: async () => ({ id: "pago-1" }),
+        aggregate: async () => ({ _sum: { monto: 0 } }),
+        create: async () => ({ id: "pago-2" }),
+      },
+      auditoria: { create: async () => ({}) },
+      $queryRaw: async () => {},
+    };
     const txMockWithDuplicate = {
       ...client,
-      $transaction: async (callback: any) => {
-        const customTx = {
-          adeudo: {
-            findFirst: async () => ({
-              id: "adeudo-1",
-              monto: 100,
-              pagado: false,
-              estado: "pendiente",
-            }),
-            update: async () => ({ id: "adeudo-1" }),
-          },
-          pago: {
-            findFirst: async () => ({ id: "pago-1" }),
-            aggregate: async () => ({ _sum: { monto: 0 } }),
-            create: async () => ({ id: "pago-2" }),
-          },
-          auditoria: {
-            create: async () => ({}),
-          },
-          $queryRaw: async () => {},
-        };
-        return callback(customTx);
-      },
+      $transaction: async <T>(
+        callback: (transaction: typeof customTx) => Promise<T>,
+      ) => callback(customTx),
     };
 
     await assert.rejects(
@@ -359,34 +357,30 @@ describe("registerTransferPayment", () => {
   it("rejects duplicate transfer reference values with a Conflict error", async () => {
     const { client } = createPaymentClient();
     const validPdfBuffer = Buffer.from("%PDF-1.4 mock pdf contents");
+    const customTx = {
+      adeudo: {
+        findFirst: async () => ({
+          id: "adeudo-1",
+          monto: 100,
+          pagado: false,
+          estado: "pendiente",
+        }),
+        update: async () => ({ id: "adeudo-1" }),
+      },
+      pago: {
+        findFirst: async () => ({ id: "pago-existing" }),
+        aggregate: async () => ({ _sum: { monto: 0 } }),
+        create: async () => ({ id: "pago-2" }),
+      },
+      comprobante: { create: async () => ({}) },
+      auditoria: { create: async () => ({}) },
+      $queryRaw: async () => {},
+    };
     const txMockWithDuplicate = {
       ...client,
-      $transaction: async (callback: any) => {
-        const customTx = {
-          adeudo: {
-            findFirst: async () => ({
-              id: "adeudo-1",
-              monto: 100,
-              pagado: false,
-              estado: "pendiente",
-            }),
-            update: async () => ({ id: "adeudo-1" }),
-          },
-          pago: {
-            findFirst: async () => ({ id: "pago-existing" }),
-            aggregate: async () => ({ _sum: { monto: 0 } }),
-            create: async () => ({ id: "pago-2" }),
-          },
-          comprobante: {
-            create: async () => ({}),
-          },
-          auditoria: {
-            create: async () => ({}),
-          },
-          $queryRaw: async () => {},
-        };
-        return callback(customTx);
-      },
+      $transaction: async <T>(
+        callback: (transaction: typeof customTx) => Promise<T>,
+      ) => callback(customTx),
     };
 
     await assert.rejects(

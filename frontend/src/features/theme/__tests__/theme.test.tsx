@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ThemeProvider, useTheme } from '../theme'
+import { useTheme } from '../theme-context'
+import { ThemeProvider } from '../theme'
 
 function ThemeProbe() {
   const { theme, toggleTheme } = useTheme()

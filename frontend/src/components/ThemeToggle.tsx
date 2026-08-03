@@ -1,4 +1,4 @@
-import { useTheme } from '../features/theme/theme'
+import { useTheme } from '../features/theme/theme-context'
 import { cn } from '../lib/utils'
 
 type ThemeToggleProps = {
