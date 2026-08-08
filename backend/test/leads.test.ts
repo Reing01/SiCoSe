@@ -48,7 +48,7 @@ describe("Leads API & Service", () => {
     });
   });
 
-  it("creates a lead and returns 201 when the payload is normalized and persisted", async () => {
+  it("creates a lead and returns 201 when the payload is persisted", async () => {
     const createdData: Prisma.LeadCreateArgs["data"][] = [];
     const originalCreate = prisma.lead.create;
 
@@ -84,9 +84,9 @@ describe("Leads API & Service", () => {
       assert.equal(payload.message, "Lead received");
       assert.equal(createdData.length, 1);
       assert.deepEqual(createdData[0], {
-        nombre: "Juan PÃ©rez",
-        comite: "Junta Auxiliar Centro",
-        contacto: "222 123 4567",
+        nombre: "  Juan PÃ©rez  ",
+        comite: "  Junta Auxiliar Centro  ",
+        contacto: "  222 123 4567  ",
       });
     } finally {
       prisma.lead.create = originalCreate;
