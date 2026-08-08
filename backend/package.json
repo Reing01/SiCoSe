@@ -17,14 +17,12 @@
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "bcrypt": "^6.0.0",
-    "cors": "^2.8.5",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
     "helmet": "^8.0.0",
@@ -33,21 +31,24 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "pdfkit": "^0.15.2",
-    "prisma": "^5.22.0",
+    "prisma": "^7.9.1",
     "swagger-ui-express": "^5.0.1",
     "write-excel-file": "^4.1.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "@types/cors": "^2.8.19",
     "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^2.1.0",
     "@types/node": "^26.1.2",
     "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^10.8.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "scheduler": "^0.27.0",
     "tsx": "^4.19.2",
     "typescript": "^7.0.2"
   }
