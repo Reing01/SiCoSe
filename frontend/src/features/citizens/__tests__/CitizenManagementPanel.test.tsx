@@ -3,10 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { authStorageKeys } from '../../auth/auth.session'
 import { citizenSeed } from '../citizen.seed'
 import * as citizenApi from '../citizen.api'
+import * as citizenHistoryApi from '../citizen-history.api'
 import CitizenManagementPanel from '../CitizenManagementPanel'
 import { validateCitizenForm } from '../citizen-form.validation'
 
 vi.mock('../citizen.api')
+vi.mock('../citizen-history.api')
 
 function persistSecretarySession() {
   window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
@@ -57,6 +59,51 @@ describe('CitizenManagementPanel', () => {
     vi.clearAllMocks()
     window.sessionStorage.clear()
     persistSecretarySession()
+    vi.mocked(citizenHistoryApi.fetchCitizenHistory).mockResolvedValue({
+      ciudadanoId: 'CIT-002',
+          adeudos: [
+        {
+          id: 'adeudo-1',
+          periodo: '2026-06',
+          monto: 30,
+          vencimiento: '2026-06-30T00:00:00.000Z',
+          estado: 'pagado',
+          pagado: true,
+          ciudadanoId: 'CIT-002',
+              servicioId: 'serv-1',
+              servicio: {
+                id: 'serv-1',
+                nombre: 'Agua potable',
+                tarifa: 30,
+              },
+            },
+          ],
+      pagos: [
+        {
+          id: 'pago-1',
+          ciudadanoId: 'CIT-002',
+          adeudoId: 'adeudo-1',
+          monto: 30,
+          fecha: '2026-06-15T12:00:00.000Z',
+          metodo: 'efectivo',
+          folio: 'SCS-2026-000001',
+          recibo: 'SCS-2026-000001',
+          creado_por: 'user-1',
+          adeudo: {
+            id: 'adeudo-1',
+            periodo: '2026-06',
+            monto: 30,
+            servicio: {
+              id: 'serv-1',
+              nombre: 'Agua potable',
+              tarifa: 30,
+            },
+          },
+          comprobantes: [],
+        },
+      ],
+      historial: [],
+    })
     vi.mocked(citizenApi.fetchCitizenPage).mockResolvedValue({
       records: citizenSeed.map((record) => ({ ...record, activo: true })),
       metadata: {

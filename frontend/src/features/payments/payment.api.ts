@@ -1,4 +1,4 @@
-import { apiRequest } from '../../lib/api'
+import { API_BASE_URL, apiRequest } from '../../lib/api'
 
 export type PendingDebtRecord = {
   id: string
@@ -94,4 +94,23 @@ export async function registerPayment(
   })
 
   return response.data
+}
+
+export async function fetchPaymentReceiptBlob(token: string, paymentId: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/pagos/${encodeURIComponent(paymentId)}/recibo`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/pdf',
+      },
+      credentials: 'include',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('No fue posible generar el comprobante de pago.')
+  }
+
+  return response.blob()
 }
