@@ -30,7 +30,7 @@
     "jose": "^6.2.8",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
-    "pdfkit": "^0.15.2",
+    "pdfkit": "^0.19.1",
     "prisma": "^7.9.1",
     "swagger-ui-express": "^5.0.1",
     "write-excel-file": "^4.1.1",
