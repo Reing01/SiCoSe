@@ -30,6 +30,7 @@ COPY package.json package-lock.json ./
 COPY prisma ./prisma
 RUN npm ci --omit=dev --omit=peer \
   && npm run prisma:generate \
+  && rm -rf node_modules/typescript node_modules/@typescript \
   && npm cache clean --force \
   && rm -rf /usr/local/lib/node_modules/npm \
   && rm -f /usr/local/bin/npm /usr/local/bin/npx
