@@ -280,7 +280,7 @@ test.describe("E2E Integration Flows", () => {
     await page.goto("/pagos");
     await expect(page).toHaveURL(/\/pagos$/);
     await expect(
-      page.getByRole("heading", { name: "Captura de pagos" }),
+      page.getByRole("heading", { name: "Cobranza, historial y comprobantes" }),
     ).toBeVisible({ timeout: 15000 });
 
     // Verify select option shows full $100 amount

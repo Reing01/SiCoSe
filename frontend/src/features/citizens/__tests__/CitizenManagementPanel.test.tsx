@@ -200,7 +200,6 @@ describe('CitizenManagementPanel', () => {
       ).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/luis garcia perez/i)).toBeInTheDocument()
     expect(
       screen.getByRole('row', { name: /luis garcia perez/i }),
     ).toBeInTheDocument()
