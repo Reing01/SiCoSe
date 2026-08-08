@@ -3,6 +3,7 @@ import {
   persistAuthSession,
   readAuthSession,
 } from '../features/auth/auth.session'
+import { navigateTo } from './navigation'
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(
   /\/+$/,
@@ -57,7 +58,7 @@ function redirectToLogin() {
     typeof window !== 'undefined' &&
     window.location.pathname.replace(/\/+$/, '') !== '/login'
   ) {
-    window.location.assign('/login')
+    navigateTo('/login', true)
   }
 }
 

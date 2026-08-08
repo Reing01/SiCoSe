@@ -10,6 +10,7 @@ import { apiRequest } from "./lib/api";
 // ------ Sub-componentes ------
 
 import RoutePills from "./components/RoutePills";
+import AppLink from "./components/AppLink";
 
 const NAV_LINKS = [
   { label: "El Problema", href: "#problema" },
@@ -25,7 +26,7 @@ function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0f3042] shadow-lg">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2">
+        <AppLink href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-md bg-[#f97316] flex items-center justify-center">
             <svg
               width="18"
@@ -47,7 +48,7 @@ function Navbar() {
           <span className="hidden sm:inline text-slate-400 text-xs font-medium border-l border-slate-600 pl-2 ml-1 leading-tight">
             Juntas Auxiliares
           </span>
-        </a>
+        </AppLink>
 
         {/* Links — desktop */}
         <ul className="hidden md:flex items-center gap-6">
@@ -171,12 +172,12 @@ function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
+          <AppLink
             href="/login"
             className="bg-[#f97316] hover:bg-orange-500 active:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg shadow-orange-700/30 transition-all hover:-translate-y-0.5"
           >
             Iniciar sesión
-          </a>
+          </AppLink>
           <a
             href="#modulos"
             className="border border-white/30 hover:border-white/60 text-white font-semibold text-lg px-8 py-4 rounded-xl transition-all hover:bg-white/5"
@@ -191,7 +192,7 @@ function Hero() {
             { step: "02", label: "Entra al panel", href: "/login" },
             { step: "03", label: "Opera el flujo", href: "#contacto" },
           ].map((item, index) => (
-            <a
+            <AppLink
               key={item.step}
               href={item.href}
               className="rounded-2xl border border-white/10 bg-white/5 p-4 text-left shadow-lg shadow-black/10 backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/10 animate-fade-up"
@@ -203,7 +204,7 @@ function Hero() {
               <p className="mt-2 text-sm font-semibold text-white">
                 {item.label}
               </p>
-            </a>
+            </AppLink>
           ))}
         </div>
 
@@ -477,12 +478,12 @@ function Modulos() {
                 {nombre}
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
-              <a
+              <AppLink
                 href={href}
                 className="mt-5 inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-[#0f3042] transition-colors hover:border-[#f97316]/40 hover:bg-[#f97316]/5 hover:text-[#f97316]"
               >
                 {cta}
-              </a>
+              </AppLink>
             </div>
           ))}
         </div>

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import RoutePills from '../RoutePills'
+import { authStorageKeys } from '../../features/auth/auth.session'
 
 describe('RoutePills', () => {
   beforeEach(() => {
@@ -26,5 +27,22 @@ describe('RoutePills', () => {
     expect(
       screen.getByRole('link', { name: 'Login' }),
     ).toBeInTheDocument()
+  })
+
+  it('navigates to pagos without reloading the page for an admin session', () => {
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        email: 'admin@sicose.test',
+        rol: 'admin',
+      }),
+    )
+
+    render(<RoutePills />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Pagos' }))
+
+    expect(window.location.pathname).toBe('/pagos')
   })
 })

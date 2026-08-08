@@ -13,6 +13,7 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { useToast } from '../../components/ui/toast-context'
 import { cn } from '../../lib/utils'
+import { navigateTo } from '../../lib/navigation'
 import { LOGIN_COPY, getPublicLoginErrorMessage } from './auth.copy'
 import type { LoginRequest } from './auth.types'
 import { type LoginFieldName, validateLoginForm } from './login-form.validation'
@@ -155,7 +156,7 @@ export default function LoginForm({
 
         if (typeof redirectTo === 'string' && redirectTo.trim()) {
           window.setTimeout(() => {
-            window.location.assign(redirectTo)
+            navigateTo(redirectTo, true)
           }, 900)
         }
       }

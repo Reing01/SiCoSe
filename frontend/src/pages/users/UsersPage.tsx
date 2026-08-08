@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import AppLink from '../../components/AppLink'
 import RoutePills from '../../components/RoutePills'
 import ThemeToggle from '../../components/ThemeToggle'
 import { Button } from '../../components/ui/button'
@@ -8,6 +9,7 @@ import { Label } from '../../components/ui/label'
 import { logout } from '../../features/auth/auth.api'
 import { clearAuthSession, readAuthSession } from '../../features/auth/auth.session'
 import { useTheme } from '../../features/theme/theme-context'
+import { navigateTo } from '../../lib/navigation'
 import { cn } from '../../lib/utils'
 import {
   createUser,
@@ -313,7 +315,7 @@ export default function UsersPage() {
       // La sesión local debe cerrarse aunque el backend ya no acepte el token.
     } finally {
       clearAuthSession()
-      window.location.assign('/login')
+      navigateTo('/login', true)
     }
   }
 
@@ -490,7 +492,7 @@ export default function UsersPage() {
       )}
     >
       <header className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <a
+        <AppLink
           href="/"
           className={cn(
             'inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm backdrop-blur transition-colors',
@@ -515,7 +517,7 @@ export default function UsersPage() {
               Usuarios
             </p>
           </div>
-        </a>
+        </AppLink>
 
         <div className="flex flex-wrap items-center gap-3">
           <RoutePills variant={theme === 'dark' ? 'light' : 'dark'} />

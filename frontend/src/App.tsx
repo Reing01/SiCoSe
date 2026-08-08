@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { readAuthSession } from './features/auth/auth.session'
 import { resolveAppRoute } from './features/auth/auth.routing'
 import { ThemeProvider } from './features/theme/theme'
+import { navigateTo, useAppPathname } from './lib/navigation'
 
 const LandingPage = lazy(() => import('./LandingPage'))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
@@ -24,10 +25,7 @@ function AppFallback() {
 }
 
 export default function App() {
-  const pathname =
-    typeof window !== 'undefined'
-      ? window.location.pathname.replace(/\/+$/, '') || '/'
-      : '/'
+  const pathname = useAppPathname()
   const session = readAuthSession()
   const resolvedRoute = resolveAppRoute(pathname, session)
 
@@ -37,7 +35,7 @@ export default function App() {
     }
 
     if (resolvedRoute !== pathname) {
-      window.history.replaceState({}, '', resolvedRoute)
+      navigateTo(resolvedRoute, true)
     }
   }, [pathname, resolvedRoute])
 

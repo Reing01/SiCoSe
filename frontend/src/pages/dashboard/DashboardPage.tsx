@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import AppLink from '../../components/AppLink'
 import ThemeToggle from '../../components/ThemeToggle'
 import RoutePills from '../../components/RoutePills'
 import { Button } from '../../components/ui/button'
@@ -9,6 +10,7 @@ import { logout } from '../../features/auth/auth.api'
 import { exportMonthlyReport, fetchDashboardMetrics } from '../../features/dashboard/dashboard.api'
 import type { DashboardMetrics } from '../../features/dashboard/dashboard.types'
 import { cn } from '../../lib/utils'
+import { navigateTo } from '../../lib/navigation'
 import { useTheme } from '../../features/theme/theme-context'
 
 type LoadState = { kind: 'loading' } | { kind: 'ready'; metrics: DashboardMetrics } | { kind: 'error'; message: string }
@@ -451,7 +453,7 @@ export default function DashboardPage() {
       // La sesión local debe cerrarse aunque el backend ya no acepte el token.
     } finally {
       clearAuthSession()
-      window.location.assign('/login')
+      navigateTo('/login', true)
     }
   }
 
@@ -535,7 +537,7 @@ export default function DashboardPage() {
       )}
     >
       <header className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <a
+        <AppLink
           href="/"
           className={cn(
             'inline-flex items-center gap-3 rounded-full px-4 py-2 shadow-sm backdrop-blur transition-colors',
@@ -558,7 +560,7 @@ export default function DashboardPage() {
             </p>
             <p className={cn('text-sm', theme === 'dark' ? 'text-slate-300' : 'text-slate-500')}>Panel financiero</p>
           </div>
-        </a>
+        </AppLink>
 
         <div className="flex flex-wrap items-center gap-3">
           <RoutePills variant={theme === 'dark' ? 'light' : 'dark'} />
@@ -631,7 +633,7 @@ export default function DashboardPage() {
               <p>{state.message}</p>
               <button
                 type="button"
-                onClick={() => window.location.assign('/login')}
+                onClick={() => navigateTo('/login', true)}
                 className="inline-flex min-h-11 w-fit items-center rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-700"
               >
                 Ir al login

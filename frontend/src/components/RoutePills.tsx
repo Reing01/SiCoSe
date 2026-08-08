@@ -5,6 +5,7 @@ import {
 } from "../features/auth/authorization";
 import { readAuthSession } from "../features/auth/auth.session";
 import { cn } from "../lib/utils";
+import AppLink from './AppLink';
 
 const ROUTE_LABELS: Record<(typeof APP_ROUTES)[number], string> = {
   "/": "Inicio",
@@ -118,10 +119,11 @@ export default function RoutePills({
           const isActive = currentPath === route;
 
           return (
-            <a
+            <AppLink
               key={route}
               href={route}
               aria-current={isActive ? "page" : undefined}
+              onClick={() => setIsOpen(false)}
               className={cn(
                 "inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
                 isActive ? styles.active : styles.idle,
@@ -129,7 +131,7 @@ export default function RoutePills({
               )}
             >
               {ROUTE_LABELS[route as keyof typeof ROUTE_LABELS]}
-            </a>
+            </AppLink>
           );
         })}
       </nav>

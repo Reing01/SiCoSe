@@ -1,6 +1,7 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import RoutePills from '../../components/RoutePills'
+import AppLink from '../../components/AppLink'
 import ThemeToggle from '../../components/ThemeToggle'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
@@ -18,6 +19,7 @@ import {
   type PaymentRecord,
 } from '../../features/payments/payment.api'
 import { MONTHLY_WATER_FEE_MXN } from '../../lib/water-billing'
+import { navigateTo } from '../../lib/navigation'
 import { cn } from '../../lib/utils'
 
 type PaymentMethod = 'efectivo' | 'transferencia'
@@ -226,7 +228,7 @@ export default function PaymentsPage() {
       }
     } finally {
       clearAuthSession()
-      window.location.assign('/login')
+      navigateTo('/login', true)
     }
   }
 
@@ -384,7 +386,7 @@ export default function PaymentsPage() {
       )}
     >
       <header className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <a
+        <AppLink
           href="/"
           className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/90 px-4 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-900"
         >
@@ -399,7 +401,7 @@ export default function PaymentsPage() {
               Cobranza
             </p>
           </div>
-        </a>
+        </AppLink>
         <div className="flex flex-wrap items-center gap-3">
           <RoutePills variant={theme === 'dark' ? 'light' : 'dark'} />
           <ThemeToggle />

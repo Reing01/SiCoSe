@@ -41,6 +41,77 @@ function mockUserListRequest() {
   )
 }
 
+function mockPaymentsRequest() {
+  vi.spyOn(window, 'fetch').mockImplementation(async (input) => {
+    const url = String(input)
+
+    if (url.includes('/api/adeudos/pendientes')) {
+      return Response.json({
+        data: [
+          {
+            id: 'debt-1',
+            ciudadanoId: 'citizen-1',
+            servicioId: 'service-water',
+            monto: 100,
+            periodo: '2026-08',
+            vencimiento: '2026-08-31T00:00:00.000Z',
+            estado: 'pendiente',
+            ciudadano: {
+              nombre: 'Juan',
+              apellido: 'Perez',
+              email: 'juan@test.com',
+              clave_catastral: 'CATA-123',
+            },
+            servicio: {
+              nombre: 'Agua potable',
+              tarifa: 100,
+            },
+          },
+        ],
+        metadata: {
+          total: 1,
+          totalPendiente: 100,
+        },
+      })
+    }
+
+    if (url.includes('/api/ciudadanos/citizen-1/historial')) {
+      return Response.json({
+        data: {
+          ciudadanoId: 'citizen-1',
+          adeudos: [
+            {
+              id: 'debt-1',
+              ciudadanoId: 'citizen-1',
+              servicioId: 'service-water',
+              monto: 100,
+              periodo: '2026-08',
+              vencimiento: '2026-08-31T00:00:00.000Z',
+              pagado: false,
+              estado: 'pendiente',
+              servicio: {
+                id: 'service-water',
+                nombre: 'Agua potable',
+                tarifa: 100,
+              },
+            },
+          ],
+          pagos: [],
+          historial: [],
+        },
+        metadata: {
+          totalAdeudos: 1,
+          totalPagos: 0,
+          totalMovimientos: 1,
+          filtros: {},
+        },
+      })
+    }
+
+    return new Response(null, { status: 404 })
+  })
+}
+
 afterEach(() => {
   window.history.replaceState({}, '', '/')
   window.sessionStorage.clear()
@@ -138,6 +209,34 @@ describe('App routing', () => {
     expect(screen.getByText('$1,250.00')).toBeInTheDocument()
     expect(screen.getByText('80%')).toBeInTheDocument()
     expect(screen.getByText('Informacion disponible')).toBeInTheDocument()
+  })
+
+  it('renders the payments page at /pagos for a tesorero session', async () => {
+    window.history.pushState({}, '', '/pagos')
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        id: 'user-3',
+        email: 'tesorero@sicose.test',
+        nombre: 'Tesoreria',
+        rol: 'tesorero',
+      }),
+    )
+    mockPaymentsRequest()
+
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /cobranza, historial y comprobantes/i,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('button', {
+        name: /confirmar pago/i,
+      }),
+    ).toBeInTheDocument()
   })
 
   it('renders the users page for an admin session at /usuarios', async () => {

@@ -1,4 +1,5 @@
 import RoutePills from '../../components/RoutePills'
+import AppLink from '../../components/AppLink'
 import ThemeToggle from '../../components/ThemeToggle'
 import CitizenManagementPanel from '../../features/citizens/CitizenManagementPanel'
 import { logout } from '../../features/auth/auth.api'
@@ -7,6 +8,7 @@ import {
   readAuthSession,
 } from '../../features/auth/auth.session'
 import { useTheme } from '../../features/theme/theme-context'
+import { navigateTo } from '../../lib/navigation'
 import { cn } from '../../lib/utils'
 
 export default function CitizenManagementPage() {
@@ -23,7 +25,7 @@ export default function CitizenManagementPage() {
       // La sesión local debe cerrarse aunque el backend ya no acepte el token.
     } finally {
       clearAuthSession()
-      window.location.assign('/login')
+      navigateTo('/login', true)
     }
   }
 
@@ -37,7 +39,7 @@ export default function CitizenManagementPage() {
       )}
     >
       <header className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <a
+        <AppLink
           href="/"
           className={cn(
             'inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm backdrop-blur transition-colors',
@@ -67,7 +69,7 @@ export default function CitizenManagementPage() {
               Navegación principal
             </p>
           </div>
-        </a>
+        </AppLink>
 
         <div className="flex flex-wrap items-center gap-3">
           <RoutePills variant={theme === 'dark' ? 'light' : 'dark'} />
