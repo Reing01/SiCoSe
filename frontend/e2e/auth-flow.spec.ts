@@ -220,7 +220,10 @@ test.describe("E2E Integration Flows", () => {
 
     // 3. Navigate to Payments Page
     await page.goto("/pagos");
-    await expect(page.getByText("Captura de pagos")).toBeVisible();
+    await expect(page).toHaveURL(/\/pagos$/);
+    await expect(
+      page.getByRole("heading", { name: "Captura de pagos" }),
+    ).toBeVisible({ timeout: 15000 });
 
     // Verify select option shows full $100 amount
     const select = page.locator("select#debt");
