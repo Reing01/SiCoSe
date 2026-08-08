@@ -8,6 +8,8 @@ const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
 const CitizenManagementPage = lazy(() => import('./pages/citizens/CitizenManagementPage'))
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'))
 const PaymentsPage = lazy(() => import('./pages/payments/PaymentsPage'))
+const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'))
+const UsersPage = lazy(() => import('./pages/users/UsersPage'))
 
 function AppFallback() {
   return (
@@ -50,6 +52,10 @@ export default function App() {
           <DashboardPage />
         ) : resolvedRoute === '/pagos' ? (
           <PaymentsPage />
+        ) : resolvedRoute === '/reportes' ? (
+          <ReportsPage />
+        ) : resolvedRoute === '/usuarios' ? (
+          <UsersPage />
         ) : (
           <LandingPage />
         )}

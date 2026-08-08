@@ -12,6 +12,8 @@ const ROUTE_LABELS: Record<(typeof APP_ROUTES)[number], string> = {
   "/dashboard": "Dashboard",
   "/ciudadanos": "Ciudadanos",
   "/pagos": "Pagos",
+  "/reportes": "Reportes",
+  "/usuarios": "Usuarios",
 };
 
 type RoutePillsProps = {
@@ -30,7 +32,9 @@ function getCurrentPath() {
   return pathname === "/login" ||
     pathname === "/ciudadanos" ||
     pathname === "/dashboard" ||
-    pathname === "/pagos"
+    pathname === "/pagos" ||
+    pathname === "/reportes" ||
+    pathname === "/usuarios"
     ? pathname
     : "/";
 }

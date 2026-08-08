@@ -9,7 +9,9 @@ function normalizeRoute(pathname: string): AppRoute {
     normalized === "/login" ||
     normalized === "/dashboard" ||
     normalized === "/ciudadanos" ||
-    normalized === "/pagos"
+    normalized === "/pagos" ||
+    normalized === "/reportes" ||
+    normalized === "/usuarios"
   ) {
     return normalized;
   }
@@ -27,7 +29,13 @@ export function resolveAppRoute(
     return session ? getHomeRouteForRole(session.user.rol) : "/login";
   }
 
-  if (route === "/dashboard" || route === "/ciudadanos" || route === "/pagos") {
+  if (
+    route === "/dashboard" ||
+    route === "/ciudadanos" ||
+    route === "/pagos" ||
+    route === "/reportes" ||
+    route === "/usuarios"
+  ) {
     if (!session) {
       return "/login";
     }

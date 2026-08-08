@@ -395,6 +395,53 @@ function Modulos() {
       href: "/dashboard",
       cta: "Ver historial",
     },
+    {
+      icon: (
+        <svg
+          className="w-7 h-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M16 11h6" />
+          <path d="M19 8v6" />
+        </svg>
+      ),
+      nombre: "Usuarios del Sistema",
+      desc: "Administra las cuentas del comité con roles, estado activo e inactivo y alta inicial protegida.",
+      tag: "Roles y acceso",
+      href: "/usuarios",
+      cta: "Gestionar usuarios",
+    },
+    {
+      icon: (
+        <svg
+          className="w-7 h-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <path d="M8 9h4" />
+        </svg>
+      ),
+      nombre: "Reportes Mensuales",
+      desc: "Genera y exporta los reportes oficiales con cartera vencida, comparativos y top de morosos.",
+      tag: "Exportación institucional",
+      href: "/reportes",
+      cta: "Ver reportes",
+    },
   ];
 
   return (
@@ -405,7 +452,7 @@ function Modulos() {
             La Solución
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f3042] mb-4">
-            4 módulos, un solo sistema
+            6 módulos, un solo sistema
           </h2>
           <p className="text-slate-500 max-w-xl mx-auto text-base">
             Diseñado específicamente para juntas auxiliares — sin funciones
@@ -413,7 +460,7 @@ function Modulos() {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {modulos.map(({ icon, nombre, desc, tag, href, cta }, index) => (
             <div
               key={nombre}

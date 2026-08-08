@@ -17,6 +17,30 @@ function mockCitizenListRequest() {
   )
 }
 
+function mockUserListRequest() {
+  vi.spyOn(window, 'fetch').mockResolvedValue(
+    Response.json({
+      data: [
+        {
+          id: 'user-1',
+          email: 'admin@sicose.test',
+          nombre: 'Cristian',
+          rol: 'admin',
+          activo: true,
+          created_at: '2026-08-01T12:00:00.000Z',
+          updated_at: '2026-08-01T12:00:00.000Z',
+        },
+      ],
+      metadata: {
+        total: 1,
+        pagina: 1,
+        limite: 100,
+        totalPaginas: 1,
+      },
+    }),
+  )
+}
+
 afterEach(() => {
   window.history.replaceState({}, '', '/')
   window.sessionStorage.clear()
@@ -114,6 +138,61 @@ describe('App routing', () => {
     expect(screen.getByText('$1,250.00')).toBeInTheDocument()
     expect(screen.getByText('80%')).toBeInTheDocument()
     expect(screen.getByText('Informacion disponible')).toBeInTheDocument()
+  })
+
+  it('renders the users page for an admin session at /usuarios', async () => {
+    window.history.pushState({}, '', '/usuarios')
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        id: 'user-1',
+        email: 'admin@sicose.test',
+        nombre: 'Cristian',
+        rol: 'admin',
+      }),
+    )
+    mockUserListRequest()
+
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /usuarios con alta/i,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /nuevo usuario/i,
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('renders the reports page for a tesorero session at /reportes', async () => {
+    window.history.pushState({}, '', '/reportes')
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        id: 'user-3',
+        email: 'tesorero@sicose.test',
+        nombre: 'Tesoreria',
+        rol: 'tesorero',
+      }),
+    )
+
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /genera, exporta e imprime reportes operativos/i,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: /generar reporte/i,
+      }),
+    ).toBeInTheDocument()
   })
 
   it('shows a public alert when dashboard export fails', async () => {
@@ -326,6 +405,27 @@ describe('App routing', () => {
 
   it('redirects secretary away from /dashboard to /ciudadanos', async () => {
     window.history.pushState({}, '', '/dashboard')
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        id: 'user-2',
+        email: 'secretaria@sicose.test',
+        nombre: 'Maria Nerida',
+        rol: 'secretaria',
+      }),
+    )
+    mockCitizenListRequest()
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/ciudadanos')
+    })
+  })
+
+  it('redirects secretary away from /reportes to /ciudadanos', async () => {
+    window.history.pushState({}, '', '/reportes')
     window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
     window.sessionStorage.setItem(
       authStorageKeys.user,
