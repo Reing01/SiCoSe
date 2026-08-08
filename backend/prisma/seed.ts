@@ -1,10 +1,10 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import { createPrismaClient } from "../src/lib/prisma-client.js";
 
 dotenv.config();
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 const passwordHash = await bcrypt.hash("SiCoSe2026!", 12);
 
 async function main() {
