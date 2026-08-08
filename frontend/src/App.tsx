@@ -37,7 +37,7 @@ export default function App() {
     }
 
     if (resolvedRoute !== pathname) {
-      window.location.replace(resolvedRoute)
+      window.history.replaceState({}, '', resolvedRoute)
     }
   }, [pathname, resolvedRoute])
 

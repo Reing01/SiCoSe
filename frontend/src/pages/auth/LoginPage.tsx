@@ -31,7 +31,7 @@ export default function LoginPage() {
     const session = readAuthSession()
 
     if (session) {
-      window.location.replace(getHomeRouteForRole(session.user.rol))
+      window.history.replaceState({}, '', getHomeRouteForRole(session.user.rol))
     }
   }, [])
 

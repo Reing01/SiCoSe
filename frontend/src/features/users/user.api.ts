@@ -46,7 +46,7 @@ export async function fetchUsers(token: string) {
   let page = 1
   let totalPages = 1
 
-  do {
+  while (page <= totalPages) {
     const response = await apiRequest<UsersListResponse>(
       `/api/usuarios?pagina=${page}&limite=100`,
       {
@@ -57,7 +57,7 @@ export async function fetchUsers(token: string) {
     records.push(...response.data)
     totalPages = Math.max(1, response.metadata.totalPaginas)
     page += 1
-  } while (page <= totalPages)
+  }
 
   return records.map(toUserRecord)
 }
