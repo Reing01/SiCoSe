@@ -17,6 +17,7 @@ SiCoSe es un monorepo para digitalizar la recaudación, el control de adeudos y 
 - `Docs/` evidencias, guías y contexto del proyecto
 - `docker-compose.yml` entorno local con PostgreSQL y Redis
 - `swarm/` despliegue multi-máquina con Docker Swarm y routing mesh
+- `helm/sicose/` chart base para Kubernetes con probes, recursos y escala configurable
 
 ## Instalación
 
@@ -53,7 +54,15 @@ npm run build
 docker compose up -d
 ```
 
-Levantará PostgreSQL 16 y Redis 7 con volúmenes persistentes y variables de entorno separadas en `.env.docker`.
+Levanta frontend, backend, PostgreSQL 16 y Redis 7 con volumenes persistentes, healthchecks y reinicio automatico. Los valores locales seguros estan documentados en `.env.example`; crea un `.env` sin versionar solo si necesitas sobreescribirlos.
+
+Para probar en un solo paso el arranque local y el render orquestado con 4 nodos fisicos y 3 replicas por nodo:
+
+```bash
+docker compose up -d && helm template sicose ./helm/sicose -f ./helm/sicose/values-practica-4-nodos.yaml
+```
+
+El chart calcula las replicas desde `cluster.physicalNodes * cluster.replicasPerNode` y las distribuye con `topologySpreadConstraints`.
 
 Para una práctica multi-máquina de 4 nodos con Docker Swarm y routing mesh:
 

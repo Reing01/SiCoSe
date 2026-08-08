@@ -5,6 +5,10 @@ global:
 
 imagePullSecrets: []
 
+cluster:
+  physicalNodes: 4
+  replicasPerNode: 3
+
 images:
   backend:
     repository: sicose-backend
@@ -29,7 +33,7 @@ ingress:
   host: sicose.example.com
 
 backend:
-  replicaCount: 3
+  replicaCount: null
   servicePort: 80
   containerPort: 3000
   nodeSelector: {}
@@ -67,7 +71,7 @@ backend:
       topologyKey: kubernetes.io/hostname
 
 frontend:
-  replicaCount: 3
+  replicaCount: null
   servicePort: 80
   containerPort: 8080
   nodeSelector: {}
@@ -106,8 +110,8 @@ frontend:
 
 autoscaling:
   enabled: true
-  minReplicas: 3
-  maxReplicas: 6
+  minReplicas: null
+  maxReplicas: 12
   targetCPUUtilizationPercentage: 70
 
 pdb:

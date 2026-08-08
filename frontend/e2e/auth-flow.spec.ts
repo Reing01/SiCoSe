@@ -193,6 +193,64 @@ test.describe("E2E Integration Flows", () => {
       });
     });
 
+    await page.route("**/api/ciudadanos/citizen-1/historial*", async (route) => {
+      const amount = paymentRegistered ? 60 : 100;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            ciudadanoId: "citizen-1",
+            adeudos: [
+              {
+                id: "debt-1",
+                periodo: "2026-06",
+                monto: amount,
+                estado: paymentRegistered ? "parcial" : "pendiente",
+                pagado: paymentRegistered,
+                servicio: {
+                  nombre: "Agua potable",
+                },
+              },
+            ],
+            pagos: paymentRegistered
+              ? [
+                  {
+                    id: "payment-folio-1",
+                    ciudadanoId: "citizen-1",
+                    adeudoId: "debt-1",
+                    monto: 40,
+                    fecha: new Date().toISOString(),
+                    metodo: "efectivo",
+                    folio: "SCS-2026-000001",
+                    recibo: "SCS-2026-000001",
+                    creado_por: "user-1",
+                    adeudo: {
+                      id: "debt-1",
+                      periodo: "2026-06",
+                      monto: 100,
+                      servicio: {
+                        id: "service-water",
+                        nombre: "Agua potable",
+                        tarifa: 100,
+                      },
+                    },
+                    comprobantes: [],
+                  },
+                ]
+              : [],
+            historial: [],
+          },
+          metadata: {
+            totalAdeudos: 1,
+            totalPagos: paymentRegistered ? 1 : 0,
+            totalMovimientos: paymentRegistered ? 2 : 1,
+            filtros: {},
+          },
+        }),
+      });
+    });
+
     // Mock register payment endpoint
     let registerCount = 0;
     await page.route("**/api/pagos", async (route) => {

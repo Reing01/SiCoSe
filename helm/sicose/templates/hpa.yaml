@@ -9,8 +9,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "sicose.fullname" . }}-backend
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  minReplicas: {{ default (include "sicose.targetReplicas" .) .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ default (include "sicose.targetReplicas" .) .Values.autoscaling.maxReplicas }}
   metrics:
     - type: Resource
       resource:
@@ -29,8 +29,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "sicose.fullname" . }}-frontend
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  minReplicas: {{ default (include "sicose.targetReplicas" .) .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ default (include "sicose.targetReplicas" .) .Values.autoscaling.maxReplicas }}
   metrics:
     - type: Resource
       resource:

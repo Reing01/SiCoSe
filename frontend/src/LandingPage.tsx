@@ -1,4 +1,5 @@
-import { ChangeEvent, FormEvent, useState } from "react";
+﻿import { ChangeEvent, FormEvent, useState } from "react";
+import { apiRequest } from "./lib/api";
 
 // ============================================================
 // SiCoSe — Sistema de Cobros de Servicios
@@ -645,7 +646,13 @@ function InterfacePreview() {
 // ------ Formulario de Captura ------
 const INITIAL_FORM = { nombre: "", comite: "", contacto: "" };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+function normalizeLeadPayload(input: typeof INITIAL_FORM) {
+  return {
+    nombre: input.nombre.trim().replace(/\s+/g, " "),
+    comite: input.comite.trim().replace(/\s+/g, " "),
+    contacto: input.contacto.trim().replace(/\s+/g, " "),
+  };
+}
 
 function FormularioContacto() {
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -666,9 +673,8 @@ function FormularioContacto() {
     e.preventDefault();
     setAttemptedSubmit(true);
 
-    const nombre = formData.nombre.trim();
-    const comite = formData.comite.trim();
-    const contacto = formData.contacto.trim();
+    const normalizedPayload = normalizeLeadPayload(formData);
+    const { nombre, comite, contacto } = normalizedPayload;
 
     if (!nombre || !comite || !contacto) {
       setError(false);
@@ -681,25 +687,21 @@ function FormularioContacto() {
     setFormMessage("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/leads`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre,
-          comite,
-          contacto,
-        }),
+      await apiRequest<{ message: string }>('/api/leads', {
+        method: 'POST',
+        body: normalizedPayload,
       });
-      if (!response.ok) {
-        throw new Error("Lead submission failed");
-      }
+
       setEnviado(true);
       setFormData(INITIAL_FORM);
       setAttemptedSubmit(false);
-    } catch {
-      // Si hay un error de red real lo mostramos
+    } catch (error) {
       setError(true);
-      setFormMessage("Ocurrió un problema al enviar. Intenta de nuevo.");
+      setFormMessage(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Ocurrió un problema al enviar. Intenta de nuevo.',
+      );
     } finally {
       setCargando(false);
     }

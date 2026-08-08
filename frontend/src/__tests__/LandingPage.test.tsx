@@ -31,15 +31,10 @@ describe('LandingPage', () => {
 
   it('posts contact data to the leads endpoint using the normalized payload', async () => {
     fetchMock.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({ ok: true }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      ),
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
     )
 
     render(<LandingPage />)

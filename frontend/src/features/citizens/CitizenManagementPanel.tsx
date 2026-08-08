@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { Button } from '../../components/ui/button'
 import {
   Card,
@@ -13,7 +13,16 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { useToast } from '../../components/ui/toast-context'
 import { cn } from '../../lib/utils'
+import {
+  MONTHLY_WATER_FEE_MXN,
+  buildMonthlyPeriods,
+  formatPeriodLabel,
+} from '../../lib/water-billing'
 import { readAuthSession } from '../auth/auth.session'
+import {
+  fetchCitizenHistory,
+  type CitizenHistoryPaymentRecord,
+} from './citizen-history.api'
 import {
   createCitizen,
   deactivateCitizen,
@@ -38,12 +47,36 @@ type SubmissionState =
   | { kind: 'error'; message: string }
 
 type StatusTone = 'success' | 'warning' | 'muted'
+type MonthlyStatusTone = 'paid' | 'partial' | 'pending' | 'missing'
 
 type SummaryCardProps = {
   label: string
   value: string
   detail: string
 }
+
+type CitizenHistoryState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | {
+      kind: 'ready'
+      citizenId: string
+      citizenName: string
+      history: {
+        adeudos: Array<{
+          id: string
+          periodo: string
+          monto: number
+          estado: string
+          pagado: boolean
+          servicio: {
+            nombre: string
+          }
+        }>
+        pagos: CitizenHistoryPaymentRecord[]
+      }
+    }
+  | { kind: 'error'; message: string }
 
 const DEFAULT_FORM_VALUES: CitizenFormValues = {
   nombre: '',
@@ -130,6 +163,17 @@ function createEmptyMetadata(): CitizenPageMetadata {
   }
 }
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(value)
+}
+
+function isWaterService(serviceName: string) {
+  return /agua/i.test(serviceName)
+}
+
 function SummaryCard({ label, value, detail }: SummaryCardProps) {
   return (
     <Card className="border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
@@ -145,6 +189,291 @@ function SummaryCard({ label, value, detail }: SummaryCardProps) {
         <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
           {detail}
         </span>
+      </CardContent>
+    </Card>
+  )
+}
+
+type MonthlyHistoryRow = {
+  key: string
+  year: number
+  month: number
+  monthLabel: string
+  expected: number
+  paid: number
+  pending: number
+  paymentCount: number
+  tone: MonthlyStatusTone
+}
+
+function CitizenMonthlyHistoryPanel({
+  selectedCitizen,
+  historyState,
+}: {
+  selectedCitizen: CitizenRecord | null
+  historyState: CitizenHistoryState
+}) {
+  const periods = useMemo(() => buildMonthlyPeriods(2025, 1, new Date()), [])
+
+  const monthlyRows = useMemo<MonthlyHistoryRow[]>(() => {
+    if (historyState.kind !== 'ready') {
+      return []
+    }
+
+    const waterAdeudos = historyState.history.adeudos.filter((adeudo) =>
+      isWaterService(adeudo.servicio.nombre),
+    )
+    const relevantAdeudos = waterAdeudos.length > 0 ? waterAdeudos : historyState.history.adeudos
+
+    const paymentsByPeriod = new Map<string, number>()
+    const paymentCountByPeriod = new Map<string, number>()
+
+    for (const payment of historyState.history.pagos) {
+      if (waterAdeudos.length > 0 && !isWaterService(payment.adeudo.servicio.nombre)) {
+        continue
+      }
+
+      const periodKey = payment.adeudo.periodo
+      paymentsByPeriod.set(periodKey, (paymentsByPeriod.get(periodKey) ?? 0) + payment.monto)
+      paymentCountByPeriod.set(periodKey, (paymentCountByPeriod.get(periodKey) ?? 0) + 1)
+    }
+
+    return periods.map((period) => {
+      const periodAdeudos = relevantAdeudos.filter((adeudo) => adeudo.periodo === period.key)
+      const paid = paymentsByPeriod.get(period.key) ?? 0
+      const paymentCount = paymentCountByPeriod.get(period.key) ?? 0
+      const expected = MONTHLY_WATER_FEE_MXN
+      const pending = Math.max(0, expected - paid)
+      const tone: MonthlyStatusTone =
+        periodAdeudos.length === 0
+          ? 'missing'
+          : paid >= expected
+            ? 'paid'
+            : paid > 0
+              ? 'partial'
+              : 'pending'
+
+      return {
+        key: period.key,
+        year: period.year,
+        month: period.month,
+        monthLabel: period.fullLabel,
+        expected,
+        paid,
+        pending,
+        paymentCount,
+        tone,
+      }
+    })
+  }, [historyState, periods])
+
+  const groupedRows = useMemo(() => {
+    return monthlyRows.reduce<Record<number, MonthlyHistoryRow[]>>((accumulator, row) => {
+      accumulator[row.year] ??= []
+      accumulator[row.year].push(row)
+      return accumulator
+    }, {})
+  }, [monthlyRows])
+
+  const summary = useMemo(() => {
+    const paid = monthlyRows.filter((row) => row.tone === 'paid').length
+    const partial = monthlyRows.filter((row) => row.tone === 'partial').length
+    const pending = monthlyRows.filter((row) => row.tone === 'pending').length
+    const missing = monthlyRows.filter((row) => row.tone === 'missing').length
+    const totalPaid = monthlyRows.reduce((sum, row) => sum + row.paid, 0)
+    const totalPending = monthlyRows.reduce((sum, row) => sum + row.pending, 0)
+
+    return {
+      paid,
+      partial,
+      pending,
+      missing,
+      totalPaid,
+      totalPending,
+    }
+  }, [monthlyRows])
+
+  const toneClasses: Record<MonthlyStatusTone, string> = {
+    paid: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200',
+    partial: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-200',
+    pending: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/60 dark:text-rose-200',
+    missing: 'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
+  }
+
+  if (!selectedCitizen) {
+    return (
+      <Card className="border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+          <CardTitle>Historial mensual 2025-2026</CardTitle>
+          <CardDescription>
+            Selecciona un ciudadano para ver su calendario de pagos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-5">
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+            El panel mostrara cada mes desde enero de 2025 hasta el mes actual,
+            con la cuota de agua de {formatCurrency(MONTHLY_WATER_FEE_MXN)} por
+            mes.
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (historyState.kind === 'loading') {
+    return (
+      <Card className="border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+          <CardTitle>Historial mensual 2025-2026</CardTitle>
+          <CardDescription>Cargando meses pagados y pendientes...</CardDescription>
+        </CardHeader>
+        <CardContent className="p-5 text-sm text-slate-600 dark:text-slate-300">
+          Buscando movimientos del ciudadano seleccionado.
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (historyState.kind === 'error') {
+    return (
+      <Card className="border-rose-200 bg-rose-50 shadow-sm">
+        <CardHeader className="border-b border-rose-100 bg-rose-50">
+          <CardTitle>Historial mensual 2025-2026</CardTitle>
+          <CardDescription className="text-rose-700">
+            No fue posible cargar la informacion mensual.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-5 text-sm text-rose-800">
+          {historyState.message}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (historyState.kind !== 'ready') {
+    return null
+  }
+
+  return (
+    <Card className="border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+      <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle>Historial mensual 2025-2026</CardTitle>
+            <CardDescription className="mt-1">
+              {historyState.citizenName} · {formatPeriodLabel(2025, 1)} hasta{' '}
+              {formatPeriodLabel(new Date().getFullYear(), new Date().getMonth() + 1)}
+            </CardDescription>
+          </div>
+          <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
+            {formatCurrency(MONTHLY_WATER_FEE_MXN)} / mes
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6 p-5">
+        <div className="grid gap-4 md:grid-cols-4">
+          <SummaryCard
+            label="Meses pagados"
+            value={String(summary.paid)}
+            detail="Cubiertos"
+          />
+          <SummaryCard
+            label="Pagos parciales"
+            value={String(summary.partial)}
+            detail="En proceso"
+          />
+          <SummaryCard
+            label="Meses pendientes"
+            value={String(summary.pending)}
+            detail="Saldo abierto"
+          />
+          <SummaryCard
+            label="Meses sin carga"
+            value={String(summary.missing)}
+            detail="Sin adeudo"
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+              Total estimado pagado
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+              {formatCurrency(summary.totalPaid)}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+              Total estimado pendiente
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+              {formatCurrency(summary.totalPending)}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+              Cuota mensual
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+              {formatCurrency(MONTHLY_WATER_FEE_MXN)}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {Object.keys(groupedRows)
+            .map(Number)
+            .sort((left, right) => left - right)
+            .map((year) => (
+              <section key={year} className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-slate-950 dark:text-white">
+                    {year}
+                  </h3>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {groupedRows[year].length} meses
+                  </span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {groupedRows[year].map((row) => (
+                    <article
+                      key={row.key}
+                      className={cn(
+                        'rounded-2xl border p-4 shadow-sm',
+                        toneClasses[row.tone],
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.3em] opacity-80">
+                            {row.monthLabel}
+                          </p>
+                          <p className="mt-2 text-lg font-semibold">
+                            {formatCurrency(row.expected)}
+                          </p>
+                        </div>
+                        <span className="rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]">
+                          {row.tone === 'paid'
+                            ? 'Pagado'
+                            : row.tone === 'partial'
+                              ? 'Parcial'
+                              : row.tone === 'pending'
+                                ? 'Pendiente'
+                                : 'Sin carga'}
+                        </span>
+                      </div>
+                      <div className="mt-4 space-y-1 text-sm">
+                        <p>Pagado: {formatCurrency(row.paid)}</p>
+                        <p>Pendiente: {formatCurrency(row.pending)}</p>
+                        <p>Movimientos: {row.paymentCount}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))}
+        </div>
       </CardContent>
     </Card>
   )
@@ -185,6 +514,9 @@ export default function CitizenManagementPanel() {
   const [submissionState, setSubmissionState] = useState<SubmissionState>({
     kind: 'idle',
   })
+  const [historyState, setHistoryState] = useState<CitizenHistoryState>({
+    kind: 'idle',
+  })
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -194,6 +526,65 @@ export default function CitizenManagementPanel() {
 
     return () => window.clearTimeout(timer)
   }, [searchTerm])
+
+  useEffect(() => {
+    const session = readAuthSession()
+    const selectedCitizen =
+      selectedCitizenId == null
+        ? null
+        : (citizens.find((record) => record.id === selectedCitizenId) ?? null)
+
+    if (!session || !selectedCitizen) {
+      setHistoryState({ kind: 'idle' })
+      return
+    }
+
+    let cancelled = false
+    setHistoryState({ kind: 'loading' })
+
+    fetchCitizenHistory(session.token, selectedCitizen.id)
+      .then((history) => {
+        if (cancelled) {
+          return
+        }
+
+        setHistoryState({
+          kind: 'ready',
+          citizenId: selectedCitizen.id,
+          citizenName: `${selectedCitizen.nombre} ${selectedCitizen.apellido}`.trim(),
+          history: {
+            adeudos: history.adeudos.map((adeudo) => ({
+              id: adeudo.id,
+              periodo: adeudo.periodo,
+              monto: adeudo.monto,
+              estado: adeudo.estado,
+              pagado: adeudo.pagado,
+              servicio: {
+                nombre: adeudo.servicio.nombre,
+              },
+            })),
+            pagos: history.pagos,
+          },
+        })
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return
+        }
+
+        setHistoryState({
+          kind: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'No fue posible cargar el historial mensual.',
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [citizens, selectedCitizenId])
 
   useEffect(() => {
     const session = readAuthSession()
@@ -1030,6 +1421,13 @@ export default function CitizenManagementPanel() {
             </CardFooter>
           </form>
         </Card>
+      </div>
+
+      <div className="mt-6">
+        <CitizenMonthlyHistoryPanel
+          selectedCitizen={selectedCitizen}
+          historyState={historyState}
+        />
       </div>
     </section>
   )

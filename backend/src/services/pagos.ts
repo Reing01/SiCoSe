@@ -132,7 +132,7 @@ export async function registerCashPayment(
     if (input.monto > pendingAmount) {
       throw new PaymentError(
         400,
-        "Payment amount cannot be greater than pending debt",
+        `Payment amount cannot exceed the pending debt balance of ${pendingAmount}`,
       );
     }
 
@@ -153,13 +153,15 @@ export async function registerCashPayment(
       },
     });
 
-    // 3. Mark paid only if this payment covers the remaining balance
-    const isFullyPaid = Math.abs(pendingAmount - input.monto) < 0.001;
+    const remainingBalance = pendingAmount - input.monto;
+    const isFullyPaid = Math.abs(remainingBalance) < 0.001;
+    const nextEstado = isFullyPaid ? PAID_STATUS : "parcial";
+
     await tx.adeudo.update({
       where: { id: adeudo.id },
       data: {
         pagado: isFullyPaid,
-        estado: isFullyPaid ? PAID_STATUS : "parcial",
+        estado: nextEstado,
       },
     });
 
@@ -174,8 +176,10 @@ export async function registerCashPayment(
         ciudadanoId: input.ciudadanoId,
         adeudoId: input.adeudoId,
         monto: input.monto,
+        saldoPendienteAnterior: pendingAmount,
+        saldoRestante: remainingBalance,
         estadoAnterior: adeudo.estado || PENDING_STATUS,
-        estadoNuevo: isFullyPaid ? PAID_STATUS : "parcial",
+        estadoNuevo: nextEstado,
       },
     });
 
@@ -270,7 +274,7 @@ export async function registerTransferPayment(
     if (input.monto > pendingAmount) {
       throw new PaymentError(
         400,
-        "Payment amount cannot be greater than pending debt",
+        `Payment amount cannot exceed the pending debt balance of ${pendingAmount}`,
       );
     }
 
@@ -313,13 +317,15 @@ export async function registerTransferPayment(
       },
     });
 
-    // 3. Mark paid only if this payment covers the remaining balance
-    const isFullyPaid = Math.abs(pendingAmount - input.monto) < 0.001;
+    const remainingBalance = pendingAmount - input.monto;
+    const isFullyPaid = Math.abs(remainingBalance) < 0.001;
+    const nextEstado = isFullyPaid ? PAID_STATUS : "parcial";
+
     await tx.adeudo.update({
       where: { id: adeudo.id },
       data: {
         pagado: isFullyPaid,
-        estado: isFullyPaid ? PAID_STATUS : "parcial",
+        estado: nextEstado,
       },
     });
 
@@ -337,8 +343,10 @@ export async function registerTransferPayment(
         monto: input.monto,
         comprobanteUrl: storage.url,
         hashSha256,
+        saldoPendienteAnterior: pendingAmount,
+        saldoRestante: remainingBalance,
         estadoAnterior: adeudo.estado || PENDING_STATUS,
-        estadoNuevo: isFullyPaid ? PAID_STATUS : "parcial",
+        estadoNuevo: nextEstado,
       },
     });
 
