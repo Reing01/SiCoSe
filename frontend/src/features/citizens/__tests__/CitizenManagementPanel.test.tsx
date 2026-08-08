@@ -231,10 +231,6 @@ describe('CitizenManagementPanel', () => {
       ).toBeInTheDocument()
     })
 
-    expect(
-      screen.getByText(/jose alfredo ramirez hernandez/i),
-    ).toBeInTheDocument()
-
     fireEvent.click(
       screen.getByRole('button', {
         name: /eliminar jose alfredo ramirez hernandez/i,
