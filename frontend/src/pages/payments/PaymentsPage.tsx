@@ -112,6 +112,11 @@ export default function PaymentsPage() {
     return state.debts.find((debt) => debt.id === selectedDebtId) ?? null
   }, [selectedDebtId, state])
 
+  const selectedDebtCitizenId = selectedDebt?.ciudadanoId ?? null
+  const selectedDebtCitizenName = selectedDebt
+    ? `${selectedDebt.ciudadano.nombre} ${selectedDebt.ciudadano.apellido}`.trim()
+    : ''
+
   const sortedPaymentHistory = useMemo(() => {
     if (historyState.kind !== 'ready') {
       return []
@@ -169,7 +174,7 @@ export default function PaymentsPage() {
   useEffect(() => {
     const session = readAuthSession()
 
-    if (!session || !selectedDebt) {
+    if (!session || !selectedDebtCitizenId) {
       setHistoryState({ kind: 'idle' })
       return
     }
@@ -177,7 +182,7 @@ export default function PaymentsPage() {
     let cancelled = false
     setHistoryState({ kind: 'loading' })
 
-    fetchCitizenHistory(session.token, selectedDebt.ciudadanoId)
+    fetchCitizenHistory(session.token, selectedDebtCitizenId)
       .then((history) => {
         if (cancelled) {
           return
@@ -185,8 +190,8 @@ export default function PaymentsPage() {
 
         setHistoryState({
           kind: 'ready',
-          citizenId: selectedDebt.ciudadanoId,
-          citizenName: `${selectedDebt.ciudadano.nombre} ${selectedDebt.ciudadano.apellido}`.trim(),
+          citizenId: selectedDebtCitizenId,
+          citizenName: selectedDebtCitizenName,
           history: {
             adeudos: history.adeudos,
             pagos: history.pagos,
@@ -210,7 +215,7 @@ export default function PaymentsPage() {
     return () => {
       cancelled = true
     }
-  }, [historyReloadKey, selectedDebt?.ciudadanoId])
+  }, [historyReloadKey, selectedDebtCitizenId, selectedDebtCitizenName])
 
   const handleLogout = async () => {
     const session = readAuthSession()
@@ -367,7 +372,7 @@ export default function PaymentsPage() {
   const selectedDebtLabel =
     selectedDebt == null
       ? 'Selecciona un adeudo para cargar la cobranza'
-      : `${selectedDebt.ciudadano.nombre} ${selectedDebt.ciudadano.apellido}`.trim()
+      : selectedDebtCitizenName
 
   return (
     <main

@@ -168,6 +168,7 @@ function createEmptyFormValues(): UserFormValues {
 
 export default function UsersPage() {
   const session = readAuthSession()
+  const sessionToken = session?.token ?? null
   const { theme } = useTheme()
   const searchId = useId()
   const emailId = useId()
@@ -198,7 +199,7 @@ export default function UsersPage() {
   }, [searchTerm, roleFilter])
 
   useEffect(() => {
-    if (!session) {
+    if (!sessionToken) {
       setIsLoading(false)
       setLoadError('Inicia sesión para administrar usuarios.')
       return
@@ -208,7 +209,7 @@ export default function UsersPage() {
     setIsLoading(true)
     setLoadError(null)
 
-    fetchUsers(session.token)
+    fetchUsers(sessionToken)
       .then((records) => {
         if (cancelled) {
           return
@@ -236,7 +237,7 @@ export default function UsersPage() {
     return () => {
       cancelled = true
     }
-  }, [reloadKey, session?.token])
+  }, [reloadKey, sessionToken])
 
   const selectedUser = useMemo(
     () => users.find((record) => record.id === selectedUserId) ?? null,
