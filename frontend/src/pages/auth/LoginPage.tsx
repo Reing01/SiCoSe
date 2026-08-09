@@ -37,6 +37,15 @@ export default function LoginPage() {
     }
   }, [])
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void import('../../pages/dashboard/DashboardPage')
+      void import('../../pages/citizens/CitizenManagementPage')
+    }, 250)
+
+    return () => window.clearTimeout(timer)
+  }, [])
+
   const handleLogin = async (credentials: LoginRequest) => {
     const response = await login(credentials)
 

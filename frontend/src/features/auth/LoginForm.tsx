@@ -155,9 +155,7 @@ export default function LoginForm({
         const redirectTo = result.redirectTo
 
         if (typeof redirectTo === 'string' && redirectTo.trim()) {
-          window.setTimeout(() => {
-            navigateTo(redirectTo, true)
-          }, 900)
+          navigateTo(redirectTo, true)
         }
       }
     } catch {
