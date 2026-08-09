@@ -109,7 +109,7 @@ function buildCards(metrics: DashboardMetrics): KpiCard[] {
           : formatCurrency(metrics.totalPendienteMes),
       detail:
         metrics.totalPendienteMes === null
-          ? 'El backend actual no expone este monto'
+          ? 'Monto pendiente no disponible en esta vista'
           : 'Monto pendiente por cobrar',
       tone:
         metrics.totalPendienteMes === null
@@ -448,6 +448,12 @@ export default function DashboardPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   }, [])
   const { theme } = useTheme()
+
+  useEffect(() => {
+    if (!readAuthSession()) {
+      navigateTo('/login', true)
+    }
+  }, [])
 
   const handleLogout = async () => {
     const session = readAuthSession()

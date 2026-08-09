@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import AppLink from '../../components/AppLink'
 import RoutePills from '../../components/RoutePills'
 import ThemeToggle from '../../components/ThemeToggle'
@@ -300,6 +300,12 @@ export default function ReportsPage() {
   const [latestReport, setLatestReport] = useState<MonthlyReportRecord | null>(
     null,
   )
+
+  useEffect(() => {
+    if (!session) {
+      navigateTo('/login', true)
+    }
+  }, [session])
 
   const latestSummary = useMemo(
     () => latestReport?.resumen_json ?? null,

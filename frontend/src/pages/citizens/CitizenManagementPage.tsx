@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import RoutePills from '../../components/RoutePills'
 import AppLink from '../../components/AppLink'
 import ThemeToggle from '../../components/ThemeToggle'
@@ -13,13 +14,20 @@ import { cn } from '../../lib/utils'
 
 export default function CitizenManagementPage() {
   const { theme } = useTheme()
+  const session = readAuthSession()
+
+  useEffect(() => {
+    if (!session) {
+      navigateTo('/login', true)
+    }
+  }, [session])
 
   const handleLogout = async () => {
-    const session = readAuthSession()
+    const currentSession = readAuthSession()
 
     try {
-      if (session) {
-        await logout(session.token)
+      if (currentSession) {
+        await logout(currentSession.token)
       }
     } catch {
       // La sesión local debe cerrarse aunque el backend ya no acepte el token.

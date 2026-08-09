@@ -197,6 +197,12 @@ export default function UsersPage() {
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
+    if (!sessionToken) {
+      navigateTo('/login', true)
+    }
+  }, [sessionToken])
+
+  useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, roleFilter])
 

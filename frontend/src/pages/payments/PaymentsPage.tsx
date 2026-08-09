@@ -117,6 +117,7 @@ function getLatestReceiptAttachment(payment: CitizenHistoryPaymentRecord) {
 
 export default function PaymentsPage() {
   const { theme } = useTheme()
+  const session = readAuthSession()
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
   const [historyState, setHistoryState] = useState<HistoryState>({ kind: 'idle' })
   const [selectedDebtId, setSelectedDebtId] = useState('')
@@ -129,6 +130,12 @@ export default function PaymentsPage() {
   const [success, setSuccess] = useState<PaymentRecord | null>(null)
   const [receiptMessage, setReceiptMessage] = useState<string | null>(null)
   const [historyReloadKey, setHistoryReloadKey] = useState(0)
+
+  useEffect(() => {
+    if (!session) {
+      navigateTo('/login', true)
+    }
+  }, [session])
 
   const selectedDebt = useMemo(() => {
     if (state.kind !== 'ready') {
