@@ -295,6 +295,7 @@ export default function ReportsPage() {
   const session = readAuthSession()
   const { theme } = useTheme()
   const [period, setPeriod] = useState(createCurrentPeriod)
+  const currentPeriod = useMemo(createCurrentPeriod, [])
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' })
   const [latestReport, setLatestReport] = useState<MonthlyReportRecord | null>(
     null,
@@ -555,6 +556,7 @@ export default function ReportsPage() {
                   type="month"
                   value={period}
                   onChange={handlePeriodChange}
+                  max={currentPeriod}
                 />
               </div>
 

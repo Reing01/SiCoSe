@@ -143,6 +143,70 @@ describe('App routing', () => {
     ).toBeInTheDocument()
   })
 
+  it('redirects authenticated sessions at / to their home dashboard', async () => {
+    window.history.pushState({}, '', '/')
+    window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
+    window.sessionStorage.setItem(
+      authStorageKeys.user,
+      JSON.stringify({
+        id: 'user-1',
+        email: 'admin@sicose.test',
+        nombre: 'Cristian',
+        rol: 'admin',
+      }),
+    )
+    vi.spyOn(window, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            periodo: '2026-06',
+            totalRecaudadoMes: 1250,
+            totalPendienteMes: 250,
+            porcentajeCobertura: 80,
+            numeroMorosos: 2,
+            comparativoMesAnterior: 25,
+            totalAdeudosMes: 10,
+            adeudosPagadosMes: 8,
+            pagosRegistradosMes: 7,
+            historicoRecaudacion: [
+              { periodo: '2026-01', total: 700 },
+              { periodo: '2026-02', total: 800 },
+              { periodo: '2026-03', total: 900 },
+              { periodo: '2026-04', total: 1000 },
+              { periodo: '2026-05', total: 1000 },
+              { periodo: '2026-06', total: 1250 },
+            ],
+            variacion: {
+              direccion: 'mejora',
+              color: 'verde',
+              montoMesAnterior: 1000,
+            },
+            ultimaActualizacion: '2026-06-18T12:00:00.000Z',
+            cache: {
+              hit: true,
+              ttlSegundos: 300,
+            },
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      ),
+    )
+
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /situacion financiera del mes/i,
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/dashboard')
+  })
+
   it('renders the dashboard page at /dashboard with KPI cards', async () => {
     window.history.pushState({}, '', '/dashboard')
     window.sessionStorage.setItem(authStorageKeys.token, 'test-token')

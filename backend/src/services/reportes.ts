@@ -129,11 +129,24 @@ function normalizePeriod(periodo?: string) {
     throw new ReportError(400, "Invalid period format. Expected YYYY-MM");
   }
 
+  ensureSelectablePeriod(normalized);
+
   return normalized;
 }
 
 function getCurrentPeriod(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function ensureSelectablePeriod(periodo: string, referenceDate = new Date()) {
+  const currentPeriod = getCurrentPeriod(referenceDate);
+
+  if (periodo > currentPeriod) {
+    throw new ReportError(
+      400,
+      "No se permiten periodos futuros para el reporte mensual.",
+    );
+  }
 }
 
 function getPreviousPeriod(periodo: string) {
@@ -410,19 +423,9 @@ async function buildMonthlyReportSnapshot(
           },
         }) as Promise<PaymentRow[]>,
         (async () => {
-          const { end } = getPeriodRange(periodo);
           const where: Prisma.AdeudoWhereInput = {
+            periodo,
             pagado: false,
-            OR: [
-              {
-                estado: "vencido",
-              },
-              {
-                vencimiento: {
-                  lt: end,
-                },
-              },
-            ],
           };
 
           const [total, cartera] = await Promise.all([

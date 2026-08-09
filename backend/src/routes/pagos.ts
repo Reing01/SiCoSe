@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type NextFunction, type Response } from "express";
 import multer from "multer";
 import { z } from "zod";
 import { authenticate, requireResource } from "../middleware/require-role.js";
@@ -46,42 +46,57 @@ function getParamId(id: string | string[] | undefined) {
   return Array.isArray(id) ? id[0] : id;
 }
 
+async function sendReceiptPdf(
+  request: AuthenticatedRequest,
+  response: Response,
+  next: NextFunction,
+) {
+  try {
+    const paymentId = getParamId(request.params.id);
+
+    if (!paymentId) {
+      return response.status(400).json({
+        error: "Missing payment id",
+        code: 400,
+      });
+    }
+
+    const receipt = await generatePaymentReceiptPdf(paymentId);
+
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader("Content-Length", String(receipt.buffer.length));
+    response.setHeader(
+      "Content-Disposition",
+      `inline; filename="${receipt.filename}"`,
+    );
+
+    return response.send(receipt.buffer);
+  } catch (error) {
+    if (error instanceof ReceiptError) {
+      return response.status(error.statusCode).json({
+        error: error.message,
+        code: error.statusCode,
+      });
+    }
+
+    return next(error);
+  }
+}
+
 pagosRouter.get(
   "/:id/recibo",
   authenticate,
   requireResource("cobranza"),
-  async (request, response, next) => {
-    try {
-      const paymentId = getParamId(request.params.id);
+  sendReceiptPdf,
+);
 
-      if (!paymentId) {
-        return response.status(400).json({
-          error: "Missing payment id",
-          code: 400,
-        });
-      }
-
-      const receipt = await generatePaymentReceiptPdf(paymentId);
-
-      response.setHeader("Content-Type", "application/pdf");
-      response.setHeader("Content-Length", String(receipt.buffer.length));
-      response.setHeader(
-        "Content-Disposition",
-        `inline; filename="${receipt.filename}"`,
-      );
-
-      return response.send(receipt.buffer);
-    } catch (error) {
-      if (error instanceof ReceiptError) {
-        return response.status(error.statusCode).json({
-          error: error.message,
-          code: error.statusCode,
-        });
-      }
-
-      return next(error);
-    }
-  },
+// Alias de compatibilidad para documentos y clientes antiguos que aún llaman
+// al endpoint histórico de "comprobante".
+pagosRouter.get(
+  "/:id/comprobante",
+  authenticate,
+  requireResource("cobranza"),
+  sendReceiptPdf,
 );
 
 pagosRouter.post(

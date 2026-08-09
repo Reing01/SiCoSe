@@ -97,20 +97,52 @@ export async function registerPayment(
 }
 
 export async function fetchPaymentReceiptBlob(token: string, paymentId: string) {
-  const response = await fetch(
-    `${API_BASE_URL}/api/pagos/${encodeURIComponent(paymentId)}/recibo`,
-    {
+  const receiptPaths = [
+    `/api/pagos/${encodeURIComponent(paymentId)}/recibo`,
+    `/api/pagos/${encodeURIComponent(paymentId)}/comprobante`,
+  ]
+
+  let lastResponse: Response | null = null
+
+  for (const path of receiptPaths) {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/pdf',
       },
       credentials: 'include',
-    },
-  )
+    })
 
-  if (!response.ok) {
-    throw new Error('No fue posible generar el comprobante de pago.')
+    lastResponse = response
+
+    if (response.ok) {
+      return response.blob()
+    }
+
+    if (response.status !== 404) {
+      break
+    }
   }
 
-  return response.blob()
+  if (lastResponse && !lastResponse.ok) {
+    if (lastResponse.status === 404) {
+      throw new Error('No fue posible generar el comprobante de pago.')
+    }
+
+    const payload = await lastResponse
+      .clone()
+      .json()
+      .catch(() => null)
+
+    throw new Error(
+      typeof payload === 'object' &&
+      payload !== null &&
+      'error' in payload &&
+      typeof payload.error === 'string'
+        ? payload.error
+        : 'No fue posible generar el comprobante de pago.',
+    )
+  }
+
+  throw new Error('No fue posible generar el comprobante de pago.')
 }

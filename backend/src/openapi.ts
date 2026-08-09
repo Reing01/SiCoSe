@@ -475,6 +475,22 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/pagos/{id}/comprobante': {
+      get: {
+        tags: ['Pagos'],
+        summary: 'Alias de compatibilidad para descargar o previsualizar un comprobante de pago PDF',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: {
+          200: {
+            description: 'Receipt PDF',
+            content: { 'application/pdf': { schema: { type: 'string', format: 'binary' } } },
+          },
+          404: { description: 'Receipt not found' },
+        },
+      },
+    },
     '/api/reportes/generar': {
       post: {
         tags: ['Reportes'],

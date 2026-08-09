@@ -45,5 +45,9 @@ export function resolveAppRoute(
       : getHomeRouteForRole(session.user.rol);
   }
 
+  if (route === "/" && session) {
+    return getHomeRouteForRole(session.user.rol);
+  }
+
   return route;
 }

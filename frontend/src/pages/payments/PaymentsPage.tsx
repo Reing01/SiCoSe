@@ -18,11 +18,18 @@ import {
   type PendingDebtRecord,
   type PaymentRecord,
 } from '../../features/payments/payment.api'
-import { MONTHLY_WATER_FEE_MXN } from '../../lib/water-billing'
+import { fetchGeneratedFile, openBlobInNewTab } from '../../lib/download'
+import {
+  MONTHLY_WATER_FEE_MXN,
+  buildMonthlyPeriods,
+  formatPeriodLabel,
+} from '../../lib/water-billing'
 import { navigateTo } from '../../lib/navigation'
 import { cn } from '../../lib/utils'
 
 type PaymentMethod = 'efectivo' | 'transferencia'
+type MonthlyStatusTone = 'paid' | 'partial' | 'pending' | 'missing'
+
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'ready'; debts: PendingDebtRecord[]; totalPending: number }
@@ -52,6 +59,30 @@ type HistoryState =
     }
   | { kind: 'error'; message: string }
 
+type MonthlyPaymentRow = {
+  key: string
+  year: number
+  month: number
+  label: string
+  expected: number
+  paid: number
+  pending: number
+  paymentCount: number
+  tone: MonthlyStatusTone
+}
+
+type PaymentReceiptAttachment = {
+  id: string
+  paymentId: string
+  paymentLabel: string
+  period: string
+  amount: number
+  date: string
+  fileName: string
+  mimeType: string | null
+  url: string
+}
+
 const currencyFormatter = new Intl.NumberFormat('es-MX', {
   style: 'currency',
   currency: 'MXN',
@@ -78,17 +109,10 @@ function getPrintableReceiptName(payment: PaymentRecord | CitizenHistoryPaymentR
   return payment.folio ?? ('recibo' in payment ? payment.recibo ?? payment.id : payment.id)
 }
 
-function openPdfInNewTab(blob: Blob, fileName: string) {
-  const objectUrl = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = objectUrl
-  link.target = '_blank'
-  link.rel = 'noreferrer'
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+function getLatestReceiptAttachment(payment: CitizenHistoryPaymentRecord) {
+  return [...payment.comprobantes].sort(
+    (left, right) => new Date(right.fecha).getTime() - new Date(left.fecha).getTime(),
+  )[0] ?? null
 }
 
 export default function PaymentsPage() {
@@ -134,6 +158,110 @@ export default function PaymentsPage() {
       (left, right) => new Date(right.fecha).getTime() - new Date(left.fecha).getTime(),
     )
   }, [historyState])
+
+  const monthlyPeriods = useMemo(() => buildMonthlyPeriods(2025, 1, new Date()), [])
+
+  const monthlyRows = useMemo<MonthlyPaymentRow[]>(() => {
+    if (historyState.kind !== 'ready') {
+      return []
+    }
+
+    const waterAdeudos = historyState.history.adeudos.filter((adeudo) =>
+      isWaterService(adeudo.servicio.nombre),
+    )
+    const relevantAdeudos = waterAdeudos.length > 0 ? waterAdeudos : historyState.history.adeudos
+
+    const paymentsByPeriod = new Map<string, number>()
+    const paymentCountByPeriod = new Map<string, number>()
+
+    for (const payment of historyState.history.pagos) {
+      if (waterAdeudos.length > 0 && !isWaterService(payment.adeudo.servicio.nombre)) {
+        continue
+      }
+
+      const periodKey = payment.adeudo.periodo
+      paymentsByPeriod.set(periodKey, (paymentsByPeriod.get(periodKey) ?? 0) + payment.monto)
+      paymentCountByPeriod.set(periodKey, (paymentCountByPeriod.get(periodKey) ?? 0) + 1)
+    }
+
+    return monthlyPeriods.map((period) => {
+      const periodAdeudos = relevantAdeudos.filter((adeudo) => adeudo.periodo === period.key)
+      const paid = paymentsByPeriod.get(period.key) ?? 0
+      const paymentCount = paymentCountByPeriod.get(period.key) ?? 0
+      const expected = MONTHLY_WATER_FEE_MXN
+      const pending = Math.max(0, expected - paid)
+      const tone: MonthlyStatusTone =
+        periodAdeudos.length === 0
+          ? 'missing'
+          : paid >= expected
+            ? 'paid'
+            : paid > 0
+              ? 'partial'
+              : 'pending'
+
+      return {
+        key: period.key,
+        year: period.year,
+        month: period.month,
+        label: period.fullLabel,
+        expected,
+        paid,
+        pending,
+        paymentCount,
+        tone,
+      }
+    })
+  }, [historyState, monthlyPeriods])
+
+  const monthlyRowsByYear = useMemo(() => {
+    return monthlyRows.reduce<Record<number, MonthlyPaymentRow[]>>((accumulator, row) => {
+      accumulator[row.year] ??= []
+      accumulator[row.year].push(row)
+      return accumulator
+    }, {})
+  }, [monthlyRows])
+
+  const monthlySummary = useMemo(() => {
+    const paid = monthlyRows.filter((row) => row.tone === 'paid').length
+    const partial = monthlyRows.filter((row) => row.tone === 'partial').length
+    const pending = monthlyRows.filter((row) => row.tone === 'pending').length
+    const missing = monthlyRows.filter((row) => row.tone === 'missing').length
+    const totalPaid = monthlyRows.reduce((sum, row) => sum + row.paid, 0)
+    const totalPending = monthlyRows.reduce((sum, row) => sum + row.pending, 0)
+
+    return {
+      paid,
+      partial,
+      pending,
+      missing,
+      totalPaid,
+      totalPending,
+    }
+  }, [monthlyRows])
+
+  const receiptAttachments = useMemo<PaymentReceiptAttachment[]>(() => {
+    if (historyState.kind !== 'ready') {
+      return []
+    }
+
+    return sortedPaymentHistory
+      .flatMap((payment) =>
+        payment.comprobantes.map((comprobante) => ({
+          id: comprobante.id,
+          paymentId: payment.id,
+          paymentLabel: getPrintableReceiptName(payment),
+          period: payment.adeudo.periodo,
+          amount: payment.monto,
+          date: comprobante.fecha,
+          fileName:
+            comprobante.nombre_archivo?.trim() ||
+            `comprobante-${getPrintableReceiptName(payment)}.pdf`,
+          mimeType: comprobante.mime_type,
+          url: comprobante.url,
+        })),
+      )
+      .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
+  }, [historyState, sortedPaymentHistory])
 
   const printablePayment = success ?? sortedPaymentHistory[0] ?? null
 
@@ -237,6 +365,35 @@ export default function PaymentsPage() {
     setMessage(null)
   }
 
+  const handleOpenPaymentAttachment = async (sourceUrl: string, fileName: string) => {
+    const session = readAuthSession()
+
+    if (!session) {
+      setReceiptMessage('Inicia sesion para abrir comprobantes.')
+      return
+    }
+
+    setReceiptMessage(null)
+
+    try {
+      const response = await fetchGeneratedFile(sourceUrl)
+
+      if (!response || !response.ok) {
+        throw new Error('No fue posible abrir el comprobante adjunto.')
+      }
+
+      const blob = await response.blob()
+      openBlobInNewTab(blob, fileName)
+      setReceiptMessage('El comprobante adjunto se abrio en una nueva pestaña listo para imprimir.')
+    } catch (error) {
+      setReceiptMessage(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible abrir el comprobante adjunto.',
+      )
+    }
+  }
+
   const handleDebtChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const debtId = event.target.value
     setSelectedDebtId(debtId)
@@ -259,7 +416,7 @@ export default function PaymentsPage() {
 
     try {
       const blob = await fetchPaymentReceiptBlob(session.token, paymentId)
-      openPdfInNewTab(blob, `recibo-${paymentId}.pdf`)
+      openBlobInNewTab(blob, `recibo-${paymentId}.pdf`)
       setReceiptMessage('El comprobante se abrio en una nueva pestaña listo para imprimir.')
     } catch (error) {
       setReceiptMessage(
@@ -746,6 +903,7 @@ export default function PaymentsPage() {
                               <th className="px-4 py-3 font-semibold">Monto</th>
                               <th className="px-4 py-3 font-semibold">Metodo</th>
                               <th className="px-4 py-3 font-semibold">Folio</th>
+                              <th className="px-4 py-3 font-semibold">Comprobante</th>
                               <th className="px-4 py-3 font-semibold">Accion</th>
                             </tr>
                           </thead>
@@ -772,6 +930,31 @@ export default function PaymentsPage() {
                                     {getPrintableReceiptName(payment)}
                                   </td>
                                   <td className="px-4 py-3">
+                                    {getLatestReceiptAttachment(payment) ? (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          const latestAttachment = getLatestReceiptAttachment(payment)
+                                          if (latestAttachment) {
+                                            void handleOpenPaymentAttachment(
+                                              latestAttachment.url,
+                                              latestAttachment.nombre_archivo?.trim() ||
+                                                `comprobante-${getPrintableReceiptName(payment)}.pdf`,
+                                            )
+                                          }
+                                        }}
+                                      >
+                                        Abrir archivo
+                                      </Button>
+                                    ) : (
+                                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                                        Sin adjunto
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3">
                                     <Button
                                       type="button"
                                       variant="outline"
@@ -786,7 +969,7 @@ export default function PaymentsPage() {
                             ) : (
                               <tr>
                                 <td
-                                  colSpan={6}
+                                  colSpan={7}
                                   className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400"
                                 >
                                   Todavia no hay pagos registrados para este ciudadano.
@@ -801,6 +984,208 @@ export default function PaymentsPage() {
                 </CardContent>
               </Card>
             </div>
+
+            <Card
+              id="historial-mensual"
+              className="mt-6 overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90"
+            >
+              <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <CardTitle>Historial mensual 2025-2026</CardTitle>
+                    <CardDescription className="mt-1">
+                      {historyState.kind === 'ready'
+                        ? `${historyState.citizenName} · ${formatPeriodLabel(2025, 1)} hasta ${formatPeriodLabel(
+                            new Date().getFullYear(),
+                            new Date().getMonth() + 1,
+                          )}`
+                        : 'El calendario mensual se carga con los adeudos del ciudadano seleccionado.'}
+                    </CardDescription>
+                  </div>
+                  <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
+                    {formatCurrency(MONTHLY_WATER_FEE_MXN)} / mes
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6 p-5">
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/60">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700 dark:text-emerald-200">
+                      Meses pagados
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold text-emerald-950 dark:text-white">
+                      {monthlySummary.paid}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/60">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-700 dark:text-amber-200">
+                      Pagos parciales
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold text-amber-950 dark:text-white">
+                      {monthlySummary.partial}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-900/60 dark:bg-rose-950/60">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-rose-700 dark:text-rose-200">
+                      Meses pendientes
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold text-rose-950 dark:text-white">
+                      {monthlySummary.pending}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                      Sin adeudo
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">
+                      {monthlySummary.missing}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                      Total estimado pagado
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+                      {formatCurrency(monthlySummary.totalPaid)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                      Total estimado pendiente
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+                      {formatCurrency(monthlySummary.totalPending)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                      Cuota fija
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+                      {formatCurrency(MONTHLY_WATER_FEE_MXN)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  {Object.keys(monthlyRowsByYear)
+                    .map(Number)
+                    .sort((left, right) => left - right)
+                    .map((year) => (
+                      <section key={year} className="space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="text-lg font-semibold text-slate-950 dark:text-white">
+                            {year}
+                          </h3>
+                          <span className="text-sm text-slate-500 dark:text-slate-400">
+                            {monthlyRowsByYear[year].length} meses
+                          </span>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                          {monthlyRowsByYear[year].map((row) => (
+                            <article
+                              key={row.key}
+                              className={cn(
+                                'rounded-2xl border p-4 shadow-sm',
+                                row.tone === 'paid'
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200'
+                                  : row.tone === 'partial'
+                                    ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-200'
+                                    : row.tone === 'pending'
+                                      ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/60 dark:text-rose-200'
+                                      : 'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-[0.3em] opacity-80">
+                                    {row.label}
+                                  </p>
+                                  <p className="mt-2 text-lg font-semibold">
+                                    {formatCurrency(row.expected)}
+                                  </p>
+                                </div>
+                                <span className="rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]">
+                                  {row.tone === 'paid'
+                                    ? 'Pagado'
+                                    : row.tone === 'partial'
+                                      ? 'Parcial'
+                                      : row.tone === 'pending'
+                                        ? 'Pendiente'
+                                        : 'Sin carga'}
+                                </span>
+                              </div>
+                              <div className="mt-4 space-y-1 text-sm">
+                                <p>Pagado: {formatCurrency(row.paid)}</p>
+                                <p>Pendiente: {formatCurrency(row.pending)}</p>
+                                <p>Movimientos: {row.paymentCount}</p>
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card
+              id="comprobantes-adjuntos"
+              className="mt-6 overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90"
+            >
+              <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+                <CardTitle>Comprobantes adjuntos</CardTitle>
+                <CardDescription>
+                  Revisa y abre los archivos cargados en transferencias para conservar la trazabilidad del pago.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-5">
+                {receiptAttachments.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {receiptAttachments.map((attachment) => (
+                      <article
+                        key={`${attachment.paymentId}:${attachment.id}`}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/60"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                          Comprobante
+                        </p>
+                        <p className="mt-2 text-base font-semibold text-slate-950 dark:text-white">
+                          {attachment.fileName}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                          {attachment.paymentLabel} · {attachment.period} ·{' '}
+                          {formatCurrency(attachment.amount)}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          {formatDate(attachment.date)}
+                          {attachment.mimeType ? ` · ${attachment.mimeType}` : ''}
+                        </p>
+                        <div className="mt-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              void handleOpenPaymentAttachment(attachment.url, attachment.fileName)
+                            }}
+                          >
+                            Abrir comprobante
+                          </Button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+                    Aun no hay comprobantes adjuntos para este ciudadano. Cuando se capture una transferencia, aqui aparecera el archivo cargado.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             <Card id="comprobante-pago" className="mt-6 overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
               <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">

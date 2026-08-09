@@ -241,21 +241,7 @@ export default function UsersPage() {
     }
   }, [reloadKey, sessionToken])
 
-  const selectedUser = useMemo(
-    () => users.find((record) => record.id === selectedUserId) ?? null,
-    [selectedUserId, users],
-  )
-
-  useEffect(() => {
-    if (!selectedUserId) {
-      return
-    }
-
-    if (!selectedUser) {
-      setSelectedUserId(null)
-      setValues(createEmptyFormValues())
-    }
-  }, [selectedUser, selectedUserId])
+  const isEditing = selectedUserId !== null
 
   const filteredUsers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
@@ -426,7 +412,6 @@ export default function UsersPage() {
       return
     }
 
-    const isEditing = selectedUser != null
     const nextErrors = validateForm(values, isEditing)
 
     if (Object.keys(nextErrors).length > 0) {
@@ -447,8 +432,8 @@ export default function UsersPage() {
         rol: values.rol,
       }
 
-      if (isEditing && selectedUser) {
-        await updateUser(session.token, selectedUser.id, {
+      if (isEditing && selectedUserId) {
+        await updateUser(session.token, selectedUserId, {
           ...payload,
           activo: values.activo,
         })
@@ -841,16 +826,16 @@ export default function UsersPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <CardTitle>
-                      {selectedUser ? 'Editar usuario' : 'Nuevo usuario'}
+                      {isEditing ? 'Editar usuario' : 'Nuevo usuario'}
                     </CardTitle>
                     <CardDescription className="mt-1 max-w-md">
-                      {selectedUser
+                      {isEditing
                         ? 'Ajusta los datos del usuario seleccionado y guarda los cambios.'
                         : 'Crea una cuenta nueva con rol y contraseña inicial.'}
                     </CardDescription>
                   </div>
                   <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
-                    {selectedUser ? selectedUser.id : 'Alta nueva'}
+                    {selectedUserId ?? 'Alta nueva'}
                   </span>
                 </div>
               </CardHeader>
@@ -900,7 +885,7 @@ export default function UsersPage() {
                   </select>
                 </div>
 
-                {!selectedUser ? (
+                {!isEditing ? (
                   <div className="space-y-2">
                     <Label htmlFor={passwordId}>Contraseña inicial *</Label>
                     <Input
@@ -914,7 +899,7 @@ export default function UsersPage() {
                   </div>
                 ) : null}
 
-                {selectedUser ? (
+                {isEditing ? (
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/60">
                     <input
                       id={activoId}
@@ -938,7 +923,7 @@ export default function UsersPage() {
                 <Button type="submit" size="lg" className="w-full" disabled={isSaving}>
                   {isSaving
                     ? 'Guardando...'
-                    : selectedUser
+                    : isEditing
                       ? 'Guardar cambios'
                       : 'Crear usuario'}
                 </Button>

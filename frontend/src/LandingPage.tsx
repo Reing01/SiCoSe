@@ -919,12 +919,12 @@ function FormularioContacto() {
                 {cargando ? "Enviando…" : "Enviar Datos →"}
               </button>
 
-              <a
+              <AppLink
                 href="/login"
                 className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-[#0f3042] transition-colors hover:border-[#f97316]/40 hover:bg-[#f97316]/5 hover:text-[#f97316]"
               >
                 Ya tengo acceso: ir al login
-              </a>
+              </AppLink>
 
               <p className="text-center text-slate-400 text-xs">
                 Sin spam. Solo te contactamos para agendar la demo.

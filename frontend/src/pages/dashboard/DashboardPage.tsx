@@ -292,6 +292,7 @@ function DashboardContent({
   exportStatus,
   period,
   onPeriodChange,
+  currentPeriod,
   theme,
 }: {
   metrics: DashboardMetrics
@@ -300,6 +301,7 @@ function DashboardContent({
   exportStatus: ExportStatus | null
   period: string
   onPeriodChange: (period: string) => void
+  currentPeriod: string
   theme: 'light' | 'dark'
 }) {
   const cards = useMemo(() => buildCards(metrics), [metrics])
@@ -347,6 +349,7 @@ function DashboardContent({
               type="month"
               value={period}
               onChange={(event) => onPeriodChange(event.target.value)}
+              max={currentPeriod}
               className="w-44"
               aria-label="Filtrar periodo"
             />
@@ -440,6 +443,10 @@ export default function DashboardPage() {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
+  const currentPeriod = useMemo(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  }, [])
   const { theme } = useTheme()
 
   const handleLogout = async () => {
@@ -650,6 +657,7 @@ export default function DashboardPage() {
             exportStatus={exportStatus}
             period={selectedPeriod}
             onPeriodChange={setSelectedPeriod}
+            currentPeriod={currentPeriod}
             theme={theme}
           />
         ) : null}

@@ -18,6 +18,10 @@ function periodToDate(periodo?: string) {
   return new Date(year, month - 1, 1);
 }
 
+function getCurrentPeriod(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 dashboardRouter.get(
   "/metricas",
   authenticate,
@@ -30,6 +34,13 @@ dashboardRouter.get(
         return response.status(400).json({
           error: "Invalid dashboard query",
           details: parsed.error.flatten(),
+        });
+      }
+
+      if (parsed.data.periodo && parsed.data.periodo > getCurrentPeriod()) {
+        return response.status(400).json({
+          error: "No se permiten periodos futuros para el dashboard.",
+          code: 400,
         });
       }
 
