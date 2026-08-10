@@ -83,17 +83,17 @@ authRouter.post("/login", loginRateLimit, async (request, response, next) => {
       });
     }
 
-    await resetLoginEmailAttempts(user.email);
+    const [token, refreshSession] = await Promise.all([
+      signAuthToken({
+        sub: user.id,
+        email: user.email,
+        rol: user.rol,
+      }),
+      issueRefreshToken(user.id),
+      resetLoginEmailAttempts(user.email),
+    ]);
 
-    const token = await signAuthToken({
-      sub: user.id,
-      email: user.email,
-      rol: user.rol,
-    });
-
-    const { token: refreshToken, ttlSeconds } = await issueRefreshToken(
-      user.id,
-    );
+    const { token: refreshToken, ttlSeconds } = refreshSession;
     setRefreshCookie(response, refreshToken, ttlSeconds);
 
     return response.json({

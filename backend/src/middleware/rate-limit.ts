@@ -110,27 +110,28 @@ export async function loginRateLimit(
   const ip = getRequestIp(request)
   const email = normalizeEmail(request.body?.email)
 
-  const ipCheck = await checkLimit(
-    `login:ip:${ip}`,
-    env.RATE_LIMIT_MAX,
-    env.RATE_LIMIT_WINDOW_MS,
-  )
+  const [ipCheck, emailCheck] = await Promise.all([
+    checkLimit(`login:ip:${ip}`, env.RATE_LIMIT_MAX, env.RATE_LIMIT_WINDOW_MS),
+    email
+      ? checkLimit(
+          `login:email:${email}`,
+          env.RATE_LIMIT_EMAIL_MAX,
+          env.RATE_LIMIT_EMAIL_WINDOW_MS,
+        )
+      : Promise.resolve<RateLimitCheck | null>(null),
+  ])
 
   if (!ipCheck.allowed) {
     console.warn(`Rate limit exceeded for login IP: ${ip}`)
     return rejectRateLimited(response, ipCheck.retryAfterSeconds ?? 60, 'ip')
   }
 
-  if (email) {
-    const emailCheck = await checkLimit(
-      `login:email:${email}`,
-      env.RATE_LIMIT_EMAIL_MAX,
-      env.RATE_LIMIT_EMAIL_WINDOW_MS,
+  if (emailCheck && !emailCheck.allowed) {
+    return rejectRateLimited(
+      response,
+      emailCheck.retryAfterSeconds ?? 300,
+      'email',
     )
-
-    if (!emailCheck.allowed) {
-      return rejectRateLimited(response, emailCheck.retryAfterSeconds ?? 300, 'email')
-    }
   }
 
   return next()
