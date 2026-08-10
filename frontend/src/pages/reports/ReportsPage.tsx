@@ -274,8 +274,9 @@ function ReportArtifactPanel({ report }: { report: MonthlyReportRecord }) {
 async function presentReportArtifact(
   report: MonthlyReportRecord,
   format: ReportExportFormat,
+  token: string,
 ) {
-  const response = await fetchGeneratedFile(report.archivo_url)
+  const response = await fetchGeneratedFile(report.archivo_url, token)
 
   if (!response?.ok) {
     throw new Error('No fue posible descargar el archivo generado.')
@@ -355,7 +356,7 @@ export default function ReportsPage() {
         format === 'pdf' || report.formato ? report : { ...report, formato: format }
 
       setLatestReport(normalizedReport)
-      await presentReportArtifact(normalizedReport, format)
+      await presentReportArtifact(normalizedReport, format, session.token)
 
       setActionState({
         kind: 'success',

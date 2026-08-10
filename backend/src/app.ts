@@ -18,6 +18,7 @@ import { healthRouter } from "./routes/health.js";
 import { leadsRouter } from "./routes/leads.js";
 import { pagosRouter } from "./routes/pagos.js";
 import { reportesRouter } from "./routes/reportes.js";
+import { storageDownloadRouter } from "./routes/storage-download.js";
 import { usuariosRouter } from "./routes/usuarios.js";
 
 export function createApp() {
@@ -84,6 +85,7 @@ export function createApp() {
   app.use("/api/docs", docsRouter);
   app.use("/api/pagos", pagosRouter);
   app.use("/api/reportes", reportesRouter);
+  app.use("/api/storage-download", storageDownloadRouter);
   app.use("/api/usuarios", usuariosRouter);
 
   if (fs.existsSync(frontendIndexPath)) {

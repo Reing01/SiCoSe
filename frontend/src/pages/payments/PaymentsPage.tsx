@@ -383,7 +383,7 @@ export default function PaymentsPage() {
     setReceiptMessage(null)
 
     try {
-      const response = await fetchGeneratedFile(sourceUrl)
+      const response = await fetchGeneratedFile(sourceUrl, session.token)
 
       if (!response || !response.ok) {
         throw new Error('No fue posible abrir el comprobante adjunto.')

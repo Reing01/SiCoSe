@@ -9,6 +9,7 @@ import { clearAuthSession, readAuthSession } from '../../features/auth/auth.sess
 import { logout } from '../../features/auth/auth.api'
 import { exportMonthlyReport, fetchDashboardMetrics } from '../../features/dashboard/dashboard.api'
 import type { DashboardMetrics } from '../../features/dashboard/dashboard.types'
+import { fetchGeneratedFile } from '../../lib/download'
 import { cn } from '../../lib/utils'
 import { navigateTo } from '../../lib/navigation'
 import { useTheme } from '../../features/theme/theme-context'
@@ -190,41 +191,6 @@ function RevenueLineChart({ metrics, theme }: { metrics: DashboardMetrics; theme
       </CardContent>
     </Card>
   )
-}
-
-function buildDownloadUrls(sourceUrl: string) {
-  try {
-    const parsedUrl = new URL(sourceUrl)
-
-    if (
-      parsedUrl.hostname.endsWith('.supabase.co') &&
-      parsedUrl.pathname.startsWith('/storage/v1/object/')
-    ) {
-      return [
-        `/api/storage-download?url=${encodeURIComponent(sourceUrl)}`,
-        sourceUrl,
-      ]
-    }
-  } catch {
-    // Si la URL no es absoluta, dejamos que el intento original falle de forma controlada.
-  }
-
-  return [sourceUrl]
-}
-
-async function fetchGeneratedFile(sourceUrl: string) {
-  let lastResponse: Response | null = null
-
-  for (const url of buildDownloadUrls(sourceUrl)) {
-    const response = await fetch(url)
-    lastResponse = response
-
-    if (response.ok) {
-      return response
-    }
-  }
-
-  return lastResponse
 }
 
 function MetricCard({ card, theme }: { card: KpiCard; theme: 'light' | 'dark' }) {
@@ -486,7 +452,7 @@ export default function DashboardPage() {
 
     try {
       const exportResult = await exportMonthlyReport(session.token, state.metrics.periodo, format)
-      const fileResponse = await fetchGeneratedFile(exportResult.archivo_url)
+      const fileResponse = await fetchGeneratedFile(exportResult.archivo_url, session.token)
 
       if (!fileResponse?.ok) {
         throw new Error('No fue posible descargar el archivo generado.')

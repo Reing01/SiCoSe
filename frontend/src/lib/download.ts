@@ -15,11 +15,19 @@ function buildDownloadUrls(sourceUrl: string) {
   return [sourceUrl]
 }
 
-async function fetchBlobResponse(sourceUrl: string) {
+async function fetchBlobResponse(sourceUrl: string, token?: string) {
   let lastResponse: Response | null = null
 
   for (const url of buildDownloadUrls(sourceUrl)) {
-    const response = await fetch(url)
+    const response = await fetch(url, {
+      credentials: url.startsWith('/api/') ? 'include' : 'omit',
+      headers:
+        url.startsWith('/api/storage-download') && token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : undefined,
+    })
     lastResponse = response
 
     if (response.ok) {
@@ -30,8 +38,8 @@ async function fetchBlobResponse(sourceUrl: string) {
   return lastResponse
 }
 
-export async function fetchGeneratedFile(sourceUrl: string) {
-  return fetchBlobResponse(sourceUrl)
+export async function fetchGeneratedFile(sourceUrl: string, token?: string) {
+  return fetchBlobResponse(sourceUrl, token)
 }
 
 export function downloadBlob(blob: Blob, fileName: string) {

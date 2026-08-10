@@ -220,6 +220,10 @@
       "destination": "https://sicose-24pj.onrender.com/api/pagos/:path*"
     },
     {
+      "source": "/api/storage-download",
+      "destination": "https://sicose-24pj.onrender.com/api/storage-download"
+    },
+    {
       "source": "/api/reportes/:path*",
       "destination": "https://sicose-24pj.onrender.com/api/reportes/:path*"
     },
