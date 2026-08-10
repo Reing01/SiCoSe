@@ -1,3 +1,9 @@
+import { API_BASE_URL } from './api'
+
+const DOWNLOAD_BASE_URL = (
+  API_BASE_URL || (import.meta.env.PROD ? 'https://sicose-24pj.onrender.com' : '')
+).trim().replace(/\/+$/, '')
+
 function buildDownloadUrls(sourceUrl: string) {
   try {
     const parsedUrl = new URL(sourceUrl)
@@ -6,7 +12,11 @@ function buildDownloadUrls(sourceUrl: string) {
       parsedUrl.hostname.endsWith('.supabase.co') &&
       parsedUrl.pathname.startsWith('/storage/v1/object/')
     ) {
-      return [`/api/storage-download?url=${encodeURIComponent(sourceUrl)}`, sourceUrl]
+      const downloadUrl = DOWNLOAD_BASE_URL
+        ? `${DOWNLOAD_BASE_URL}/api/storage-download?url=${encodeURIComponent(sourceUrl)}`
+        : `/api/storage-download?url=${encodeURIComponent(sourceUrl)}`
+
+      return [downloadUrl, sourceUrl]
     }
   } catch {
     // Si la URL no es absoluta, dejamos que el intento original falle de forma controlada.
