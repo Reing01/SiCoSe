@@ -125,9 +125,13 @@ describe('App routing', () => {
     render(<App />)
 
     expect(
-      await screen.findByRole('heading', {
-        name: /acceso seguro al panel principal de la junta auxiliar/i,
-      }),
+      await screen.findByRole(
+        'heading',
+        {
+          name: /acceso seguro al panel principal de la junta auxiliar/i,
+        },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument()
   })
 

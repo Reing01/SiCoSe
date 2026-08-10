@@ -180,6 +180,54 @@
   ],
   "rewrites": [
     {
+      "source": "/api/auth/:path*",
+      "destination": "https://sicose-1.onrender.com/api/auth/:path*"
+    },
+    {
+      "source": "/api/adeudos/:path*",
+      "destination": "https://sicose-1.onrender.com/api/adeudos/:path*"
+    },
+    {
+      "source": "/api/auditorias/:path*",
+      "destination": "https://sicose-1.onrender.com/api/auditorias/:path*"
+    },
+    {
+      "source": "/api/ciudadanos/:path*",
+      "destination": "https://sicose-1.onrender.com/api/ciudadanos/:path*"
+    },
+    {
+      "source": "/api/dashboard/:path*",
+      "destination": "https://sicose-1.onrender.com/api/dashboard/:path*"
+    },
+    {
+      "source": "/api/docs/:path*",
+      "destination": "https://sicose-1.onrender.com/api/docs/:path*"
+    },
+    {
+      "source": "/api/health",
+      "destination": "https://sicose-1.onrender.com/api/health"
+    },
+    {
+      "source": "/api/health/:path*",
+      "destination": "https://sicose-1.onrender.com/api/health/:path*"
+    },
+    {
+      "source": "/api/leads/:path*",
+      "destination": "https://sicose-1.onrender.com/api/leads/:path*"
+    },
+    {
+      "source": "/api/pagos/:path*",
+      "destination": "https://sicose-1.onrender.com/api/pagos/:path*"
+    },
+    {
+      "source": "/api/reportes/:path*",
+      "destination": "https://sicose-1.onrender.com/api/reportes/:path*"
+    },
+    {
+      "source": "/api/usuarios/:path*",
+      "destination": "https://sicose-1.onrender.com/api/usuarios/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
