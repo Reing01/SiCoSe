@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { API_BASE_URL } from '../lib/api'
 import LandingPage from '../LandingPage'
 
 describe('LandingPage', () => {
@@ -56,7 +57,7 @@ describe('LandingPage', () => {
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
 
-    expect(url).toBe('/api/leads')
+    expect(url).toBe(`${API_BASE_URL}/api/leads`)
     expect(init.method).toBe('POST')
     expect(init.body).toBe(
       JSON.stringify({

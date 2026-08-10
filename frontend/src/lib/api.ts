@@ -5,10 +5,11 @@ import {
 } from '../features/auth/auth.session'
 import { navigateTo } from './navigation'
 
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(
-  /\/+$/,
-  '',
-)
+const DEFAULT_API_BASE_URL = 'https://sicose-1.onrender.com'
+
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL
+).replace(/\/+$/, '')
 
 export type ApiErrorPayload = {
   error?: string

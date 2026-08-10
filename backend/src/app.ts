@@ -39,6 +39,8 @@ export function createApp() {
   // ademas de los origenes explicitos configurados en CORS_ORIGIN.
   const vercelPreviewPattern =
     /^https:\/\/[a-z0-9-]+-cesaro4pacheco09-7836s-projects\.vercel\.app$/;
+  const vercelProductionPattern =
+    /^https:\/\/si-co-se(?:-[a-z0-9-]+)?\.vercel\.app$/;
 
   // El backend no se publica directamente. Confiar solo en el numero conocido
   // de proxies evita aceptar cabeceras X-Forwarded-For falsificadas desde una
@@ -56,7 +58,8 @@ export function createApp() {
 
         if (
           allowedOrigins.includes(origin) ||
-          vercelPreviewPattern.test(origin)
+          vercelPreviewPattern.test(origin) ||
+          vercelProductionPattern.test(origin)
         ) {
           return callback(null, true);
         }
