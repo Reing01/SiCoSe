@@ -35,6 +35,10 @@ function generateToken() {
   return randomBytes(48).toString('hex')
 }
 
+async function persistRefreshTokenInRedis(hash: string, userId: string, ttlSeconds: number) {
+  await withRedis((redis) => redis.set(redisKey(hash), userId, 'EX', ttlSeconds))
+}
+
 /**
  * Emite un nuevo refresh token para el usuario y lo persiste (Redis, con
  * fallback en memoria si Redis no responde). El valor guardado nunca es el
@@ -45,12 +49,10 @@ export async function issueRefreshToken(userId: string) {
   const hash = hashToken(token)
   const ttlSeconds = REFRESH_TOKEN_TTL_SECONDS
 
-  try {
-    await withRedis((redis) => redis.set(redisKey(hash), userId, 'EX', ttlSeconds))
-  } catch {
-    cleanupMemoryStore()
-    memoryStore.set(hash, { userId, expiresAt: Date.now() + ttlSeconds * 1000 })
-  }
+  cleanupMemoryStore()
+  memoryStore.set(hash, { userId, expiresAt: Date.now() + ttlSeconds * 1000 })
+
+  void persistRefreshTokenInRedis(hash, userId, ttlSeconds).catch(() => undefined)
 
   return { token, ttlSeconds }
 }
@@ -65,6 +67,18 @@ export async function consumeRefreshToken(token: string): Promise<string | null>
   const hash = hashToken(token)
 
   try {
+    cleanupMemoryStore()
+
+    const memoryEntry = memoryStore.get(hash)
+
+    if (memoryEntry) {
+      memoryStore.delete(hash)
+
+      if (memoryEntry.expiresAt > Date.now()) {
+        return memoryEntry.userId
+      }
+    }
+
     const userId = await withRedis((redis) => redis.get(redisKey(hash)))
 
     if (!userId) {
@@ -93,9 +107,11 @@ export async function consumeRefreshToken(token: string): Promise<string | null>
 export async function revokeRefreshToken(token: string) {
   const hash = hashToken(token)
 
+  memoryStore.delete(hash)
+
   try {
     await withRedis((redis) => redis.del(redisKey(hash)))
   } catch {
-    memoryStore.delete(hash)
+    return
   }
 }

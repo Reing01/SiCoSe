@@ -79,14 +79,6 @@ async function checkRedisLimit(
   })
 }
 
-async function checkLimit(key: string, maxAttempts: number, windowMs: number) {
-  try {
-    return await checkRedisLimit(key, maxAttempts, windowMs)
-  } catch {
-    return checkMemoryLimit(key, maxAttempts, windowMs)
-  }
-}
-
 function rejectRateLimited(
   response: Response,
   retryAfterSeconds: number,
@@ -110,16 +102,29 @@ export async function loginRateLimit(
   const ip = getRequestIp(request)
   const email = normalizeEmail(request.body?.email)
 
-  const [ipCheck, emailCheck] = await Promise.all([
-    checkLimit(`login:ip:${ip}`, env.RATE_LIMIT_MAX, env.RATE_LIMIT_WINDOW_MS),
+  const ipCheck = checkMemoryLimit(
+    `login:ip:${ip}`,
+    env.RATE_LIMIT_MAX,
+    env.RATE_LIMIT_WINDOW_MS,
+  )
+  const emailCheck = email
+    ? checkMemoryLimit(
+        `login:email:${email}`,
+        env.RATE_LIMIT_EMAIL_MAX,
+        env.RATE_LIMIT_EMAIL_WINDOW_MS,
+      )
+    : null
+
+  void Promise.all([
+    checkRedisLimit(`login:ip:${ip}`, env.RATE_LIMIT_MAX, env.RATE_LIMIT_WINDOW_MS),
     email
-      ? checkLimit(
+      ? checkRedisLimit(
           `login:email:${email}`,
           env.RATE_LIMIT_EMAIL_MAX,
           env.RATE_LIMIT_EMAIL_WINDOW_MS,
         )
       : Promise.resolve<RateLimitCheck | null>(null),
-  ])
+  ]).catch(() => undefined)
 
   if (!ipCheck.allowed) {
     console.warn(`Rate limit exceeded for login IP: ${ip}`)
@@ -146,9 +151,7 @@ export async function resetLoginEmailAttempts(email: string) {
 
   const key = `login:email:${normalizedEmail}`
 
-  try {
-    await withRedis((redis) => redis.del(key))
-  } catch {
-    memoryBuckets.delete(key)
-  }
+  memoryBuckets.delete(key)
+
+  void withRedis((redis) => redis.del(key)).catch(() => undefined)
 }
