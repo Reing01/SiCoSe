@@ -2,7 +2,11 @@ import { useEffect } from 'react'
 import LoginForm from '../../features/auth/LoginForm'
 import { login } from '../../features/auth/auth.api'
 import { LOGIN_COPY } from '../../features/auth/auth.copy'
-import { getHomeRouteForRole, persistAuthSession, readAuthSession } from '../../features/auth/auth.session'
+import {
+  getHomeRouteForRole,
+  persistAuthSession,
+  readAuthSession,
+} from '../../features/auth/auth.session'
 import type { LoginRequest } from '../../features/auth/auth.types'
 import RoutePills from '../../components/RoutePills'
 import AppLink from '../../components/AppLink'
@@ -10,23 +14,23 @@ import { navigateTo } from '../../lib/navigation'
 
 const highlights = [
   {
-    title: 'Acceso institucional',
+    title: 'Cobro de agua',
     description:
-      'El panel esta pensado para que las personas autorizadas trabajen con claridad.',
+      'Entra al flujo de cobranza y consulta solo lo necesario para registrar pagos.',
   },
   {
-    title: 'Acceso seguro',
+    title: 'Búsqueda directa',
     description:
-      'La pantalla mantiene una experiencia clara, consistente y enfocada en el usuario.',
+      'Localiza al ciudadano por nombre o clave catastral sin navegar por módulos ajenos.',
   },
   {
-    title: 'Experiencia mobile-first',
+    title: 'Comprobante listo',
     description:
-      'La composición responde bien en tablet y celular sin perder contraste ni jerarquía.',
+      'Abre, imprime y conserva el comprobante del pago sin pasos intermedios.',
   },
 ]
 
-const signals = ['Acceso protegido', 'Gestion clara', 'Soporte', 'Responsive']
+const signals = ['Cobro de agua', 'Búsqueda paginada', 'Comprobante PDF', 'Responsive']
 
 export default function LoginPage() {
   useEffect(() => {
@@ -35,15 +39,6 @@ export default function LoginPage() {
     if (session) {
       navigateTo(getHomeRouteForRole(session.user.rol), true)
     }
-  }, [])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void import('../../pages/dashboard/DashboardPage')
-      void import('../../pages/citizens/CitizenManagementPage')
-    }, 250)
-
-    return () => window.clearTimeout(timer)
   }, [])
 
   const handleLogin = async (credentials: LoginRequest) => {
@@ -75,7 +70,7 @@ export default function LoginPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
               SiCoSe
             </p>
-            <p className="text-sm text-slate-300">Navegación principal</p>
+            <p className="text-sm text-slate-300">Cobro de agua</p>
           </div>
         </AppLink>
 
@@ -85,19 +80,16 @@ export default function LoginPage() {
       <div className="relative mx-auto grid min-h-screen max-w-7xl gap-10 px-4 pb-10 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-12">
         <section className="flex flex-col justify-center gap-8 animate-fade-up">
           <div className="max-w-2xl space-y-6">
-
-
             <div className="space-y-4">
               <p className="text-sm font-medium uppercase tracking-[0.35em] text-sky-200/80">
-                SiCoSe · Sistema de Cobro de Servicios
+                SiCoSe · Sistema de cobro de agua
               </p>
               <h1 className="max-w-xl text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Acceso seguro al panel principal de la junta auxiliar
+                Acceso directo al panel de cobranza de agua
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                La pantalla de login concentra una experiencia clara para
-                entrar al sistema y continuar hacia el panel de trabajo sin
-                sacrificar legibilidad ni enfoque.
+                Inicia sesión para buscar al ciudadano, registrar el pago y
+                generar el comprobante sin salir del flujo principal.
               </p>
             </div>
           </div>
@@ -128,7 +120,6 @@ export default function LoginPage() {
               </span>
             ))}
           </div>
-
         </section>
 
         <section className="flex items-center justify-center animate-scale-in">

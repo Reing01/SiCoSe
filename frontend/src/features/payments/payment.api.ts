@@ -44,10 +44,37 @@ function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` }
 }
 
-export async function fetchPendingDebts(token: string) {
-  return apiRequest<PendingDebtResponse>('/api/adeudos/pendientes?limite=100', {
-    headers: authHeaders(token),
+export async function fetchPendingDebts(
+  token: string,
+  params?: {
+    ciudadanoId?: string
+    servicioId?: string
+    pagina?: number
+    limite?: number
+  },
+) {
+  const query = new URLSearchParams({
+    limite: String(params?.limite ?? 100),
   })
+
+  if (params?.ciudadanoId) {
+    query.set('ciudadano_id', params.ciudadanoId)
+  }
+
+  if (params?.servicioId) {
+    query.set('servicio_id', params.servicioId)
+  }
+
+  if (params?.pagina) {
+    query.set('pagina', String(params.pagina))
+  }
+
+  return apiRequest<PendingDebtResponse>(
+    `/api/adeudos/pendientes?${query.toString()}`,
+    {
+      headers: authHeaders(token),
+    },
+  )
 }
 
 export async function registerPayment(

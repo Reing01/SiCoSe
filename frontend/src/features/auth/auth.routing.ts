@@ -1,4 +1,4 @@
-import { canAccessRoute, type AppRoute } from "./authorization";
+import type { AppRoute } from "./authorization";
 import { getHomeRouteForRole } from "./auth.session";
 import type { AuthSession } from "./auth.types";
 
@@ -7,9 +7,9 @@ function normalizeRoute(pathname: string): AppRoute {
 
   if (
     normalized === "/login" ||
+    normalized === "/pagos" ||
     normalized === "/dashboard" ||
     normalized === "/ciudadanos" ||
-    normalized === "/pagos" ||
     normalized === "/reportes" ||
     normalized === "/usuarios"
   ) {
@@ -25,29 +25,17 @@ export function resolveAppRoute(
 ): AppRoute {
   const route = normalizeRoute(pathname);
 
-  if (route === "/login") {
-    return session ? getHomeRouteForRole(session.user.rol) : "/login";
+  if (!session) {
+    return "/login";
   }
 
-  if (
-    route === "/dashboard" ||
-    route === "/ciudadanos" ||
-    route === "/pagos" ||
-    route === "/reportes" ||
-    route === "/usuarios"
-  ) {
-    if (!session) {
-      return "/login";
-    }
-
-    return canAccessRoute(route, session)
-      ? route
-      : getHomeRouteForRole(session.user.rol);
-  }
-
-  if (route === "/" && session) {
+  if (route === "/login" || route === "/") {
     return getHomeRouteForRole(session.user.rol);
   }
 
-  return route;
+  if (route === "/pagos") {
+    return "/pagos";
+  }
+
+  return "/pagos";
 }

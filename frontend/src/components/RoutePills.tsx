@@ -1,21 +1,13 @@
 import { useState } from "react";
-import {
-  APP_ROUTES,
-  getVisibleProtectedRoutes,
-} from "../features/auth/authorization";
 import { readAuthSession } from "../features/auth/auth.session";
 import { cn } from "../lib/utils";
 import AppLink from './AppLink';
 
-const ROUTE_LABELS: Record<(typeof APP_ROUTES)[number], string> = {
+const ROUTE_LABELS = {
   "/": "Inicio",
   "/login": "Login",
-  "/dashboard": "Dashboard",
-  "/ciudadanos": "Ciudadanos",
   "/pagos": "Pagos",
-  "/reportes": "Reportes",
-  "/usuarios": "Usuarios",
-};
+} as const;
 
 type RoutePillsProps = {
   className?: string;
@@ -30,12 +22,7 @@ function getCurrentPath() {
 
   const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
 
-  return pathname === "/login" ||
-    pathname === "/ciudadanos" ||
-    pathname === "/dashboard" ||
-    pathname === "/pagos" ||
-    pathname === "/reportes" ||
-    pathname === "/usuarios"
+  return pathname === "/login" || pathname === "/pagos"
     ? pathname
     : "/";
 }
@@ -44,10 +31,10 @@ function getVisibleRoutes() {
   const session = readAuthSession();
 
   if (!session) {
-    return APP_ROUTES.filter((route) => route === "/" || route === "/login");
+    return ["/", "/login"] as const;
   }
 
-  return ["/", "/login", ...getVisibleProtectedRoutes(session)];
+  return ["/", "/login", "/pagos"] as const;
 }
 
 const VARIANT_CLASSES = {

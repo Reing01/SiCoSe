@@ -4,9 +4,11 @@ import { ThemeProvider } from '../../../features/theme/theme'
 import { authStorageKeys } from '../../../features/auth/auth.session'
 import PaymentsPage from '../PaymentsPage'
 import * as paymentApi from '../../../features/payments/payment.api'
+import * as citizenApi from '../../../features/citizens/citizen.api'
 import * as citizenHistoryApi from '../../../features/citizens/citizen-history.api'
 
 vi.mock('../../../features/payments/payment.api')
+vi.mock('../../../features/citizens/citizen.api')
 vi.mock('../../../features/citizens/citizen-history.api')
 
 function persistTesoreroSession() {
@@ -24,6 +26,28 @@ describe('PaymentsPage', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
     persistTesoreroSession()
+    vi.mocked(citizenApi.fetchCitizenPage).mockResolvedValue({
+      records: [
+        {
+          id: 'citizen-1',
+          nombre: 'Juan',
+          apellido: 'Perez',
+          email: 'juan@test.com',
+          telefono: '',
+          direccion: '',
+          claveCatastral: 'CATA-123',
+          activo: true,
+          createdAt: '2026-08-01T12:00:00.000Z',
+          updatedAt: '2026-08-01T12:00:00.000Z',
+        },
+      ],
+      metadata: {
+        total: 1,
+        pagina: 1,
+        limite: 6,
+        totalPaginas: 1,
+      },
+    })
     vi.mocked(paymentApi.fetchPendingDebts).mockResolvedValue({
       data: [
         {
@@ -119,11 +143,24 @@ describe('PaymentsPage', () => {
     )
 
     expect(
-      await screen.findByRole('heading', { name: /cobranza, historial y comprobantes/i }),
+      await screen.findByRole('heading', { name: /cobro de agua, historial y comprobantes/i }),
     ).toBeInTheDocument()
 
+    await screen.findByRole('heading', { name: /buscar ciudadano para cobrar/i })
     await screen.findByRole('heading', { name: /historial de pagos/i })
-    expect(screen.getByText(/cuota mensual/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/cuota mensual/i)).toHaveLength(2)
+    expect(screen.getAllByText(/juan perez/i).length).toBeGreaterThan(0)
+    await waitFor(() => {
+      expect(citizenApi.fetchCitizenPage).toHaveBeenCalledWith(
+        'test-token',
+        expect.objectContaining({
+          pagina: 1,
+          limite: 6,
+          nombre: undefined,
+          incluirInactivos: false,
+        }),
+      )
+    })
     await waitFor(() => {
       expect(citizenHistoryApi.fetchCitizenHistory).toHaveBeenCalledWith(
         'test-token',

@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import RoutePills from '../../components/RoutePills'
 import AppLink from '../../components/AppLink'
 import ThemeToggle from '../../components/ThemeToggle'
@@ -9,7 +9,9 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { logout } from '../../features/auth/auth.api'
 import { clearAuthSession, readAuthSession } from '../../features/auth/auth.session'
+import { fetchCitizenPage } from '../../features/citizens/citizen.api'
 import { fetchCitizenHistory, type CitizenHistoryPaymentRecord } from '../../features/citizens/citizen-history.api'
+import type { CitizenPageMetadata, CitizenRecord } from '../../features/citizens/citizen.types'
 import { useTheme } from '../../features/theme/theme-context'
 import {
   fetchPaymentReceiptBlob,
@@ -31,9 +33,15 @@ type PaymentMethod = 'efectivo' | 'transferencia'
 type MonthlyStatusTone = 'paid' | 'partial' | 'pending' | 'missing'
 
 type LoadState =
+  | { kind: 'idle' }
   | { kind: 'loading' }
   | { kind: 'ready'; debts: PendingDebtRecord[]; totalPending: number }
   | { kind: 'error'; message: string }
+
+type CitizenSearchState =
+  | { kind: 'loading'; records: CitizenRecord[]; metadata: CitizenPageMetadata }
+  | { kind: 'ready'; records: CitizenRecord[]; metadata: CitizenPageMetadata }
+  | { kind: 'error'; message: string; records: CitizenRecord[]; metadata: CitizenPageMetadata }
 
 type HistoryState =
   | { kind: 'idle' }
@@ -83,6 +91,8 @@ type PaymentReceiptAttachment = {
   url: string
 }
 
+const CITIZEN_SEARCH_PAGE_SIZE = 6
+
 const currencyFormatter = new Intl.NumberFormat('es-MX', {
   style: 'currency',
   currency: 'MXN',
@@ -105,6 +115,19 @@ function isWaterService(serviceName: string) {
   return /agua/i.test(serviceName)
 }
 
+function getCitizenFullName(citizen: CitizenRecord) {
+  return `${citizen.nombre} ${citizen.apellido}`.trim()
+}
+
+function createEmptyCitizenMetadata(): CitizenPageMetadata {
+  return {
+    total: 0,
+    pagina: 1,
+    limite: CITIZEN_SEARCH_PAGE_SIZE,
+    totalPaginas: 1,
+  }
+}
+
 function getPrintableReceiptName(payment: PaymentRecord | CitizenHistoryPaymentRecord) {
   return payment.folio ?? ('recibo' in payment ? payment.recibo ?? payment.id : payment.id)
 }
@@ -118,7 +141,19 @@ function getLatestReceiptAttachment(payment: CitizenHistoryPaymentRecord) {
 export default function PaymentsPage() {
   const { theme } = useTheme()
   const session = readAuthSession()
-  const [state, setState] = useState<LoadState>({ kind: 'loading' })
+  const sessionToken = session?.token ?? null
+  const citizenSearchInputId = useId()
+  const autoSelectedCitizenRef = useRef(false)
+  const [citizenSearchTerm, setCitizenSearchTerm] = useState('')
+  const [submittedCitizenSearchTerm, setSubmittedCitizenSearchTerm] = useState('')
+  const [citizenSearchPage, setCitizenSearchPage] = useState(1)
+  const [citizenSearchState, setCitizenSearchState] = useState<CitizenSearchState>({
+    kind: 'loading',
+    records: [],
+    metadata: createEmptyCitizenMetadata(),
+  })
+  const [selectedCitizen, setSelectedCitizen] = useState<CitizenRecord | null>(null)
+  const [debtState, setDebtState] = useState<LoadState>({ kind: 'idle' })
   const [historyState, setHistoryState] = useState<HistoryState>({ kind: 'idle' })
   const [selectedDebtId, setSelectedDebtId] = useState('')
   const [method, setMethod] = useState<PaymentMethod>('efectivo')
@@ -129,26 +164,29 @@ export default function PaymentsPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [success, setSuccess] = useState<PaymentRecord | null>(null)
   const [receiptMessage, setReceiptMessage] = useState<string | null>(null)
-  const [historyReloadKey, setHistoryReloadKey] = useState(0)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    if (!session) {
+    if (!sessionToken) {
       navigateTo('/login', true)
     }
-  }, [session])
+  }, [sessionToken])
 
   const selectedDebt = useMemo(() => {
-    if (state.kind !== 'ready') {
+    if (debtState.kind !== 'ready') {
       return null
     }
 
-    return state.debts.find((debt) => debt.id === selectedDebtId) ?? null
-  }, [selectedDebtId, state])
+    return debtState.debts.find((debt) => debt.id === selectedDebtId) ?? null
+  }, [selectedDebtId, debtState])
 
-  const selectedDebtCitizenId = selectedDebt?.ciudadanoId ?? null
-  const selectedDebtCitizenName = selectedDebt
-    ? `${selectedDebt.ciudadano.nombre} ${selectedDebt.ciudadano.apellido}`.trim()
-    : ''
+  const selectedCitizenName = selectedCitizen ? getCitizenFullName(selectedCitizen) : ''
+  const selectedCitizenLabel = selectedCitizenName || 'Busca un ciudadano para iniciar el cobro'
+  const selectedCitizenKey = selectedCitizen?.claveCatastral ?? ''
+  const totalWaterDebts =
+    debtState.kind === 'ready' ? debtState.debts.length : 0
+  const totalWaterPending =
+    debtState.kind === 'ready' ? debtState.totalPending : 0
 
   const sortedPaymentHistory = useMemo(() => {
     if (historyState.kind !== 'ready') {
@@ -246,6 +284,162 @@ export default function PaymentsPage() {
     }
   }, [monthlyRows])
 
+  useEffect(() => {
+    if (!sessionToken) {
+      return
+    }
+
+    let cancelled = false
+    setCitizenSearchState((current) => ({
+      kind: 'loading',
+      records: current.records,
+      metadata: current.metadata,
+    }))
+
+    fetchCitizenPage(sessionToken, {
+      pagina: citizenSearchPage,
+      limite: CITIZEN_SEARCH_PAGE_SIZE,
+      nombre: submittedCitizenSearchTerm.trim() || undefined,
+      incluirInactivos: false,
+    })
+      .then((response) => {
+        if (cancelled) {
+          return
+        }
+
+        setCitizenSearchState({
+          kind: 'ready',
+          records: response.records,
+          metadata: response.metadata,
+        })
+
+        if (
+          !autoSelectedCitizenRef.current &&
+          citizenSearchPage === 1 &&
+          !submittedCitizenSearchTerm.trim() &&
+          response.records[0]
+        ) {
+          autoSelectedCitizenRef.current = true
+          setSelectedCitizen(response.records[0])
+        }
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return
+        }
+
+        setCitizenSearchState({
+          kind: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'No fue posible buscar ciudadanos.',
+          records: [],
+          metadata: createEmptyCitizenMetadata(),
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [citizenSearchPage, sessionToken, submittedCitizenSearchTerm])
+
+  useEffect(() => {
+    if (!sessionToken || !selectedCitizen) {
+      setDebtState({ kind: 'idle' })
+      return
+    }
+
+    let cancelled = false
+    setDebtState({ kind: 'loading' })
+
+    fetchPendingDebts(sessionToken, {
+      ciudadanoId: selectedCitizen.id,
+      limite: 100,
+    })
+      .then((response) => {
+        if (cancelled) {
+          return
+        }
+
+        const waterDebts = response.data.filter((debt) =>
+          isWaterService(debt.servicio.nombre),
+        )
+        const totalPending = waterDebts.reduce((sum, debt) => sum + debt.monto, 0)
+
+        setDebtState({
+          kind: 'ready',
+          debts: waterDebts,
+          totalPending,
+        })
+
+        const firstDebt = waterDebts[0]
+        setSelectedDebtId(firstDebt?.id ?? '')
+        setAmount(firstDebt ? String(firstDebt.monto) : '')
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return
+        }
+
+        setDebtState({
+          kind: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'No fue posible cargar los adeudos del ciudadano.',
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [refreshKey, selectedCitizen, sessionToken])
+
+  useEffect(() => {
+    if (!sessionToken || !selectedCitizen) {
+      setHistoryState({ kind: 'idle' })
+      return
+    }
+
+    let cancelled = false
+    setHistoryState({ kind: 'loading' })
+
+    fetchCitizenHistory(sessionToken, selectedCitizen.id)
+      .then((history) => {
+        if (cancelled) {
+          return
+        }
+
+        setHistoryState({
+          kind: 'ready',
+          citizenId: selectedCitizen.id,
+          citizenName: getCitizenFullName(selectedCitizen),
+          history: {
+            adeudos: history.adeudos,
+            pagos: history.pagos,
+          },
+        })
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return
+        }
+
+        setHistoryState({
+          kind: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'No fue posible cargar el historial de pagos.',
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [refreshKey, selectedCitizen, sessionToken])
+
   const receiptAttachments = useMemo<PaymentReceiptAttachment[]>(() => {
     if (historyState.kind !== 'ready') {
       return []
@@ -272,87 +466,37 @@ export default function PaymentsPage() {
 
   const printablePayment = success ?? sortedPaymentHistory[0] ?? null
 
-  useEffect(() => {
-    const session = readAuthSession()
+  const handleCitizenSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
 
-    if (!session) {
-      setState({
-        kind: 'error',
-        message: 'Inicia sesion para registrar pagos.',
-      })
-      return
-    }
+    setSubmittedCitizenSearchTerm(citizenSearchTerm.trim())
+    setCitizenSearchPage(1)
+    setSelectedCitizen(null)
+    setDebtState({ kind: 'idle' })
+    setHistoryState({ kind: 'idle' })
+    setSelectedDebtId('')
+    setAmount('')
+    setMessage(null)
+    setReceiptMessage(null)
+  }
 
-    fetchPendingDebts(session.token)
-      .then((response) => {
-        setState({
-          kind: 'ready',
-          debts: response.data,
-          totalPending: response.metadata.totalPendiente,
-        })
+  const handleClearCitizenSearch = () => {
+    setCitizenSearchTerm('')
+    setSubmittedCitizenSearchTerm('')
+    setCitizenSearchPage(1)
+  }
 
-        const firstDebt = response.data[0]
-        if (firstDebt) {
-          setSelectedDebtId(firstDebt.id)
-          setAmount(String(firstDebt.monto))
-        }
-      })
-      .catch((error: unknown) => {
-        setState({
-          kind: 'error',
-          message:
-            error instanceof Error
-              ? error.message
-              : 'No fue posible cargar los adeudos pendientes.',
-        })
-      })
-  }, [])
-
-  useEffect(() => {
-    const session = readAuthSession()
-
-    if (!session || !selectedDebtCitizenId) {
-      setHistoryState({ kind: 'idle' })
-      return
-    }
-
-    let cancelled = false
-    setHistoryState({ kind: 'loading' })
-
-    fetchCitizenHistory(session.token, selectedDebtCitizenId)
-      .then((history) => {
-        if (cancelled) {
-          return
-        }
-
-        setHistoryState({
-          kind: 'ready',
-          citizenId: selectedDebtCitizenId,
-          citizenName: selectedDebtCitizenName,
-          history: {
-            adeudos: history.adeudos,
-            pagos: history.pagos,
-          },
-        })
-      })
-      .catch((error: unknown) => {
-        if (cancelled) {
-          return
-        }
-
-        setHistoryState({
-          kind: 'error',
-          message:
-            error instanceof Error
-              ? error.message
-              : 'No fue posible cargar el historial de pagos.',
-        })
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [historyReloadKey, selectedDebtCitizenId, selectedDebtCitizenName])
+  const handleCitizenSelect = (citizen: CitizenRecord) => {
+    setSelectedCitizen(citizen)
+    setSelectedDebtId('')
+    setMethod('efectivo')
+    setAmount('')
+    setReference('')
+    setReceipt(null)
+    setMessage(null)
+    setReceiptMessage(null)
+    setSuccess(null)
+  }
 
   const handleLogout = async () => {
     const session = readAuthSession()
@@ -405,8 +549,8 @@ export default function PaymentsPage() {
     const debtId = event.target.value
     setSelectedDebtId(debtId)
 
-    if (state.kind === 'ready') {
-      const debt = state.debts.find((item) => item.id === debtId)
+    if (debtState.kind === 'ready') {
+      const debt = debtState.debts.find((item) => item.id === debtId)
       setAmount(debt ? String(debt.monto) : '')
     }
   }
@@ -491,8 +635,8 @@ export default function PaymentsPage() {
 
       setSuccess(payment)
       setMessage(`Pago confirmado con folio ${payment.folio ?? payment.id}.`)
-      setHistoryReloadKey((current) => current + 1)
-      setState((current) => {
+      setRefreshKey((current) => current + 1)
+      setDebtState((current) => {
         if (current.kind !== 'ready') {
           return current
         }
@@ -515,7 +659,7 @@ export default function PaymentsPage() {
         return {
           ...current,
           debts: nextDebts,
-          totalPending: Math.max(0, current.totalPending - Number(amount)),
+          totalPending: nextDebts.reduce((sum, debt) => sum + debt.monto, 0),
         }
       })
       setReceipt(null)
@@ -537,8 +681,8 @@ export default function PaymentsPage() {
 
   const selectedDebtLabel =
     selectedDebt == null
-      ? 'Selecciona un adeudo para cargar la cobranza'
-      : selectedDebtCitizenName
+      ? selectedCitizenLabel
+      : selectedCitizenName
 
   return (
     <main
@@ -586,11 +730,11 @@ export default function PaymentsPage() {
               Pagos
             </p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-              Cobranza, historial y comprobantes
+              Cobro de agua, historial y comprobantes
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              La pantalla unifica el pago del mes, el historial del ciudadano y
-              el acceso directo al comprobante PDF.
+              La pantalla unifica la búsqueda del ciudadano, el pago del mes de
+              agua y el acceso directo al comprobante PDF.
             </p>
           </div>
 
@@ -621,14 +765,14 @@ export default function PaymentsPage() {
             <CardContent className="flex items-start justify-between gap-4 p-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-                  Adeudos cargados
+                  Adeudos de agua
                 </p>
                 <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                  {state.kind === 'ready' ? state.debts.length : '—'}
+                  {debtState.kind === 'ready' ? totalWaterDebts : '—'}
                 </p>
               </div>
               <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
-                Cobranza
+                Activos
               </span>
             </CardContent>
           </Card>
@@ -640,7 +784,7 @@ export default function PaymentsPage() {
                   Total por cobrar
                 </p>
                 <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                  {state.kind === 'ready' ? formatCurrency(state.totalPending) : '—'}
+                  {debtState.kind === 'ready' ? formatCurrency(totalWaterPending) : '—'}
                 </p>
               </div>
               <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-200">
@@ -674,13 +818,149 @@ export default function PaymentsPage() {
                 <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
                   {selectedDebtLabel}
                 </p>
+                {selectedCitizenKey ? (
+                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    Clave {selectedCitizenKey}
+                  </p>
+                ) : null}
               </div>
               <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                Historial
+                Agua
               </span>
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mt-6 overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+            <CardTitle>Buscar ciudadano para cobrar</CardTitle>
+            <CardDescription>
+              Encuentra por nombre, apellido o clave catastral y avanza por
+              páginas hasta ubicar a la persona correcta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 p-5">
+            <form className="flex flex-col gap-3 lg:flex-row" onSubmit={handleCitizenSearchSubmit}>
+              <div className="flex-1 space-y-2">
+                <Label htmlFor={citizenSearchInputId}>Buscar ciudadano</Label>
+                <Input
+                  id={citizenSearchInputId}
+                  type="search"
+                  value={citizenSearchTerm}
+                  onChange={(event) => setCitizenSearchTerm(event.target.value)}
+                  placeholder="Nombre, apellido o clave catastral"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 pt-0 lg:items-end">
+                <Button type="submit">Buscar</Button>
+                <Button type="button" variant="outline" onClick={handleClearCitizenSearch}>
+                  Limpiar
+                </Button>
+              </div>
+            </form>
+
+            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {citizenSearchState.kind === 'loading'
+                    ? 'Buscando ciudadanos...'
+                    : `${citizenSearchState.metadata.total} ciudadanos encontrados`}
+                </p>
+                <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  {submittedCitizenSearchTerm
+                    ? `Filtro actual: ${submittedCitizenSearchTerm}`
+                    : 'Mostrando ciudadanos activos para el cobro de agua.'}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={citizenSearchPage <= 1 || citizenSearchState.kind === 'loading'}
+                  onClick={() => setCitizenSearchPage((current) => Math.max(1, current - 1))}
+                >
+                  Anterior
+                </Button>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                  Página {citizenSearchState.metadata.pagina} de {citizenSearchState.metadata.totalPaginas}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={
+                    citizenSearchPage >= citizenSearchState.metadata.totalPaginas ||
+                    citizenSearchState.kind === 'loading'
+                  }
+                  onClick={() =>
+                    setCitizenSearchPage((current) =>
+                      Math.min(citizenSearchState.metadata.totalPaginas, current + 1),
+                    )
+                  }
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+
+            {citizenSearchState.kind === 'error' ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-100">
+                {citizenSearchState.message}
+              </div>
+            ) : null}
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {citizenSearchState.records.length > 0 ? (
+                citizenSearchState.records.map((citizen) => {
+                  const isSelected = selectedCitizen?.id === citizen.id
+
+                  return (
+                    <article
+                      key={citizen.id}
+                      className={cn(
+                        'rounded-2xl border p-4 shadow-sm transition-colors',
+                        isSelected
+                          ? 'border-[#0f3042] bg-[#0f3042]/5 dark:border-sky-400/40 dark:bg-sky-400/10'
+                          : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60',
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <p className="text-base font-semibold text-slate-950 dark:text-white">
+                            {getCitizenFullName(citizen)}
+                          </p>
+                          <p className="text-sm text-slate-600 dark:text-slate-300">
+                            Clave catastral: {citizen.claveCatastral}
+                          </p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {citizen.telefono || 'Sin telefono'} · {citizen.direccion || 'Sin direccion'}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant={isSelected ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleCitizenSelect(citizen)}
+                        >
+                          {isSelected ? 'Seleccionado' : 'Seleccionar'}
+                        </Button>
+                      </div>
+                    </article>
+                  )
+                })
+              ) : citizenSearchState.kind === 'loading' ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+                  Cargando resultados...
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300 md:col-span-2">
+                  No se encontraron ciudadanos con el criterio indicado.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {receiptMessage ? (
           <Card className="mt-5 border-sky-200 bg-sky-50 shadow-sm dark:border-sky-900/60 dark:bg-sky-950/50">
@@ -690,30 +970,30 @@ export default function PaymentsPage() {
           </Card>
         ) : null}
 
-        {state.kind === 'loading' ? (
+        {debtState.kind === 'loading' ? (
           <Card className="mt-6 border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
             <CardContent className="p-6">
-              Cargando adeudos pendientes...
+              Cargando adeudos de agua del ciudadano seleccionado...
             </CardContent>
           </Card>
         ) : null}
 
-        {state.kind === 'error' ? (
+        {debtState.kind === 'error' ? (
           <Card className="mt-6 border-rose-200 bg-rose-50 shadow-sm">
             <CardContent className="p-6 text-rose-800">
-              {state.message}
+              {debtState.message}
             </CardContent>
           </Card>
         ) : null}
 
-        {state.kind === 'ready' ? (
+        {debtState.kind === 'ready' ? (
           <>
             <div className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
               <Card id="realizar-pago" className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
                 <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
                   <CardTitle>Realizar pago</CardTitle>
                   <CardDescription>
-                    Selecciona el adeudo, captura el monto y confirma el movimiento.
+                    Selecciona el adeudo de agua, captura el monto y confirma el movimiento.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 p-5">
@@ -724,17 +1004,23 @@ export default function PaymentsPage() {
                     onChange={handleDebtChange}
                     className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-950"
                   >
-                    {state.debts.map((debt) => (
+                    {debtState.debts.map((debt) => (
                       <option key={debt.id} value={debt.id}>
-                        {debt.ciudadano.nombre} {debt.ciudadano.apellido} - {debt.servicio.nombre} - {debt.periodo} - {formatCurrency(debt.monto)}
+                        {debt.periodo} - {debt.servicio.nombre} - {formatCurrency(debt.monto)}
                       </option>
                     ))}
                   </select>
 
+                  {debtState.debts.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+                      Este ciudadano no tiene adeudos de agua pendientes.
+                    </div>
+                  ) : null}
+
                   {selectedDebt ? (
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 dark:border-slate-800 dark:bg-slate-950/60">
                       <p className="font-semibold">
-                        {selectedDebt.ciudadano.nombre} {selectedDebt.ciudadano.apellido}
+                        {selectedCitizenName}
                       </p>
                       <p>
                         {selectedDebt.servicio.nombre} - {selectedDebt.periodo}
@@ -852,19 +1138,19 @@ export default function PaymentsPage() {
                   <CardDescription>
                     {historyState.kind === 'ready'
                       ? `${historyState.citizenName} · ${historyState.history.pagos.length} pagos registrados`
-                      : 'El historial se carga para el ciudadano del adeudo seleccionado.'}
+                      : 'El historial se carga para el ciudadano seleccionado.'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 p-5">
                   {historyState.kind === 'idle' ? (
                     <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
-                      Selecciona un adeudo para ver el historial de pagos y comprobantes.
+                      Selecciona un ciudadano para ver el historial de pagos y comprobantes.
                     </div>
                   ) : null}
 
                   {historyState.kind === 'loading' ? (
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-                      Cargando historial del ciudadano...
+                      Cargando historial del ciudadano seleccionado...
                     </div>
                   ) : null}
 
@@ -896,7 +1182,7 @@ export default function PaymentsPage() {
                             {formatCurrency(MONTHLY_WATER_FEE_MXN)}
                           </p>
                           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            Referencia para agua potable
+                            Cuota fija para el servicio de agua
                           </p>
                         </div>
                       </div>

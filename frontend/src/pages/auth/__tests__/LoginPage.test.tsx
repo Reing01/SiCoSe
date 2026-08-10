@@ -23,11 +23,11 @@ describe('LoginPage', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: /acceso seguro al panel principal de la junta auxiliar/i,
+        name: /acceso directo al panel de cobranza de agua/i,
       }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/sicose · sistema de cobro de servicios/i),
+      screen.getByText(/sicose · sistema de cobro de agua/i),
     ).toBeInTheDocument()
     expect(screen.getByLabelText(/correo institucional/i)).toBeInTheDocument()
   })
@@ -49,7 +49,7 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText(/correo institucional/i), {
       target: { value: 'ADMIN@SICOSE.TEST' },
     })
-    fireEvent.change(screen.getByLabelText(/contraseña/i, { selector: 'input' }), {
+    fireEvent.change(screen.getByLabelText(/contraseñ[aá]/i, { selector: 'input' }), {
       target: { value: 'SiCoSe2026!' },
     })
     fireEvent.click(
