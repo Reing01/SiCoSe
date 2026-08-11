@@ -27,6 +27,10 @@ export function formatPeriodKey(year: number, month: number) {
   return `${year}-${String(month).padStart(2, '0')}`
 }
 
+export function getCurrentPeriodKey(date = new Date()) {
+  return formatPeriodKey(date.getFullYear(), date.getMonth() + 1)
+}
+
 export function formatPeriodLabel(year: number, month: number) {
   const monthLabel = MONTH_NAMES[month - 1] ?? 'mes'
   return `${monthLabel} ${year}`

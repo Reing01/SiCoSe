@@ -1,10 +1,17 @@
 import { API_BASE_URL } from '../../lib/api'
+import { getCurrentPeriodKey } from '../../lib/water-billing'
+import { prefetchDashboardMetrics } from '../dashboard/dashboard.api'
+import type { AuthSession } from './auth.types'
 
 let loginWarmupStarted = false
 
-function prefetchProtectedChunks() {
+function prefetchLandingChunk(session: AuthSession) {
+  if (session.user.rol === 'secretaria') {
+    void import('../../pages/citizens/CitizenManagementPage').catch(() => undefined)
+    return
+  }
+
   void import('../../pages/dashboard/DashboardPage').catch(() => undefined)
-  void import('../../pages/citizens/CitizenManagementPage').catch(() => undefined)
 }
 
 async function warmBackendHealth() {
@@ -33,5 +40,18 @@ export function warmLoginExperience() {
   loginWarmupStarted = true
 
   void warmBackendHealth()
-  prefetchProtectedChunks()
+}
+
+export function warmPostLoginExperience(session: AuthSession) {
+  if (import.meta.env.MODE === 'test') {
+    return
+  }
+
+  prefetchLandingChunk(session)
+
+  if (session.user.rol === 'secretaria') {
+    return
+  }
+
+  prefetchDashboardMetrics(session.token, getCurrentPeriodKey())
 }

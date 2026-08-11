@@ -27,6 +27,8 @@ type ActionState =
   | { kind: 'success'; message: string }
   | { kind: 'error'; message: string }
 
+type ReportCategory = 'individual' | 'general'
+
 const currencyFormatter = new Intl.NumberFormat('es-MX', {
   style: 'currency',
   currency: 'MXN',
@@ -295,6 +297,8 @@ async function presentReportArtifact(
 export default function ReportsPage() {
   const session = readAuthSession()
   const { theme } = useTheme()
+  const [reportCategory, setReportCategory] =
+    useState<ReportCategory>('general')
   const [period, setPeriod] = useState(() => createCurrentPeriod())
   const currentPeriod = useMemo(() => createCurrentPeriod(), [])
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' })
@@ -497,6 +501,57 @@ export default function ReportsPage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8 animate-fade-up">
+        <div
+          className={cn(
+            'flex flex-col gap-4 rounded-[2rem] border p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between',
+            theme === 'dark'
+              ? 'border-slate-800 bg-slate-900/90'
+              : 'border-slate-200 bg-white/90',
+          )}
+        >
+          <div className="space-y-1">
+            <p
+              className={cn(
+                'text-xs font-semibold uppercase tracking-[0.35em]',
+                theme === 'dark' ? 'text-sky-300' : 'text-[#0f3042]',
+              )}
+            >
+              Categorías de reportes
+            </p>
+            <p
+              className={cn(
+                'text-sm',
+                theme === 'dark' ? 'text-slate-300' : 'text-slate-600',
+              )}
+            >
+              Individual para comprobantes de un pago específico y general
+              para el resumen mensual consolidado.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={reportCategory === 'individual' ? 'default' : 'outline'}
+              onClick={() => setReportCategory('individual')}
+              className="rounded-full"
+            >
+              Individual
+            </Button>
+            <Button
+              type="button"
+              variant={reportCategory === 'general' ? 'default' : 'outline'}
+              onClick={() => setReportCategory('general')}
+              className="rounded-full"
+            >
+              General
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {reportCategory === 'general' ? (
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard
@@ -628,6 +683,55 @@ export default function ReportsPage() {
           )}
         </div>
       </section>
+      ) : (
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
+        <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
+          <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+              <CardTitle>Comprobante individual</CardTitle>
+              <CardDescription>
+                Accede al flujo de un ciudadano específico para consultar el
+                historial, registrar el pago y abrir el comprobante PDF.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5 p-5">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+                El comprobante individual ya vive en la pantalla de Pagos:
+                ahí buscas al ciudadano, revisas su historial y abres el
+                recibo para imprimirlo.
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <AppLink href="/pagos" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#f97316] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-500">
+                  Ir a pagos
+                </AppLink>
+                <AppLink href="/pagos#historial-pagos" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  Ver historial
+                </AppLink>
+                <AppLink href="/pagos#comprobante-pago" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:col-span-2">
+                  Imprimir comprobante
+                </AppLink>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+              <CardTitle>Qué incluye</CardTitle>
+              <CardDescription>
+                Flujo resumido para sacar el comprobante sin perder el contexto
+                del cobro.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              <p>- Búsqueda del ciudadano con paginación.</p>
+              <p>- Historial de pagos y adeudos del ciudadano seleccionado.</p>
+              <p>- Impresión del recibo/comprobante desde el último pago.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+      )}
     </main>
   )
 }

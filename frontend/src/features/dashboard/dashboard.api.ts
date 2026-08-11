@@ -1,6 +1,9 @@
 import { apiRequest } from '../../lib/api'
 import type { DashboardMetrics } from './dashboard.types'
 
+const dashboardMetricsCache = new Map<string, DashboardMetrics>()
+const dashboardMetricsRequests = new Map<string, Promise<DashboardMetrics>>()
+
 type DashboardMetricsResponse = {
   data: Partial<DashboardMetrics> & {
     periodo: string
@@ -64,7 +67,11 @@ function normalizeDashboardMetrics(
   }
 }
 
-export async function fetchDashboardMetrics(token: string, periodo?: string) {
+function getDashboardMetricsCacheKey(token: string, periodo?: string) {
+  return `${token}::${periodo ?? ''}`
+}
+
+async function requestDashboardMetrics(token: string, periodo?: string) {
   const params = periodo ? `?periodo=${encodeURIComponent(periodo)}` : ''
   const response = await apiRequest<DashboardMetricsResponse>(`/api/dashboard/metricas${params}`, {
     headers: {
@@ -73,6 +80,53 @@ export async function fetchDashboardMetrics(token: string, periodo?: string) {
   })
 
   return normalizeDashboardMetrics(response.data)
+}
+
+export function prefetchDashboardMetrics(token: string, periodo?: string) {
+  void fetchDashboardMetrics(token, periodo)
+}
+
+export function consumePrefetchedDashboardMetrics(
+  token: string,
+  periodo?: string,
+) {
+  const cacheKey = getDashboardMetricsCacheKey(token, periodo)
+  const cachedMetrics = dashboardMetricsCache.get(cacheKey)
+
+  if (!cachedMetrics) {
+    return null
+  }
+
+  dashboardMetricsCache.delete(cacheKey)
+  return cachedMetrics
+}
+
+export async function fetchDashboardMetrics(token: string, periodo?: string) {
+  const cacheKey = getDashboardMetricsCacheKey(token, periodo)
+  const cachedMetrics = dashboardMetricsCache.get(cacheKey)
+
+  if (cachedMetrics) {
+    return cachedMetrics
+  }
+
+  const pendingRequest = dashboardMetricsRequests.get(cacheKey)
+
+  if (pendingRequest) {
+    return pendingRequest
+  }
+
+  const request = requestDashboardMetrics(token, periodo)
+    .then((metrics) => {
+      dashboardMetricsCache.set(cacheKey, metrics)
+      return metrics
+    })
+    .finally(() => {
+      dashboardMetricsRequests.delete(cacheKey)
+    })
+
+  dashboardMetricsRequests.set(cacheKey, request)
+
+  return request
 }
 
 export async function exportMonthlyReport(

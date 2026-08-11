@@ -7,7 +7,10 @@ import {
   persistAuthSession,
   readAuthSession,
 } from '../../features/auth/auth.session'
-import { warmLoginExperience } from '../../features/auth/auth.prefetch'
+import {
+  warmLoginExperience,
+  warmPostLoginExperience,
+} from '../../features/auth/auth.prefetch'
 import type { LoginRequest } from '../../features/auth/auth.types'
 import RoutePills from '../../components/RoutePills'
 import AppLink from '../../components/AppLink'
@@ -42,13 +45,20 @@ export default function LoginPage() {
       return
     }
 
-    warmLoginExperience()
+    const warmupTimer = window.setTimeout(() => {
+      warmLoginExperience()
+    }, 1500)
+
+    return () => {
+      window.clearTimeout(warmupTimer)
+    }
   }, [])
 
   const handleLogin = async (credentials: LoginRequest) => {
     const response = await login(credentials)
 
     persistAuthSession(response.data)
+    warmPostLoginExperience(response.data)
 
     return {
       message: LOGIN_COPY.success,

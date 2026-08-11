@@ -7,7 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Input } from '../../components/ui/input'
 import { clearAuthSession, readAuthSession } from '../../features/auth/auth.session'
 import { logout } from '../../features/auth/auth.api'
-import { exportMonthlyReport, fetchDashboardMetrics } from '../../features/dashboard/dashboard.api'
+import {
+  consumePrefetchedDashboardMetrics,
+  exportMonthlyReport,
+  fetchDashboardMetrics,
+} from '../../features/dashboard/dashboard.api'
 import type { DashboardMetrics } from '../../features/dashboard/dashboard.types'
 import { fetchGeneratedFile } from '../../lib/download'
 import { cn } from '../../lib/utils'
@@ -489,6 +493,16 @@ export default function DashboardPage() {
         kind: 'error',
         message: 'Inicia sesion para consultar el dashboard.',
       })
+      return
+    }
+
+    const prefetchedMetrics = consumePrefetchedDashboardMetrics(
+      session.token,
+      selectedPeriod,
+    )
+
+    if (prefetchedMetrics) {
+      setState({ kind: 'ready', metrics: prefetchedMetrics })
       return
     }
 
