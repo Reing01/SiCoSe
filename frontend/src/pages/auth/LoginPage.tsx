@@ -7,6 +7,7 @@ import {
   persistAuthSession,
   readAuthSession,
 } from '../../features/auth/auth.session'
+import { warmLoginExperience } from '../../features/auth/auth.prefetch'
 import type { LoginRequest } from '../../features/auth/auth.types'
 import RoutePills from '../../components/RoutePills'
 import AppLink from '../../components/AppLink'
@@ -38,7 +39,10 @@ export default function LoginPage() {
 
     if (session) {
       navigateTo(getHomeRouteForRole(session.user.rol), true)
+      return
     }
+
+    warmLoginExperience()
   }, [])
 
   const handleLogin = async (credentials: LoginRequest) => {

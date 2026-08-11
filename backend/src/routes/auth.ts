@@ -69,6 +69,14 @@ authRouter.post("/login", loginRateLimit, async (request, response, next) => {
 
     const user = await prisma.usuario.findUnique({
       where: { email: parsed.data.email },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        rol: true,
+        activo: true,
+        passwordHash: true,
+      },
     });
 
     const passwordHash = user?.passwordHash ?? "";
