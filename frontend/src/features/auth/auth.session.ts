@@ -79,6 +79,6 @@ export function readAuthSession(): AuthSession | null {
   }
 }
 
-export function getHomeRouteForRole(_role: AuthRole): "/pagos" {
-  return "/pagos";
+export function getHomeRouteForRole(role: AuthRole) {
+  return role === "secretaria" ? "/ciudadanos" : "/dashboard";
 }

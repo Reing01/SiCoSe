@@ -27,9 +27,10 @@ describe('RoutePills', () => {
     expect(
       screen.getByRole('link', { name: 'Login' }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Inicio' })).toBeInTheDocument()
   })
 
-  it('navigates to pagos without reloading the page for an admin session', () => {
+  it('muestra las rutas protegidas disponibles para una sesion admin', () => {
     window.sessionStorage.setItem(authStorageKeys.token, 'test-token')
     window.sessionStorage.setItem(
       authStorageKeys.user,
@@ -41,8 +42,14 @@ describe('RoutePills', () => {
 
     render(<RoutePills />)
 
-    fireEvent.click(screen.getByRole('link', { name: 'Pagos' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Abrir menu de navegacion' }),
+    )
 
-    expect(window.location.pathname).toBe('/pagos')
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ciudadanos' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Pagos' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Reportes' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Usuarios' })).toBeInTheDocument()
   })
 })
