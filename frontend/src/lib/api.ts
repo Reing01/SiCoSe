@@ -10,6 +10,13 @@ export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').trim().rep
   '',
 )
 
+const DEFAULT_PRODUCTION_API_BASE_URL = import.meta.env.PROD
+  ? 'https://sicose-24pj.onrender.com'
+  : ''
+
+export const RESOLVED_API_BASE_URL =
+  API_BASE_URL || DEFAULT_PRODUCTION_API_BASE_URL
+
 export type ApiErrorPayload = {
   error?: string
   message?: string
@@ -36,7 +43,7 @@ type ApiRequestInit = Omit<RequestInit, 'body'> & {
 
 function buildUrl(path: string) {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  return `${API_BASE_URL}${normalizedPath}`
+  return `${RESOLVED_API_BASE_URL}${normalizedPath}`
 }
 
 type RefreshResponse = {

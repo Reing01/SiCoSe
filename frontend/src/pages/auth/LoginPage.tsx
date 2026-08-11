@@ -45,13 +45,7 @@ export default function LoginPage() {
       return
     }
 
-    const warmupTimer = window.setTimeout(() => {
-      warmLoginExperience()
-    }, 1500)
-
-    return () => {
-      window.clearTimeout(warmupTimer)
-    }
+    warmLoginExperience()
   }, [])
 
   const handleLogin = async (credentials: LoginRequest) => {

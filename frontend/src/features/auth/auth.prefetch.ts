@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../../lib/api'
+import { RESOLVED_API_BASE_URL } from '../../lib/api'
 import { getCurrentPeriodKey } from '../../lib/water-billing'
 import { prefetchDashboardMetrics } from '../dashboard/dashboard.api'
 import type { AuthSession } from './auth.types'
@@ -15,12 +15,12 @@ function prefetchLandingChunk(session: AuthSession) {
 }
 
 async function warmBackendHealth() {
-  if (!API_BASE_URL) {
+  if (!RESOLVED_API_BASE_URL) {
     return
   }
 
   try {
-    await fetch(`${API_BASE_URL}/api/health`, {
+    await fetch(`${RESOLVED_API_BASE_URL}/api/health`, {
       method: 'GET',
       credentials: 'omit',
       headers: {
