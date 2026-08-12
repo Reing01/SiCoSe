@@ -12,7 +12,7 @@ async function globalSetup(config: FullConfig) {
       throw new Error(`Server returned HTTP ${response.status}`);
     }
     const html = await response.text();
-    if (!html.includes("SiCoSe - San Diego Chalma")) {
+    if (!html.includes("<title>SiCoSe | Cobro de agua</title>")) {
       throw new Error(
         "The title of the page does not match the SiCoSe application.",
       );

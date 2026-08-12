@@ -19,6 +19,39 @@ test.describe("E2E Integration Flows", () => {
       });
     });
 
+    await page.route(
+      "**/api/ciudadanos?pagina=1&limite=6&incluir_inactivos=false*",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            data: [
+              {
+                id: "citizen-1",
+                nombre: "Juan",
+                apellido: "Perez",
+                email: "juan@test.com",
+                telefono: "5512345678",
+                direccion: "Calle Agua 123",
+                zona: "Centro",
+                clave_catastral: "CATA-123",
+                activo: true,
+                created_at: "2026-08-12T00:00:00.000Z",
+                updated_at: "2026-08-12T00:00:00.000Z",
+              },
+            ],
+            metadata: {
+              total: 1,
+              pagina: 1,
+              limite: 6,
+              totalPaginas: 1,
+            },
+          }),
+        })
+      },
+    )
+
     await page.route("**/api/auth/logout", async (route) => {
       await route.fulfill({
         status: 204,
@@ -84,12 +117,16 @@ test.describe("E2E Integration Flows", () => {
 
     // 2. Land on Dashboard
     await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.getByText("Situacion financiera del mes")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /situaci[oó]n financiera del cobro de agua/i }),
+    ).toBeVisible();
 
     // 3. Refresh Page to test session persistence
     await page.reload();
     await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.getByText("Situacion financiera del mes")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /situaci[oó]n financiera del cobro de agua/i }),
+    ).toBeVisible();
 
     // 4. Logout
     await page.getByRole("button", { name: /Cerrar sesi/ }).click();
@@ -253,14 +290,22 @@ test.describe("E2E Integration Flows", () => {
 
     // Mock register payment endpoint
     let registerCount = 0;
+    let resolvePaymentRequestStarted: (() => void) | null = null;
+    let resolvePaymentResponse: (() => void) | null = null;
+    const paymentRequestStarted = new Promise<void>((resolve) => {
+      resolvePaymentRequestStarted = resolve
+    })
+    const paymentResponseReady = new Promise<void>((resolve) => {
+      resolvePaymentResponse = resolve
+    })
     await page.route("**/api/pagos", async (route) => {
       const isPost = route.request().method() === "POST";
       if (isPost) {
         registerCount++;
         paymentRegistered = true;
+        resolvePaymentRequestStarted?.()
+        await paymentResponseReady
       }
-      // Delay response to test double submission UI block
-      await new Promise((resolve) => setTimeout(resolve, 500));
       await route.fulfill({
         status: 201,
         contentType: "application/json",
@@ -280,7 +325,7 @@ test.describe("E2E Integration Flows", () => {
     await page.goto("/pagos");
     await expect(page).toHaveURL(/\/pagos$/);
     await expect(
-      page.getByRole("heading", { name: "Cobranza, historial y comprobantes" }),
+      page.getByRole("heading", { name: /cobro de agua, historial y comprobantes/i }),
     ).toBeVisible({ timeout: 15000 });
 
     // Verify select option shows full $100 amount
@@ -292,10 +337,12 @@ test.describe("E2E Integration Flows", () => {
     await amountInput.fill("40");
 
     // 5. Submit form and verify button becomes disabled immediately
-    const submitBtn = page.locator('button[type="submit"]');
+    const submitBtn = page.getByRole("button", { name: /confirm/i });
 
     await submitBtn.click();
+    await paymentRequestStarted;
     await expect(submitBtn).toBeDisabled();
+    resolvePaymentResponse?.()
 
     // Wait for success confirmation
     await expect(page.getByText(/Pago confirmado con folio/i)).toBeVisible();
