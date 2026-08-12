@@ -90,7 +90,7 @@ export default function RoutePills({
       <button
         type="button"
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f97316]/30 sm:hidden",
+          "flex h-11 w-11 items-center justify-center rounded-2xl border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f97316]/30 sm:hidden",
           buttonClasses,
         )}
         onClick={() => setIsOpen((current) => !current)}
@@ -119,10 +119,10 @@ export default function RoutePills({
       <nav
         aria-label={ariaLabel}
         className={cn(
-          "flex-wrap gap-2 sm:flex",
+          "gap-2 sm:flex sm:flex-wrap",
           isOpen
             ? cn(
-                "fixed left-4 right-4 top-24 z-30 flex max-h-[calc(100vh-7rem)] flex-col gap-2 overflow-y-auto rounded-2xl border p-3 shadow-2xl sm:absolute sm:right-0 sm:top-12 sm:min-w-48 sm:flex-row sm:gap-2 sm:overflow-visible sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none",
+                "fixed inset-x-4 bottom-4 top-auto z-30 flex max-h-[min(60vh,28rem)] flex-col gap-2 overflow-y-auto rounded-3xl border p-4 shadow-2xl sm:absolute sm:right-0 sm:top-12 sm:min-w-48 sm:flex-row sm:flex-wrap sm:gap-2 sm:overflow-visible sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:max-h-none",
                 menuClasses,
               )
             : "hidden",
@@ -138,7 +138,7 @@ export default function RoutePills({
               aria-current={isActive ? "page" : undefined}
               onClick={() => setIsOpen(false)}
               className={cn(
-                "inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
+                "inline-flex min-h-11 w-full items-center justify-start rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors sm:w-auto sm:justify-center sm:rounded-full sm:px-3 sm:py-2 sm:text-xs",
                 isActive ? styles.active : styles.idle,
                 isOpen && "justify-center sm:justify-start",
               )}

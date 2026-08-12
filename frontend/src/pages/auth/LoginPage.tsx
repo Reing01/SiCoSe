@@ -92,10 +92,10 @@ export default function LoginPage() {
       <div className="absolute -left-20 top-12 h-72 w-72 rounded-full bg-[#f97316]/15 blur-3xl" />
       <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/10 blur-3xl" />
 
-      <header className="relative z-10 mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+      <header className="relative z-10 mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-4 sm:pt-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <AppLink
           href="/"
-          className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur transition-colors hover:bg-white/10"
+          className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 backdrop-blur transition-colors hover:bg-white/10 sm:rounded-full"
         >
           <BrandMark />
           <div className="text-left">
@@ -112,9 +112,9 @@ export default function LoginPage() {
         </div>
       </header>
 
-      <div className="relative mx-auto grid min-h-screen max-w-7xl gap-10 px-4 pb-10 pt-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-12">
-        <section className="flex flex-col justify-center gap-8 animate-fade-up">
-          <div className="max-w-2xl space-y-6">
+      <div className="relative mx-auto grid min-h-screen max-w-7xl gap-8 px-4 pb-10 pt-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-12">
+        <section className="order-2 flex flex-col justify-center gap-8 animate-fade-up lg:order-1">
+          <div className="max-w-2xl space-y-5">
             <div className="space-y-4">
               <p className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-sky-200/80">
                 Acceso seguro
@@ -132,7 +132,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="hidden gap-4 sm:grid sm:grid-cols-3">
             {highlights.map((item) => (
               <article
                 key={item.title}
@@ -148,7 +148,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10 backdrop-blur sm:p-6">
+          <div className="hidden rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10 backdrop-blur sm:block sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
@@ -183,7 +183,7 @@ export default function LoginPage() {
             </ol>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="hidden flex-wrap gap-3 sm:flex">
             {signals.map((signal) => (
               <span
                 key={signal}
@@ -195,7 +195,7 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="flex items-center justify-center animate-scale-in">
+        <section className="order-1 flex items-center justify-center animate-scale-in lg:order-2">
           <div className="w-full max-w-lg">
             <LoginForm onSubmit={handleLogin} />
           </div>
