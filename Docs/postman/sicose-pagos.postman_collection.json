@@ -42,7 +42,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"metodo\": \"efectivo\",\n  \"ciudadano_id\": \"{{ciudadano_id}}\",\n  \"adeudo_id\": \"{{adeudo_id}}\",\n  \"monto\": 45.5\n}"
+          "raw": "{\n  \"metodo\": \"efectivo\",\n  \"ciudadano_id\": \"{{ciudadano_id}}\",\n  \"adeudo_id\": \"{{adeudo_id}}\",\n  \"monto\": 30\n}"
         },
         "url": {
           "raw": "{{base_url}}/api/pagos",
@@ -68,7 +68,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"metodo\": \"efectivo\",\n  \"ciudadano_id\": \"{{ciudadano_id}}\",\n  \"adeudo_id\": \"{{adeudo_id}}\",\n  \"monto\": 45.5\n}"
+          "raw": "{\n  \"metodo\": \"efectivo\",\n  \"ciudadano_id\": \"{{ciudadano_id}}\",\n  \"adeudo_id\": \"{{adeudo_id}}\",\n  \"monto\": 30\n}"
         },
         "url": {
           "raw": "{{base_url}}/api/pagos",
@@ -108,7 +108,7 @@
             },
             {
               "key": "monto",
-              "value": "45.5",
+              "value": "30",
               "type": "text"
             },
             {

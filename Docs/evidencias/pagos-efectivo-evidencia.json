@@ -14,7 +14,7 @@
     "adeudo": {
       "id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
       "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
-      "monto": 45.5,
+      "monto": 30,
       "pagado": false,
       "estado": "pendiente"
     }
@@ -23,7 +23,7 @@
     "metodo": "efectivo",
     "ciudadano_id": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
     "adeudo_id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
-    "monto": 45.5
+    "monto": 30
   },
   "login": {
     "status": 200,
@@ -42,7 +42,7 @@
         "id": "643589e8-831c-4558-9817-c91213716ab7",
         "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
         "adeudoId": "1719ee26-b923-4da0-a68a-251e81cbae3b",
-        "monto": 45.5,
+        "monto": 30,
         "fecha": "2026-06-18T15:49:45.258Z",
         "metodo": "efectivo",
         "folio": "SCS-2026-716340",
@@ -65,7 +65,7 @@
           "id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
           "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
           "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
-          "monto": 45.5,
+          "monto": 30,
           "periodo": "EVID-1781797781665",
           "vencimiento": "2026-06-30T00:00:00.000Z",
           "pagado": false,
@@ -86,7 +86,7 @@
   "databaseVerification": {
     "adeudo": {
       "id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
-      "monto": 45.5,
+      "monto": 30,
       "pagado": true,
       "estado": "pagado",
       "updated_at": "2026-06-18T15:49:45.820Z"
@@ -99,7 +99,7 @@
       "entidad_id": "643589e8-831c-4558-9817-c91213716ab7",
       "ip": "::ffff:127.0.0.1",
       "timestamp": "2026-06-18T15:49:45.966Z",
-      "detalles": "{\"folio\":\"SCS-2026-716340\",\"ciudadanoId\":\"10a9239b-fef8-47e2-8ea7-7c885ffc30ba\",\"adeudoId\":\"1719ee26-b923-4da0-a68a-251e81cbae3b\",\"monto\":45.5,\"estadoAnterior\":\"pendiente\",\"estadoNuevo\":\"pagado\"}",
+      "detalles": "{\"folio\":\"SCS-2026-716340\",\"ciudadanoId\":\"10a9239b-fef8-47e2-8ea7-7c885ffc30ba\",\"adeudoId\":\"1719ee26-b923-4da0-a68a-251e81cbae3b\",\"monto\":30,\"estadoAnterior\":\"pendiente\",\"estadoNuevo\":\"pagado\"}",
       "created_at": "2026-06-18T15:49:45.968Z"
     }
   },

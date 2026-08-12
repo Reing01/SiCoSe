@@ -22,7 +22,7 @@ Database schema is up to date!
 - Rol: `tesorero`
 - Ciudadano: `evidencia.pagos@sicose.test`
 - Adeudo usado: `1719ee26-b923-4da0-a68a-251e81cbae3b`
-- Monto del adeudo: `45.5`
+- Monto del adeudo: `30`
 
 ## Pago exitoso
 
@@ -33,7 +33,7 @@ Request:
   "metodo": "efectivo",
   "ciudadano_id": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
   "adeudo_id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
-  "monto": 45.5
+  "monto": 30
 }
 ```
 
@@ -50,7 +50,7 @@ Consulta posterior en Supabase:
 ```json
 {
   "id": "1719ee26-b923-4da0-a68a-251e81cbae3b",
-  "monto": 45.5,
+  "monto": 30,
   "pagado": true,
   "estado": "pagado"
 }

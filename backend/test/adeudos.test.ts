@@ -37,7 +37,7 @@ function createDebtGenerationClient() {
     },
     servicio: {
       findMany: async () => [
-        { id: 'servicio-agua', nombre: 'Agua potable', tarifa: 45.5 },
+        { id: 'servicio-agua', nombre: 'Agua potable', tarifa: 30 },
         { id: 'servicio-basura', tarifa: 25 },
       ],
     },

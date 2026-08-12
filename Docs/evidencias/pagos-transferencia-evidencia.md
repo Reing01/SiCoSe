@@ -30,7 +30,7 @@ Bucket verificado:
 metodo=transferencia
 ciudadano_id=74285200-ad51-45e8-9985-5ca053f2ad01
 adeudo_id=86a1b87b-0047-40d4-9294-f0ba7c64c099
-monto=45.5
+monto=30
 referencia_bancaria=SPEI-*
 comprobante=comprobante-transferencia.pdf
 ```

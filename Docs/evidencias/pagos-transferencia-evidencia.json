@@ -14,7 +14,7 @@
     "adeudo": {
       "id": "7d68e5b5-41fc-4706-afbe-c8d86d3facec",
       "ciudadanoId": "26ed8e68-f7f8-4ce6-b527-b00697a1cdf9",
-      "monto": 45.5,
+      "monto": 30,
       "pagado": false,
       "estado": "pendiente"
     }
@@ -23,7 +23,7 @@
     "metodo": "transferencia",
     "ciudadano_id": "26ed8e68-f7f8-4ce6-b527-b00697a1cdf9",
     "adeudo_id": "7d68e5b5-41fc-4706-afbe-c8d86d3facec",
-    "monto": 45.5,
+    "monto": 30,
     "referencia_bancaria": "SPEI-*",
     "comprobante": {
       "filename": "comprobante-transferencia.pdf",
@@ -50,7 +50,7 @@
         "id": "142b2dce-574c-43c5-9d09-ba9943c31f83",
         "ciudadanoId": "26ed8e68-f7f8-4ce6-b527-b00697a1cdf9",
         "adeudoId": "7d68e5b5-41fc-4706-afbe-c8d86d3facec",
-        "monto": 45.5,
+        "monto": 30,
         "fecha": "2026-06-18T16:38:23.948Z",
         "metodo": "transferencia",
         "folio": "SCS-2026-929780",
@@ -73,7 +73,7 @@
           "id": "7d68e5b5-41fc-4706-afbe-c8d86d3facec",
           "ciudadanoId": "26ed8e68-f7f8-4ce6-b527-b00697a1cdf9",
           "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
-          "monto": 45.5,
+          "monto": 30,
           "periodo": "TR-1781800693036",
           "vencimiento": "2026-06-30T00:00:00.000Z",
           "pagado": false,
@@ -93,7 +93,7 @@
   "databaseVerification": {
     "adeudo": {
       "id": "7d68e5b5-41fc-4706-afbe-c8d86d3facec",
-      "monto": 45.5,
+      "monto": 30,
       "pagado": true,
       "estado": "pagado",
       "updated_at": "2026-06-18T16:38:24.646Z"
@@ -118,7 +118,7 @@
       "entidad_id": "142b2dce-574c-43c5-9d09-ba9943c31f83",
       "ip": "::ffff:127.0.0.1",
       "timestamp": "2026-06-18T16:38:24.784Z",
-      "detalles": "{\"folio\":\"SCS-2026-929780\",\"referenciaBancaria\":\"SPEI-1781800702360\",\"ciudadanoId\":\"26ed8e68-f7f8-4ce6-b527-b00697a1cdf9\",\"adeudoId\":\"7d68e5b5-41fc-4706-afbe-c8d86d3facec\",\"monto\":45.5,\"comprobanteUrl\":\"https://wruzbnpaiyvmaldkdcmf.supabase.co/storage/v1/object/comprobantes/pagos/2026/SCS-2026-929780.pdf\",\"hashSha256\":\"68d3dbe223d4659eb030429ecc280a437eb6e9b042a59797cbbd9e16f56c1d56\",\"estadoAnterior\":\"pendiente\",\"estadoNuevo\":\"pagado\"}",
+      "detalles": "{\"folio\":\"SCS-2026-929780\",\"referenciaBancaria\":\"SPEI-1781800702360\",\"ciudadanoId\":\"26ed8e68-f7f8-4ce6-b527-b00697a1cdf9\",\"adeudoId\":\"7d68e5b5-41fc-4706-afbe-c8d86d3facec\",\"monto\":30,\"comprobanteUrl\":\"https://wruzbnpaiyvmaldkdcmf.supabase.co/storage/v1/object/comprobantes/pagos/2026/SCS-2026-929780.pdf\",\"hashSha256\":\"68d3dbe223d4659eb030429ecc280a437eb6e9b042a59797cbbd9e16f56c1d56\",\"estadoAnterior\":\"pendiente\",\"estadoNuevo\":\"pagado\"}",
       "created_at": "2026-06-18T16:38:24.787Z"
     }
   },

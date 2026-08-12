@@ -108,7 +108,7 @@
         "id": "d41544c2-7e51-4e89-a74d-de4b21d45acb",
         "ciudadanoId": "10a9239b-fef8-47e2-8ea7-7c885ffc30ba",
         "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
-        "monto": 45.5,
+        "monto": 30,
         "periodo": "2026-07",
         "estado": "pendiente",
         "pagado": false
@@ -135,7 +135,7 @@
         "id": "830903a3-0506-40e8-a37b-52051a81a4bc",
         "ciudadanoId": "26ed8e68-f7f8-4ce6-b527-b00697a1cdf9",
         "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
-        "monto": 45.5,
+        "monto": 30,
         "periodo": "2026-07",
         "estado": "pendiente",
         "pagado": false
@@ -162,7 +162,7 @@
         "id": "28926d55-2c38-466e-9658-722996c49d9a",
         "ciudadanoId": "4f1417c9-194e-4ae0-ae22-8ae034d5d126",
         "servicioId": "c017d0fb-a5db-47b5-a786-5c4ba6098218",
-        "monto": 45.5,
+        "monto": 30,
         "periodo": "2026-07",
         "estado": "pendiente",
         "pagado": false
