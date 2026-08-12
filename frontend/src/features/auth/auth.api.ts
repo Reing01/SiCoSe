@@ -22,7 +22,7 @@ export async function getCurrentUser(token: string): Promise<AuthSession> {
   });
 
   if (!isKnownAuthRole(response.data.rol)) {
-    throw new Error("No fue posible confirmar la sesion.");
+    throw new Error("No fue posible confirmar la sesión.");
   }
 
   return {

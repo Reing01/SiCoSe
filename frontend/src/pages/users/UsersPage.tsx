@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import AppLink from '../../components/AppLink'
+import BrandMark from '../../components/BrandMark'
 import RoutePills from '../../components/RoutePills'
 import ThemeToggle from '../../components/ThemeToggle'
 import { Button } from '../../components/ui/button'
@@ -11,6 +12,7 @@ import { clearAuthSession, readAuthSession } from '../../features/auth/auth.sess
 import { useTheme } from '../../features/theme/theme-context'
 import { navigateTo } from '../../lib/navigation'
 import { cn } from '../../lib/utils'
+import { useMediaQuery } from '../../lib/use-media-query'
 import {
   createUser,
   deactivateUser,
@@ -172,6 +174,7 @@ export default function UsersPage() {
   const session = readAuthSession()
   const sessionToken = session?.token ?? null
   const { theme } = useTheme()
+  const isCompactLayout = useMediaQuery('(max-width: 639px)')
   const searchId = useId()
   const emailId = useId()
   const nombreId = useId()
@@ -492,9 +495,7 @@ export default function UsersPage() {
               : 'border-slate-200 bg-white/90 hover:border-[#0f3042]/20 hover:bg-white',
           )}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3042] text-sm font-bold text-white shadow-lg shadow-[#0f3042]/15">
-            SC
-          </div>
+          <BrandMark />
           <div className="text-left">
             <p
               className={cn(
@@ -547,7 +548,7 @@ export default function UsersPage() {
               </p>
               <h1
                 className={cn(
-                  'text-4xl font-semibold tracking-tight sm:text-5xl',
+                  'text-3xl font-semibold tracking-tight sm:text-5xl',
                   theme === 'dark' ? 'text-white' : 'text-slate-950',
                 )}
               >
@@ -693,7 +694,90 @@ export default function UsersPage() {
                 </div>
               ) : null}
 
-              {!isLoading && !loadError ? (
+              {isCompactLayout && (<div className="space-y-3">
+                {!isLoading && !loadError && filteredUsers.length > 0 ? (
+                  paginatedUsers.map((record) => {
+                    const isSelected = selectedUserId === record.id
+                    const isCurrentUser = record.email === currentUserEmail
+
+                    return (
+                      <article
+                        key={record.id}
+                        className={cn(
+                          'rounded-2xl border p-4 shadow-sm',
+                          isSelected && 'border-[#0f3042] bg-[#0f3042]/5 dark:border-sky-400/40 dark:bg-sky-400/10',
+                          record.activo
+                            ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/90'
+                            : 'border-slate-200 bg-slate-50 opacity-80 dark:border-slate-800 dark:bg-slate-950/60',
+                        )}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <p className="font-semibold text-slate-950 dark:text-white">
+                                {record.nombre}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {record.email}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditUser(record)}
+                              className="shrink-0"
+                            >
+                              Editar
+                            </Button>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <UserRoleBadge role={record.rol} />
+                            <UserStatusBadge active={record.activo} />
+                            {isCurrentUser ? (
+                              <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                Sesión actual
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                            <p>Alta: {formatDate(record.createdAt)}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Actualizado: {formatDate(record.updatedAt)}
+                            </p>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant={record.activo ? 'destructive' : 'secondary'}
+                            size="sm"
+                            className="w-full"
+                            disabled={
+                              deactivatingUserId === record.id ||
+                              (record.activo && isCurrentUser)
+                            }
+                            onClick={() => handleToggleActive(record)}
+                          >
+                            {deactivatingUserId === record.id
+                              ? 'Actualizando...'
+                              : record.activo
+                                ? 'Desactivar'
+                                : 'Reactivar'}
+                          </Button>
+                        </div>
+                      </article>
+                    )
+                  })
+                ) : !isLoading && !loadError ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+                    No se encontraron usuarios con los filtros actuales.
+                  </div>
+                ) : null}
+              </div>)}
+
+              {!isLoading && !loadError && !isCompactLayout ? (
                 <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                   <div className="max-h-[34rem] overflow-auto">
                     <table className="min-w-full text-left text-sm">

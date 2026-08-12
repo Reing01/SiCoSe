@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import AppLink from '../../components/AppLink'
+import BrandMark from '../../components/BrandMark'
 import ThemeToggle from '../../components/ThemeToggle'
 import RoutePills from '../../components/RoutePills'
 import { Button } from '../../components/ui/button'
@@ -37,9 +38,37 @@ type ExportStatus = {
 }
 
 const DASHBOARD_LOAD_ERROR_MESSAGE =
-  'No fue posible cargar la informacion del panel. Intenta de nuevo.'
+  'No fue posible cargar la información del panel. Intenta de nuevo.'
 const DASHBOARD_EXPORT_ERROR_MESSAGE =
-  'No fue posible generar la exportacion. Intenta de nuevo.'
+  'No fue posible generar la exportación. Intenta de nuevo.'
+
+const dashboardWorkflow = [
+  {
+    step: '01',
+    title: 'Consulta métricas',
+    description:
+      'Revisa recaudación, cobertura y morosidad del periodo seleccionado.',
+  },
+  {
+    step: '02',
+    title: 'Exporta el corte',
+    description:
+      'Descarga el resumen en PDF o Excel para compartirlo o analizarlo.',
+  },
+  {
+    step: '03',
+    title: 'Da seguimiento',
+    description:
+      'Usa el histórico para comparar avances con el mes anterior.',
+  },
+] as const
+
+const dashboardSignals = [
+  'Cobranza mensual',
+  'Cobertura',
+  'Morosidad',
+  'PDF / XLSX',
+] as const
 
 const currencyFormatter = new Intl.NumberFormat('es-MX', {
   style: 'currency',
@@ -177,11 +206,11 @@ function RevenueLineChart({ metrics, theme }: { metrics: DashboardMetrics; theme
   return (
     <Card className={cn('shadow-sm', theme === 'dark' ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200/80 bg-white/95')}>
       <CardHeader>
-        <CardTitle>Recaudacion historica</CardTitle>
-        <CardDescription>Ultimos 6 meses registrados.</CardDescription>
+        <CardTitle>Recaudación histórica</CardTitle>
+        <CardDescription>Últimos 6 meses registrados.</CardDescription>
       </CardHeader>
       <CardContent>
-        <svg viewBox="0 0 100 100" className="h-64 w-full overflow-visible" role="img" aria-label="Grafica de recaudacion de los ultimos 6 meses">
+        <svg viewBox="0 0 100 100" className="h-64 w-full overflow-visible" role="img" aria-label="Gráfica de recaudación de los últimos 6 meses">
           <polyline points={polyline} fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           {points.map((point) => (
             <g key={point.periodo}>
@@ -278,6 +307,116 @@ function DashboardContent({
 
   return (
     <section className="space-y-6">
+      <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
+        <Card
+          className={cn(
+            'shadow-sm',
+            theme === 'dark'
+              ? 'border-slate-800 bg-slate-900/90 text-slate-100'
+              : 'border-slate-200/80 bg-white/95',
+          )}
+        >
+          <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+            <CardTitle>Resumen del periodo</CardTitle>
+            <CardDescription>
+              Una vista corta para entender el comportamiento del mes antes de
+              exportar o revisar el detalle.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 p-5 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                Periodo
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                {metrics.periodo}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                Cobertura
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                {formatPercent(metrics.porcentajeCobertura)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                Recaudado
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                {formatCurrency(metrics.totalRecaudadoMes)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                Morosos
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                {metrics.numeroMorosos}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          className={cn(
+            'shadow-sm',
+            theme === 'dark'
+              ? 'border-slate-800 bg-slate-900/90 text-slate-100'
+              : 'border-slate-200/80 bg-white/95',
+          )}
+        >
+          <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+            <CardTitle>Flujo guiado</CardTitle>
+            <CardDescription>
+              El panel te lleva de la lectura de métricas a la exportación en
+              tres pasos.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 p-5">
+            <div className="flex flex-wrap gap-2">
+              {dashboardSignals.map((signal) => (
+                <span
+                  key={signal}
+                  className={cn(
+                    'inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.25em]',
+                    theme === 'dark'
+                      ? 'border-white/10 bg-white/5 text-slate-200'
+                      : 'border-slate-200 bg-white text-slate-600',
+                  )}
+                >
+                  {signal}
+                </span>
+              ))}
+            </div>
+            <div className="grid gap-3">
+              {dashboardWorkflow.map((step) => (
+                <article
+                  key={step.step}
+                  className={cn(
+                    'rounded-2xl border p-4',
+                    theme === 'dark'
+                      ? 'border-slate-800 bg-slate-950/60'
+                      : 'border-slate-200 bg-slate-50',
+                  )}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
+                    {step.step}
+                  </p>
+                  <h2 className="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
+                    {step.title}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    {step.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card
         className={cn(
           'shadow-sm animate-scale-in',
@@ -320,7 +459,7 @@ function DashboardContent({
               value={period}
               onChange={(event) => onPeriodChange(event.target.value)}
               max={currentPeriod}
-              className="w-44"
+              className="w-full sm:w-44"
               aria-label="Filtrar periodo"
             />
             <Button type="button" variant="outline" onClick={() => onExport('pdf')} disabled={exportFormat !== null}>
@@ -374,7 +513,7 @@ function DashboardContent({
               </span>
             </div>
             <p className={cn('text-sm leading-6', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
-              Ultima actualizacion: {formatDateTime(metrics.ultimaActualizacion)}
+              Última actualización: {formatDateTime(metrics.ultimaActualizacion)}
             </p>
           </div>
 
@@ -491,7 +630,7 @@ export default function DashboardPage() {
     if (!session) {
       setState({
         kind: 'error',
-        message: 'Inicia sesion para consultar el dashboard.',
+        message: 'Inicia sesión para consultar el dashboard.',
       })
       return
     }
@@ -539,9 +678,7 @@ export default function DashboardPage() {
               : 'border border-slate-200 bg-white/90 hover:border-[#0f3042]/20 hover:bg-white',
           )}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3042] text-sm font-bold text-white shadow-lg shadow-[#0f3042]/15">
-            SC
-          </div>
+          <BrandMark />
           <div className="text-left">
             <p
               className={cn(
@@ -591,16 +728,16 @@ export default function DashboardPage() {
             Dashboard
           </span>
           <div className="mt-5 max-w-3xl space-y-3">
-            <h1
-              className={cn(
-                'text-4xl font-semibold tracking-tight sm:text-5xl',
-                theme === 'dark' ? 'text-white' : 'text-slate-950',
-              )}
-            >
-              Situacion financiera del mes
-            </h1>
+              <h1
+                className={cn(
+                  'text-3xl font-semibold tracking-tight sm:text-5xl',
+                  theme === 'dark' ? 'text-white' : 'text-slate-950',
+                )}
+              >
+                Situación financiera del mes
+              </h1>
             <p className={cn('text-base leading-7', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
-              KPIs de recaudacion, cobertura y morosidad para la planeacion de la junta auxiliar.
+              KPIs de recaudación, cobertura y morosidad para la planeación de la junta auxiliar.
             </p>
           </div>
         </div>
@@ -615,7 +752,7 @@ export default function DashboardPage() {
             )}
           >
             <CardContent className={cn('p-6 text-sm', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
-              Cargando metricas...
+              Cargando métricas...
             </CardContent>
           </Card>
         ) : null}

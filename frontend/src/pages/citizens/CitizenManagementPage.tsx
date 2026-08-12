@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import RoutePills from '../../components/RoutePills'
 import AppLink from '../../components/AppLink'
 import ThemeToggle from '../../components/ThemeToggle'
+import BrandMark from '../../components/BrandMark'
 import CitizenManagementPanel from '../../features/citizens/CitizenManagementPanel'
 import { logout } from '../../features/auth/auth.api'
 import {
@@ -56,9 +57,7 @@ export default function CitizenManagementPage() {
               : 'border-slate-200 bg-white/90 hover:border-[#0f3042]/20 hover:bg-white',
           )}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3042] text-sm font-bold text-white shadow-lg shadow-[#0f3042]/15">
-            SC
-          </div>
+          <BrandMark />
           <div className="text-left">
             <p
               className={cn(
@@ -119,7 +118,7 @@ export default function CitizenManagementPage() {
               </p>
               <h1
                 className={cn(
-                  'text-4xl font-semibold tracking-tight sm:text-5xl',
+                  'text-3xl font-semibold tracking-tight sm:text-5xl',
                   theme === 'dark' ? 'text-white' : 'text-slate-950',
                 )}
               >

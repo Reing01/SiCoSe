@@ -13,6 +13,7 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { useToast } from '../../components/ui/toast-context'
 import { cn } from '../../lib/utils'
+import { useMediaQuery } from '../../lib/use-media-query'
 import {
   MONTHLY_WATER_FEE_MXN,
   buildMonthlyPeriods,
@@ -340,7 +341,7 @@ function CitizenMonthlyHistoryPanel({
         <CardHeader className="border-b border-rose-100 bg-rose-50">
           <CardTitle>Historial mensual 2025-2026</CardTitle>
           <CardDescription className="text-rose-700">
-            No fue posible cargar la informacion mensual.
+            No fue posible cargar la información mensual.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-5 text-sm text-rose-800">
@@ -480,6 +481,7 @@ function CitizenMonthlyHistoryPanel({
 }
 
 export default function CitizenManagementPanel() {
+  const isCompactLayout = useMediaQuery('(max-width: 639px)')
   const searchId = useId()
   const nombreId = useId()
   const apellidoId = useId()
@@ -959,11 +961,139 @@ export default function CitizenManagementPanel() {
             <CardTitle>Padron de ciudadanos</CardTitle>
             <CardDescription>
               Selecciona un registro para editarlo o elimina un ciudadano cuando
-              ya no forme parte del padron.
+              ya no forme parte del padrón.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            {isCompactLayout && (<div className="space-y-3 p-4">
+              {isLoading ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+                  Cargando padrón de ciudadanos...
+                </div>
+              ) : null}
+
+              {!isLoading && loadError ? (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800">
+                  <p role="alert">{loadError}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 w-full"
+                    onClick={() => setReloadKey((current) => current + 1)}
+                  >
+                    Reintentar
+                  </Button>
+                </div>
+              ) : null}
+
+              {!isLoading && !loadError && visibleCitizens.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+                  No se encontraron ciudadanos con los filtros actuales.
+                </div>
+              ) : null}
+
+              {!isLoading &&
+                !loadError &&
+                visibleCitizens.map((record) => {
+                  const status = getCitizenStatus(record)
+                  const isSelected = selectedCitizenId === record.id
+
+                  return (
+                    <article
+                      key={record.id}
+                      className={cn(
+                        'rounded-2xl border p-4 shadow-sm',
+                        isSelected && 'border-[#f97316] bg-[#f97316]/5 dark:border-[#f97316]/40 dark:bg-[#f97316]/10',
+                        !record.activo &&
+                          'bg-slate-50 text-slate-500 opacity-80 dark:bg-slate-950/60 dark:text-slate-400',
+                        record.activo
+                          ? 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/90'
+                          : '',
+                      )}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <p className="text-base font-semibold text-slate-950 dark:text-white">
+                              {record.nombre} {record.apellido}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {record.id}
+                            </p>
+                          </div>
+                          <span
+                            className={cn(
+                              'rounded-full border px-3 py-1 text-[11px] font-semibold',
+                              statusToneClasses[status.tone],
+                            )}
+                          >
+                            {status.label}
+                          </span>
+                        </div>
+
+                        <div className="grid gap-2 text-sm text-slate-600 dark:text-slate-300">
+                          <p>
+                            <span className="font-semibold text-slate-900 dark:text-white">
+                              Correo:
+                            </span>{' '}
+                            {record.email}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-slate-900 dark:text-white">
+                              Teléfono:
+                            </span>{' '}
+                            {record.telefono || 'Sin telefono'}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-slate-900 dark:text-white">
+                              Dirección:
+                            </span>{' '}
+                            {record.direccion || 'Sin direccion'}
+                          </p>
+                          <p className="font-mono text-xs font-semibold text-[#0f3042] dark:text-sky-300">
+                            {record.claveCatastral}
+                          </p>
+                          <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                            {status.detail}
+                          </p>
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={!record.activo}
+                            onClick={() => handleSelectCitizen(record)}
+                            aria-label={`Editar ${record.nombre} ${record.apellido}`}
+                            className="w-full"
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingCitizenId === record.id || !record.activo}
+                            onClick={() => handleDeleteCitizen(record)}
+                            aria-label={`Eliminar ${record.nombre} ${record.apellido}`}
+                            className="w-full"
+                          >
+                            {!record.activo
+                              ? 'Inactivo'
+                              : deletingCitizenId === record.id
+                                ? 'Eliminando...'
+                                : 'Eliminar'}
+                          </Button>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+            </div>)}
+
+            {!isCompactLayout && (<div className="overflow-x-auto">
               <table className="min-w-[760px] text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-500 dark:bg-slate-950/80 dark:text-slate-400">
                   <tr>
@@ -1126,7 +1256,7 @@ export default function CitizenManagementPanel() {
                   ) : null}
                 </tbody>
               </table>
-            </div>
+            </div>)}
           </CardContent>
           <CardFooter className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -1178,8 +1308,8 @@ export default function CitizenManagementPanel() {
                   </CardTitle>
                   <CardDescription className="mt-1 max-w-md">
                     {selectedCitizen
-                      ? 'Ajusta la informacion del registro seleccionado y guarda los cambios.'
-                      : 'Llena el formulario para registrar un nuevo ciudadano en el padron.'}
+                      ? 'Ajusta la información del registro seleccionado y guarda los cambios.'
+                      : 'Llena el formulario para registrar un nuevo ciudadano en el padrón.'}
                   </CardDescription>
                 </div>
                 <span className="rounded-full border border-[#0f3042]/10 bg-[#0f3042]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3042] dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
@@ -1207,8 +1337,8 @@ export default function CitizenManagementPanel() {
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
                 Los campos marcados con * son obligatorios. Los demas se pueden
-                dejar vacios, pero conviene completarlos para tener un padron
-                mas util.
+                dejar vacíos, pero conviene completarlos para tener un padrón
+                más útil.
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

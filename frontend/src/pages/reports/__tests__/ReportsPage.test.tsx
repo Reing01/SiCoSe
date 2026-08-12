@@ -42,8 +42,11 @@ describe('ReportsPage', () => {
       screen.getByRole('heading', { name: /comprobante individual/i }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /ir a pagos/i }),
+      screen.getByRole('heading', { name: /flujo individual/i }),
     ).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('link', { name: /ir a pagos/i }),
+    ).toHaveLength(2)
 
     fireEvent.click(screen.getByRole('button', { name: /general/i }))
 

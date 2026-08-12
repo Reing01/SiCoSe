@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import AppLink from '../../components/AppLink'
+import BrandMark from '../../components/BrandMark'
 import RoutePills from '../../components/RoutePills'
 import ThemeToggle from '../../components/ThemeToggle'
 import { Button } from '../../components/ui/button'
@@ -55,6 +56,34 @@ function createCurrentPeriod() {
 function buildFileName(report: MonthlyReportRecord, format: ReportExportFormat) {
   return report.archivo_path.split('/').pop() ?? `reporte-${report.periodo}.${format}`
 }
+
+const reportWorkflow = [
+  {
+    step: '01',
+    title: 'Selecciona el periodo',
+    description:
+      'Elige el mes que quieres cerrar y revisa el estado operativo del corte.',
+  },
+  {
+    step: '02',
+    title: 'Genera o exporta',
+    description:
+      'Crea el reporte mensual en PDF o XLSX según lo que necesites revisar.',
+  },
+  {
+    step: '03',
+    title: 'Abre y compara',
+    description:
+      'Visualiza el último resumen, compara contra pagos y abre el archivo cuando lo necesites.',
+  },
+] as const
+
+const reportSignals = [
+  'PDF mensual',
+  'Excel operativo',
+  'Top morosos',
+  'Acceso a pagos',
+] as const
 
 function SummaryCard({
   label,
@@ -399,9 +428,7 @@ export default function ReportsPage() {
               : 'border-slate-200 bg-white/90 hover:border-[#0f3042]/20 hover:bg-white',
           )}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3042] text-sm font-bold text-white shadow-lg shadow-[#0f3042]/15">
-            SC
-          </div>
+          <BrandMark />
           <div className="text-left">
             <p
               className={cn(
@@ -442,8 +469,18 @@ export default function ReportsPage() {
         )}
       >
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-            <div className="max-w-3xl space-y-4">
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+            <div className="max-w-3xl space-y-5">
+              <p
+                className={cn(
+                  'inline-flex items-center rounded-full border px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em]',
+                  theme === 'dark'
+                    ? 'border-sky-500/20 bg-sky-500/10 text-sky-300'
+                    : 'border-[#0f3042]/10 bg-[#0f3042]/5 text-[#0f3042]',
+                )}
+              >
+                Reportes operativos
+              </p>
               <p
                 className={cn(
                   'text-sm font-semibold uppercase tracking-[0.35em]',
@@ -454,7 +491,7 @@ export default function ReportsPage() {
               </p>
               <h1
                 className={cn(
-                  'text-4xl font-semibold tracking-tight sm:text-5xl',
+                  'text-3xl font-semibold tracking-tight sm:text-5xl',
                   theme === 'dark' ? 'text-white' : 'text-slate-950',
                 )}
               >
@@ -466,10 +503,25 @@ export default function ReportsPage() {
                   theme === 'dark' ? 'text-slate-300' : 'text-slate-600',
                 )}
               >
-                Esta pantalla centraliza el reporte mensual de recaudación con
-                comparativo, cartera vencida, recaudación por servicio y top de
-                morosos.
+                Centraliza el reporte mensual de recaudación, el comparativo
+                contra el mes anterior, la cartera vencida, la recaudación por
+                servicio y el top de morosos.
               </p>
+              <div className="flex flex-wrap gap-3">
+                {reportSignals.map((signal) => (
+                  <span
+                    key={signal}
+                    className={cn(
+                      'inline-flex items-center rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em]',
+                      theme === 'dark'
+                        ? 'border-white/10 bg-white/5 text-slate-200'
+                        : 'border-slate-200 bg-white text-slate-600',
+                    )}
+                  >
+                    {signal}
+                  </span>
+                ))}
+              </div>
             </div>
 
             <div
@@ -496,6 +548,47 @@ export default function ReportsPage() {
                 <li>- Exportar el mismo periodo en PDF o Excel</li>
                 <li>- Abrir e imprimir el archivo descargado</li>
               </ul>
+            </div>
+
+            <div
+              className={cn(
+                'rounded-[2rem] border p-5 shadow-sm',
+                theme === 'dark'
+                  ? 'border-slate-800 bg-slate-900/90'
+                  : 'border-slate-200 bg-white',
+              )}
+            >
+              <p
+                className={cn(
+                  'text-sm font-semibold uppercase tracking-[0.3em]',
+                  theme === 'dark' ? 'text-sky-300' : 'text-[#0f3042]',
+                )}
+              >
+                Flujo guiado
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {reportWorkflow.map((step) => (
+                  <article
+                    key={step.step}
+                    className={cn(
+                      'rounded-2xl border p-4',
+                      theme === 'dark'
+                        ? 'border-slate-800 bg-slate-950/60'
+                        : 'border-slate-200 bg-slate-50',
+                    )}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
+                      {step.step}
+                    </p>
+                    <h2 className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">
+                      {step.title}
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                      {step.description}
+                    </p>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -525,8 +618,8 @@ export default function ReportsPage() {
                 theme === 'dark' ? 'text-slate-300' : 'text-slate-600',
               )}
             >
-              Individual para comprobantes de un pago específico y general
-              para el resumen mensual consolidado.
+              Individual para abrir el comprobante de un ciudadano específico y
+              general para el resumen mensual consolidado.
             </p>
           </div>
 
@@ -553,6 +646,68 @@ export default function ReportsPage() {
 
       {reportCategory === 'general' ? (
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
+        <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+          <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+              <CardTitle>Resumen del corte</CardTitle>
+              <CardDescription>
+                Este bloque concentra el periodo activo, el tipo de exportación y
+                el estado del último cierre para que la revisión sea más rápida.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 p-5 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                  Periodo
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                  {formatPeriodLabel(Number(period.slice(0, 4)), Number(period.slice(5)))}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                  Estado
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                  {latestSummary ? 'Listo para revisar' : 'Pendiente de generación'}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                  Formatos
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                  PDF y Excel
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+              <CardTitle>Uso rápido</CardTitle>
+              <CardDescription>
+                Un vistazo rápido a lo que cubre la pantalla de reportes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3 p-5">
+              {reportSignals.map((signal) => (
+                <span
+                  key={signal}
+                  className={cn(
+                    'inline-flex items-center rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em]',
+                    theme === 'dark'
+                      ? 'border-white/10 bg-white/5 text-slate-200'
+                      : 'border-slate-200 bg-white text-slate-600',
+                  )}
+                >
+                  {signal}
+                </span>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard
             label="Periodo activo"
@@ -685,6 +840,58 @@ export default function ReportsPage() {
       </section>
       ) : (
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
+        <div className="mb-6 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+              <CardTitle>Flujo individual</CardTitle>
+              <CardDescription>
+                El comprobante individual se administra desde Pagos, donde haces
+                la búsqueda del ciudadano, registras el movimiento y abres el PDF.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3 p-5">
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+                Búsqueda paginada
+              </span>
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+                Historial por mes
+              </span>
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+                Comprobante PDF
+              </span>
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+              <CardTitle>Accesos directos</CardTitle>
+              <CardDescription>
+                Salta directamente al flujo que normalmente sigue el usuario.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 p-5 sm:grid-cols-2">
+              <AppLink
+                href="/pagos"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#f97316] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-500"
+              >
+                Ir a pagos
+              </AppLink>
+              <AppLink
+                href="/pagos#historial-pagos"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                Ver historial
+              </AppLink>
+              <AppLink
+                href="/pagos#comprobante-pago"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:col-span-2"
+              >
+                Imprimir comprobante
+              </AppLink>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
           <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
             <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">

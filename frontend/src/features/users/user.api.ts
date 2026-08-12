@@ -1,4 +1,5 @@
 import { apiRequest } from '../../lib/api'
+import { OfflineQueueError } from '../../lib/offline-sync'
 import type { SystemUserRecord, SystemUserRole } from './user.types'
 
 type UserApiRecord = {
@@ -41,6 +42,28 @@ function toUserRecord(record: UserApiRecord): SystemUserRecord {
   }
 }
 
+function createProvisionalUserRecord(
+  input: {
+    email: string
+    nombre: string
+    rol: SystemUserRole
+    activo?: boolean
+  },
+  existingId?: string,
+): SystemUserRecord {
+  const now = new Date().toISOString()
+
+  return {
+    id: existingId ?? `local-user-${Date.now()}`,
+    email: input.email.trim(),
+    nombre: input.nombre.trim(),
+    rol: input.rol,
+    activo: input.activo ?? true,
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
 export async function fetchUsers(token: string) {
   const records: UserApiRecord[] = []
   let page = 1
@@ -71,18 +94,26 @@ export async function createUser(
     password: string
   },
 ) {
-  const response = await apiRequest<UserResponse>('/api/usuarios', {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: {
-      email: input.email,
-      nombre: input.nombre,
-      rol: input.rol,
-      password: input.password,
-    },
-  })
+  try {
+    const response = await apiRequest<UserResponse>('/api/usuarios', {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: {
+        email: input.email,
+        nombre: input.nombre,
+        rol: input.rol,
+        password: input.password,
+      },
+    })
 
-  return toUserRecord(response.data)
+    return toUserRecord(response.data)
+  } catch (error) {
+    if (error instanceof OfflineQueueError) {
+      return createProvisionalUserRecord(input)
+    }
+
+    throw error
+  }
 }
 
 export async function updateUser(
@@ -95,26 +126,58 @@ export async function updateUser(
     activo: boolean
   }>,
 ) {
-  const response = await apiRequest<UserResponse>(
-    `/api/usuarios/${encodeURIComponent(id)}`,
-    {
-      method: 'PUT',
-      headers: authHeaders(token),
-      body: input,
-    },
-  )
+  try {
+    const response = await apiRequest<UserResponse>(
+      `/api/usuarios/${encodeURIComponent(id)}`,
+      {
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: input,
+      },
+    )
 
-  return toUserRecord(response.data)
+    return toUserRecord(response.data)
+  } catch (error) {
+    if (error instanceof OfflineQueueError) {
+      return createProvisionalUserRecord(
+        {
+          email: input.email ?? '',
+          nombre: input.nombre ?? '',
+          rol: input.rol ?? 'secretaria',
+          activo: input.activo,
+        },
+        id,
+      )
+    }
+
+    throw error
+  }
 }
 
 export async function deactivateUser(token: string, id: string) {
-  const response = await apiRequest<UserResponse>(
-    `/api/usuarios/${encodeURIComponent(id)}`,
-    {
-      method: 'DELETE',
-      headers: authHeaders(token),
-    },
-  )
+  try {
+    const response = await apiRequest<UserResponse>(
+      `/api/usuarios/${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: authHeaders(token),
+      },
+    )
 
-  return toUserRecord(response.data)
+    return toUserRecord(response.data)
+  } catch (error) {
+    if (error instanceof OfflineQueueError) {
+      return createProvisionalUserRecord(
+        {
+          email: '',
+          nombre: '',
+          rol: 'secretaria',
+          activo: false,
+        },
+        id,
+      )
+    }
+
+    throw error
+  }
 }

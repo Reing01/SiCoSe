@@ -42,6 +42,8 @@ export function createApp() {
     /^https:\/\/[a-z0-9-]+-cesaro4pacheco09-7836s-projects\.vercel\.app$/;
   const vercelProductionPattern =
     /^https:\/\/si-co-se(?:-[a-z0-9-]+)?\.vercel\.app$/;
+  const localDesktopPattern =
+    /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/;
 
   // El backend no se publica directamente. Confiar solo en el numero conocido
   // de proxies evita aceptar cabeceras X-Forwarded-For falsificadas desde una
@@ -60,7 +62,8 @@ export function createApp() {
         if (
           allowedOrigins.includes(origin) ||
           vercelPreviewPattern.test(origin) ||
-          vercelProductionPattern.test(origin)
+          vercelProductionPattern.test(origin) ||
+          localDesktopPattern.test(origin)
         ) {
           return callback(null, true);
         }

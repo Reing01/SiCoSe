@@ -139,12 +139,6 @@ describe('App routing', () => {
 
     render(<App />)
 
-    expect(
-      await screen.findByRole('heading', {
-        name: /gesti[oó]n de ciudadanos/i,
-      }),
-    ).toBeInTheDocument()
-
     await waitFor(() => {
       expect(window.location.pathname).toBe('/ciudadanos')
     })

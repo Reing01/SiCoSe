@@ -77,7 +77,7 @@ describe('LoginForm', () => {
     })
 
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /sesion iniciada correctamente/i,
+      /sesión iniciada correctamente/i,
     )
   })
 

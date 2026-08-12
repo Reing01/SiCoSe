@@ -2,6 +2,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import RoutePills from '../../components/RoutePills'
 import AppLink from '../../components/AppLink'
+import BrandMark from '../../components/BrandMark'
 import ThemeToggle from '../../components/ThemeToggle'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
@@ -28,6 +29,7 @@ import {
 } from '../../lib/water-billing'
 import { navigateTo } from '../../lib/navigation'
 import { cn } from '../../lib/utils'
+import { useMediaQuery } from '../../lib/use-media-query'
 
 type PaymentMethod = 'efectivo' | 'transferencia'
 type MonthlyStatusTone = 'paid' | 'partial' | 'pending' | 'missing'
@@ -91,6 +93,34 @@ type PaymentReceiptAttachment = {
   url: string
 }
 
+const paymentWorkflow = [
+  {
+    step: '01',
+    title: 'Busca al ciudadano',
+    description:
+      'Localiza por nombre, correo o clave catastral con búsqueda paginada.',
+  },
+  {
+    step: '02',
+    title: 'Confirma el adeudo',
+    description:
+      'Revisa los meses pendientes y el monto exacto del periodo actual.',
+  },
+  {
+    step: '03',
+    title: 'Registra y entrega',
+    description:
+      'Guarda el pago, abre el historial y genera el comprobante en un paso.',
+  },
+] as const
+
+const paymentSignals = [
+  'Cuota fija de $30 MXN',
+  'Historial por mes',
+  'Comprobante PDF',
+  'Funciona en móvil y escritorio',
+] as const
+
 const CITIZEN_SEARCH_PAGE_SIZE = 6
 
 const currencyFormatter = new Intl.NumberFormat('es-MX', {
@@ -140,6 +170,7 @@ function getLatestReceiptAttachment(payment: CitizenHistoryPaymentRecord) {
 
 export default function PaymentsPage() {
   const { theme } = useTheme()
+  const isCompactLayout = useMediaQuery('(max-width: 639px)')
   const session = readAuthSession()
   const sessionToken = session?.token ?? null
   const citizenSearchInputId = useId()
@@ -520,7 +551,7 @@ export default function PaymentsPage() {
     const session = readAuthSession()
 
     if (!session) {
-      setReceiptMessage('Inicia sesion para abrir comprobantes.')
+      setReceiptMessage('Inicia sesión para abrir comprobantes.')
       return
     }
 
@@ -535,7 +566,7 @@ export default function PaymentsPage() {
 
       const blob = await response.blob()
       openBlobInNewTab(blob, fileName)
-      setReceiptMessage('El comprobante adjunto se abrio en una nueva pestaña listo para imprimir.')
+      setReceiptMessage('El comprobante adjunto se abrió en una nueva pestaña, listo para imprimir.')
     } catch (error) {
       setReceiptMessage(
         error instanceof Error
@@ -559,7 +590,7 @@ export default function PaymentsPage() {
     const session = readAuthSession()
 
     if (!session) {
-      setReceiptMessage('Inicia sesion para imprimir comprobantes.')
+      setReceiptMessage('Inicia sesión para imprimir comprobantes.')
       return
     }
 
@@ -568,7 +599,7 @@ export default function PaymentsPage() {
     try {
       const blob = await fetchPaymentReceiptBlob(session.token, paymentId)
       openBlobInNewTab(blob, `recibo-${paymentId}.pdf`)
-      setReceiptMessage('El comprobante se abrio en una nueva pestaña listo para imprimir.')
+      setReceiptMessage('El comprobante se abrió en una nueva pestaña, listo para imprimir.')
     } catch (error) {
       setReceiptMessage(
         error instanceof Error
@@ -698,9 +729,7 @@ export default function PaymentsPage() {
           href="/"
           className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/90 px-4 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-900"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3042] text-sm font-bold text-white">
-            SC
-          </div>
+          <BrandMark />
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#0f3042] dark:text-sky-300">
               SiCoSe
@@ -718,7 +747,7 @@ export default function PaymentsPage() {
             onClick={handleLogout}
             className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
           >
-            Cerrar sesion
+            Cerrar sesión
           </button>
         </div>
       </header>
@@ -729,7 +758,7 @@ export default function PaymentsPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#0f3042] dark:text-sky-300">
               Pagos
             </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
               Cobro de agua, historial y comprobantes
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -738,26 +767,78 @@ export default function PaymentsPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-3 sm:flex sm:flex-wrap">
             <a
               href="#realizar-pago"
-              className="inline-flex min-h-11 items-center rounded-full border border-[#0f3042]/15 bg-[#0f3042]/5 px-4 py-2 text-sm font-semibold text-[#0f3042] transition-colors hover:bg-[#0f3042]/10 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-200"
+              className="inline-flex w-full min-h-11 items-center justify-center rounded-full border border-[#0f3042]/15 bg-[#0f3042]/5 px-4 py-2 text-sm font-semibold text-[#0f3042] transition-colors hover:bg-[#0f3042]/10 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-200 sm:w-auto"
             >
               Realizar pago
             </a>
             <a
               href="#historial-pagos"
-              className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              className="inline-flex w-full min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:w-auto"
             >
               Historial de pagos
             </a>
             <a
               href="#comprobante-pago"
-              className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              className="inline-flex w-full min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:w-auto"
             >
               Imprimir comprobante
             </a>
           </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+          <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+              <CardTitle>Flujo de cobro guiado</CardTitle>
+              <CardDescription>
+                La pantalla reúne búsqueda, cobro, historial y comprobantes en un
+                mismo recorrido para que no se pierda el contexto del ciudadano.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 p-5 md:grid-cols-3">
+              {paymentWorkflow.map((step) => (
+                <article
+                  key={step.step}
+                  className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/60"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#0f3042] dark:text-sky-300">
+                    {step.step}
+                  </p>
+                  <h3 className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    {step.description}
+                  </p>
+                </article>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+              <CardTitle>Resumen del cobro</CardTitle>
+              <CardDescription>
+                El servicio de agua mantiene una cuota fija de $30 MXN por mes y
+                el historial queda separado por periodo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-5">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {paymentSignals.map((signal) => (
+                  <div
+                    key={signal}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200"
+                  >
+                    {signal}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -851,9 +932,11 @@ export default function PaymentsPage() {
                   placeholder="Nombre, apellido o clave catastral"
                 />
               </div>
-              <div className="flex flex-wrap gap-2 pt-0 lg:items-end">
-                <Button type="submit">Buscar</Button>
-                <Button type="button" variant="outline" onClick={handleClearCitizenSearch}>
+              <div className="grid gap-2 pt-0 sm:grid-cols-2 lg:flex lg:items-end">
+                <Button type="submit" className="w-full">
+                  Buscar
+                </Button>
+                <Button type="button" variant="outline" onClick={handleClearCitizenSearch} className="w-full">
                   Limpiar
                 </Button>
               </div>
@@ -872,23 +955,25 @@ export default function PaymentsPage() {
                     : 'Mostrando ciudadanos activos para el cobro de agua.'}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-center">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   disabled={citizenSearchPage <= 1 || citizenSearchState.kind === 'loading'}
+                  className="w-full"
                   onClick={() => setCitizenSearchPage((current) => Math.max(1, current - 1))}
                 >
                   Anterior
                 </Button>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                <span className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                   Página {citizenSearchState.metadata.pagina} de {citizenSearchState.metadata.totalPaginas}
                 </span>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
+                  className="w-full"
                   disabled={
                     citizenSearchPage >= citizenSearchState.metadata.totalPaginas ||
                     citizenSearchState.kind === 'loading'
@@ -1032,13 +1117,14 @@ export default function PaymentsPage() {
                   ) : null}
 
                   <form className="space-y-5 pt-2" onSubmit={handleSubmit}>
-                    <div className="flex gap-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                       {(['efectivo', 'transferencia'] as const).map((item) => (
                         <Button
                           key={item}
                           type="button"
                           variant={method === item ? 'default' : 'outline'}
                           onClick={() => setMethod(item)}
+                          className="w-full"
                         >
                           {item === 'efectivo' ? 'Efectivo' : 'Transferencia'}
                         </Button>
@@ -1187,7 +1273,87 @@ export default function PaymentsPage() {
                         </div>
                       </div>
 
-                      <div className="max-h-[34rem] overflow-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                      {isCompactLayout && (<div className="space-y-3">
+                        {sortedPaymentHistory.length > 0 ? (
+                          sortedPaymentHistory.map((payment) => {
+                            const latestAttachment = getLatestReceiptAttachment(payment)
+
+                            return (
+                              <article
+                                key={payment.id}
+                                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/60"
+                              >
+                                <div className="space-y-3">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                                        {payment.adeudo.periodo}
+                                      </p>
+                                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {formatDate(payment.fecha)}
+                                      </p>
+                                    </div>
+                                    <p className="text-sm font-semibold text-[#0f3042] dark:text-sky-300">
+                                      {formatCurrency(payment.monto)}
+                                    </p>
+                                  </div>
+
+                                  <div className="grid gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                    <p>
+                                      <span className="font-semibold text-slate-900 dark:text-white">
+                                        Método:
+                                      </span>{' '}
+                                      {payment.metodo}
+                                    </p>
+                                    <p className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                                      {getPrintableReceiptName(payment)}
+                                    </p>
+                                  </div>
+
+                                  <div className="grid gap-2 sm:grid-cols-2">
+                                    {latestAttachment ? (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={() => {
+                                          void handleOpenPaymentAttachment(
+                                            latestAttachment.url,
+                                            latestAttachment.nombre_archivo?.trim() ||
+                                              `comprobante-${getPrintableReceiptName(payment)}.pdf`,
+                                          )
+                                        }}
+                                      >
+                                        Abrir archivo
+                                      </Button>
+                                    ) : (
+                                      <div className="rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
+                                        Sin adjunto
+                                      </div>
+                                    )}
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full"
+                                      onClick={() => handlePrintReceipt(payment.id)}
+                                    >
+                                      Imprimir
+                                    </Button>
+                                  </div>
+                                </div>
+                              </article>
+                            )
+                          })
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+                            Todavia no hay pagos registrados para este ciudadano.
+                          </div>
+                        )}
+                      </div>)}
+
+                      {!isCompactLayout && (<div className="max-h-[34rem] overflow-auto rounded-2xl border border-slate-200 dark:border-slate-800">
                         <table className="min-w-full text-left text-sm">
                           <thead className="sticky top-0 bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-500 dark:bg-slate-950/95 dark:text-slate-400">
                             <tr>
@@ -1271,7 +1437,7 @@ export default function PaymentsPage() {
                             )}
                           </tbody>
                         </table>
-                      </div>
+                      </div>)}
                     </>
                   ) : null}
                 </CardContent>
@@ -1474,7 +1640,7 @@ export default function PaymentsPage() {
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
-                    Aun no hay comprobantes adjuntos para este ciudadano. Cuando se capture una transferencia, aqui aparecera el archivo cargado.
+                    Aún no hay comprobantes adjuntos para este ciudadano. Cuando se capture una transferencia, aquí aparecerá el archivo cargado.
                   </div>
                 )}
               </CardContent>
@@ -1503,7 +1669,7 @@ export default function PaymentsPage() {
                   </div>
                 ) : (
                   <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
-                    Cuando registres un pago, aqui se mostrara el comprobante para imprimirlo.
+                    Cuando registres un pago, aquí se mostrará el comprobante para imprimirlo.
                   </div>
                 )}
 

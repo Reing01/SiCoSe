@@ -3,6 +3,7 @@ import { readAuthSession } from './features/auth/auth.session'
 import { resolveAppRoute } from './features/auth/auth.routing'
 import { ThemeProvider } from './features/theme/theme'
 import { navigateTo, useAppPathname } from './lib/navigation'
+import { startOfflineSync } from './lib/api'
 
 const LandingPage = lazy(() => import('./LandingPage'))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
@@ -27,7 +28,18 @@ function AppFallback() {
 export default function App() {
   const pathname = useAppPathname()
   const session = readAuthSession()
+  const sessionToken = session?.token ?? null
   const resolvedRoute = resolveAppRoute(pathname, session)
+
+  useEffect(() => {
+    if (!sessionToken) {
+      return undefined
+    }
+
+    const stopOfflineSync = startOfflineSync()
+
+    return stopOfflineSync
+  }, [sessionToken])
 
   useEffect(() => {
     if (typeof window === 'undefined') {

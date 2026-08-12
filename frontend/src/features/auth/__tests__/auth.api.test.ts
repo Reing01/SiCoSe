@@ -106,7 +106,7 @@ describe('auth.api', () => {
     )
 
     await expect(getCurrentUser('session-fixture')).rejects.toThrow(
-      /confirmar la sesion/i,
+      /confirmar la sesi[oó]n/i,
     )
   })
 })

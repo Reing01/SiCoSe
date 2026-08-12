@@ -11,6 +11,7 @@ import { apiRequest } from "./lib/api";
 
 import RoutePills from "./components/RoutePills";
 import AppLink from "./components/AppLink";
+import BrandMark from "./components/BrandMark";
 
 const NAV_LINKS = [
   { label: "El Problema", href: "#problema" },
@@ -27,21 +28,7 @@ function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <AppLink href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-[#f97316] flex items-center justify-center">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-          </div>
+          <BrandMark size="sm" />
           <span className="text-white font-bold text-lg tracking-tight">
             SiCoSe<span className="text-[#f97316]">.</span>
           </span>
@@ -366,11 +353,11 @@ function Modulos() {
           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       ),
-      nombre: "Padrón Digital",
+      nombre: "Registro de usuarios",
       desc: "Base de datos de cada usuario con su ID, nombre completo, dirección exacta (Zona, Calle, CP) y foto de referencia opcional.",
       tag: "Dirección exacta",
       href: "/ciudadanos",
-      cta: "Abrir padrón",
+      cta: "Abrir registro",
     },
     {
       icon: (
@@ -559,7 +546,7 @@ function InterfacePreview() {
             Vista Previa Real
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-            Así se ve el Padrón Digital
+            Así se ve el registro digital
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto text-base">
             Interactúa con esta simulación. Busca por nombre, ID o zona para ver
@@ -575,7 +562,7 @@ function InterfacePreview() {
               <div className="w-3 h-3 rounded-full bg-green-500" />
             </div>
             <span className="text-slate-500 text-xs font-mono">
-              sicose.app / padron-digital
+              sicose.app / registro-usuarios
             </span>
           </div>
 

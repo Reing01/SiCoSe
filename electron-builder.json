@@ -1,0 +1,32 @@
+{
+  "appId": "mx.sicose.desktop",
+  "productName": "SiCoSe",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "electron/**/*",
+    "frontend/dist/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "electron/assets/icon.ico",
+      "to": "icon.ico"
+    }
+  ],
+  "asar": true,
+  "win": {
+    "target": [
+      "nsis"
+    ],
+    "artifactName": "SiCoSe-Agua-Setup-${version}.${ext}",
+    "icon": "electron/assets/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  }
+}

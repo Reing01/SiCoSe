@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LOGIN_COPY } from '../../../features/auth/auth.copy'
 import { authStorageKeys } from '../../../features/auth/auth.session'
+import { ThemeProvider } from '../../../features/theme/theme'
 import LoginPage from '../LoginPage'
 
 const { loginMock } = vi.hoisted(() => ({
@@ -19,7 +20,11 @@ describe('LoginPage', () => {
   })
 
   it('renders the login hero and the login form', () => {
-    render(<LoginPage />)
+    render(
+      <ThemeProvider>
+        <LoginPage />
+      </ThemeProvider>,
+    )
 
     expect(
       screen.getByRole('heading', {
@@ -44,12 +49,16 @@ describe('LoginPage', () => {
       },
     })
 
-    render(<LoginPage />)
+    render(
+      <ThemeProvider>
+        <LoginPage />
+      </ThemeProvider>,
+    )
 
     fireEvent.change(screen.getByLabelText(/correo institucional/i), {
       target: { value: 'ADMIN@SICOSE.TEST' },
     })
-    fireEvent.change(screen.getByLabelText(/contraseñ[aá]/i, { selector: 'input' }), {
+    fireEvent.change(screen.getByLabelText(/contraseña/i, { selector: 'input' }), {
       target: { value: 'SiCoSe2026!' },
     })
     fireEvent.click(

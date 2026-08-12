@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useId, useMemo, useState } from 'react'
+import BrandMark from '../../components/BrandMark'
 import { Button } from '../../components/ui/button'
 import {
   Card,
@@ -12,10 +13,10 @@ import {
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { useToast } from '../../components/ui/toast-context'
-import { cn } from '../../lib/utils'
-import { navigateTo } from '../../lib/navigation'
 import { LOGIN_COPY, getPublicLoginErrorMessage } from './auth.copy'
 import type { LoginRequest } from './auth.types'
+import { navigateTo } from '../../lib/navigation'
+import { cn } from '../../lib/utils'
 import { type LoginFieldName, validateLoginForm } from './login-form.validation'
 
 type SubmissionState =
@@ -37,6 +38,12 @@ const DEFAULT_TOUCHED: Record<LoginFieldName, boolean> = {
   email: false,
   password: false,
 }
+
+const loginTags = [
+  'Móvil y escritorio',
+  'Modo claro/oscuro',
+  'Comprobante PDF',
+] as const
 
 export interface LoginFormProps {
   className?: string
@@ -184,26 +191,35 @@ export default function LoginForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className={cn('w-full', className)}>
-      <Card className="overflow-hidden">
-        <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0f3042] text-base font-bold text-white shadow-lg shadow-[#0f3042]/25">
-              SC
-            </div>
-            <div className="space-y-1">
+      <Card className="overflow-hidden border-white/10 bg-white/95 shadow-2xl shadow-black/20 dark:border-slate-800 dark:bg-slate-950/85">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-950/60">
+          <div className="flex items-start gap-3">
+            <BrandMark size="lg" />
+            <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
-                SiCoSe
+                Acceso privado
               </p>
-              <CardTitle>Inicia sesi&oacute;n</CardTitle>
+              <CardTitle className="text-2xl">Inicia sesión</CardTitle>
+              <CardDescription className="max-w-md">
+                Accede con tu correo institucional y la contraseña asignada
+                para revisar los módulos protegidos del sistema.
+              </CardDescription>
             </div>
           </div>
-          <CardDescription className="max-w-md">
-            Accede con tu correo institucional y la contraseña asignada para
-            revisar los módulos protegidos del sistema.
-          </CardDescription>
+
+          <div className="flex flex-wrap gap-2 pt-1">
+            {loginTags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </CardHeader>
 
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-5 p-6">
           {submissionState.kind !== 'idle' ? (
             <div
               id={statusId}
@@ -222,6 +238,11 @@ export default function LoginForm({
             </div>
           ) : null}
 
+          <div className="rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-sky-900/40 dark:bg-sky-950/40 dark:text-slate-200">
+            El acceso está optimizado para escritorio y teléfono, con
+            navegación rápida y comprobante inmediato.
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor={emailId}>Correo institucional</Label>
             <Input
@@ -238,11 +259,17 @@ export default function LoginForm({
               aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? `${emailId}-error` : emailHintId}
             />
-            <p id={emailHintId} className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+            <p
+              id={emailHintId}
+              className="text-xs leading-5 text-slate-500 dark:text-slate-400"
+            >
               Usa una cuenta autorizada para continuar.
             </p>
             {emailError ? (
-              <p id={`${emailId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
+              <p
+                id={`${emailId}-error`}
+                className="text-sm text-rose-600 dark:text-rose-300"
+              >
                 {emailError}
               </p>
             ) : null}
@@ -279,24 +306,33 @@ export default function LoginForm({
                 {showPassword ? 'Ocultar' : 'Mostrar'}
               </Button>
             </div>
-            <p id={passwordHintId} className="text-xs leading-5 text-slate-500 dark:text-slate-400">
-              Usa tu contrasena asignada.
+            <p
+              id={passwordHintId}
+              className="text-xs leading-5 text-slate-500 dark:text-slate-400"
+            >
+              Usa tu contraseña asignada.
             </p>
             {passwordError ? (
-              <p id={`${passwordId}-error`} className="text-sm text-rose-600 dark:text-rose-300">
+              <p
+                id={`${passwordId}-error`}
+                className="text-sm text-rose-600 dark:text-rose-300"
+              >
                 {passwordError}
               </p>
             ) : null}
           </div>
-
         </CardContent>
 
-        <CardFooter className="flex flex-col items-stretch gap-4 border-t border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+        <CardFooter className="flex flex-col items-stretch gap-4 border-t border-slate-100 bg-slate-50/90 px-6 py-5 dark:border-slate-800 dark:bg-slate-950/60">
           <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? LOGIN_COPY.submitting : 'Ingresar al panel'}
           </Button>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <p>
+              Sesión protegida para operación interna. Si necesitas ayuda, usa
+              el enlace de soporte.
+            </p>
 
             <a
               href="#soporte"

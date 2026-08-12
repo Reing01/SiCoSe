@@ -1,17 +1,17 @@
 export const LOGIN_COPY = {
   fieldErrors: {
     emailRequired: 'Ingresa tu correo institucional.',
-    emailInvalid: 'Ingresa un correo institucional valido.',
-    passwordRequired: 'Ingresa tu contrasena.',
-    passwordInvalid: 'Ingresa una contrasena valida.',
+    emailInvalid: 'Ingresa un correo institucional válido.',
+    passwordRequired: 'Ingresa tu contraseña.',
+    passwordInvalid: 'Ingresa una contraseña válida.',
   },
   invalidFields: 'Corrige los campos marcados para continuar.',
-  invalidFieldsToast: 'Revisa que tus datos esten completos antes de continuar.',
+  invalidFieldsToast: 'Revisa que tus datos estén completos antes de continuar.',
   submitting: 'Ingresando...',
-  success: 'Sesion iniciada correctamente.',
-  successTitle: 'Sesion iniciada',
-  accessError: 'No pudimos iniciar sesion. Revisa tus datos o intenta mas tarde.',
-  accessErrorTitle: 'No se pudo iniciar sesion',
+  success: 'Sesión iniciada correctamente.',
+  successTitle: 'Sesión iniciada',
+  accessError: 'No pudimos iniciar sesión. Revisa tus datos o intenta más tarde.',
+  accessErrorTitle: 'No se pudo iniciar sesión',
   incompleteTitle: 'Campos incompletos',
 } as const
 

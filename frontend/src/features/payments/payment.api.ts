@@ -1,4 +1,5 @@
 import { API_BASE_URL, apiRequest } from '../../lib/api'
+import { OfflineQueueError } from '../../lib/offline-sync'
 
 export type PendingDebtRecord = {
   id: string
@@ -88,39 +89,59 @@ export async function registerPayment(
     comprobante?: File
   },
 ) {
-  if (input.metodo === 'transferencia') {
-    const formData = new FormData()
-    formData.set('metodo', input.metodo)
-    formData.set('ciudadano_id', input.ciudadanoId)
-    formData.set('adeudo_id', input.adeudoId)
-    formData.set('monto', String(input.monto))
-    formData.set('referencia_bancaria', input.referenciaBancaria ?? '')
+  const createProvisionalPayment = (): PaymentRecord => {
+    const stamp = Date.now()
 
-    if (input.comprobante) {
-      formData.set('comprobante', input.comprobante)
+    return {
+      id: `local-payment-${stamp}`,
+      folio: `LOCAL-${stamp}`,
+      monto: input.monto,
+      metodo: input.metodo,
+      fecha: new Date().toISOString(),
+    }
+  }
+
+  try {
+    if (input.metodo === 'transferencia') {
+      const formData = new FormData()
+      formData.set('metodo', input.metodo)
+      formData.set('ciudadano_id', input.ciudadanoId)
+      formData.set('adeudo_id', input.adeudoId)
+      formData.set('monto', String(input.monto))
+      formData.set('referencia_bancaria', input.referenciaBancaria ?? '')
+
+      if (input.comprobante) {
+        formData.set('comprobante', input.comprobante)
+      }
+
+      const response = await apiRequest<PaymentResponse>('/api/pagos', {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: formData,
+      })
+
+      return response.data
     }
 
     const response = await apiRequest<PaymentResponse>('/api/pagos', {
       method: 'POST',
       headers: authHeaders(token),
-      body: formData,
+      body: {
+        metodo: input.metodo,
+        ciudadano_id: input.ciudadanoId,
+        adeudo_id: input.adeudoId,
+        monto: input.monto,
+      },
     })
 
     return response.data
+  } catch (error) {
+    if (error instanceof OfflineQueueError) {
+      return createProvisionalPayment()
+    }
+
+    throw error
   }
-
-  const response = await apiRequest<PaymentResponse>('/api/pagos', {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: {
-      metodo: input.metodo,
-      ciudadano_id: input.ciudadanoId,
-      adeudo_id: input.adeudoId,
-      monto: input.monto,
-    },
-  })
-
-  return response.data
 }
 
 export async function fetchPaymentReceiptBlob(token: string, paymentId: string) {

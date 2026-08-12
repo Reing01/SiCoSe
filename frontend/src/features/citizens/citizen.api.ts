@@ -1,4 +1,5 @@
 import { apiRequest } from '../../lib/api'
+import { OfflineQueueError } from '../../lib/offline-sync'
 import type {
   CitizenFormValues,
   CitizenPageMetadata,
@@ -51,6 +52,26 @@ function toApiPayload(values: CitizenFormValues) {
     telefono: values.telefono || undefined,
     direccion: values.direccion || undefined,
     clave_catastral: values.claveCatastral,
+  }
+}
+
+function createProvisionalCitizenRecord(
+  values: CitizenFormValues,
+  existingId?: string,
+): CitizenRecord {
+  const now = new Date().toISOString()
+
+  return {
+    id: existingId ?? `local-citizen-${Date.now()}`,
+    nombre: values.nombre.trim(),
+    apellido: values.apellido.trim(),
+    email: values.email.trim(),
+    telefono: values.telefono.trim(),
+    direccion: values.direccion.trim(),
+    claveCatastral: values.claveCatastral.trim(),
+    activo: true,
+    createdAt: now,
+    updatedAt: now,
   }
 }
 
@@ -121,13 +142,21 @@ export async function createCitizen(
   token: string,
   values: CitizenFormValues,
 ): Promise<CitizenRecord> {
-  const response = await apiRequest<CitizenResponse>('/api/ciudadanos', {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: toApiPayload(values),
-  })
+  try {
+    const response = await apiRequest<CitizenResponse>('/api/ciudadanos', {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: toApiPayload(values),
+    })
 
-  return toCitizenRecord(response.data)
+    return toCitizenRecord(response.data)
+  } catch (error) {
+    if (error instanceof OfflineQueueError) {
+      return createProvisionalCitizenRecord(values)
+    }
+
+    throw error
+  }
 }
 
 export async function updateCitizen(
@@ -135,27 +164,43 @@ export async function updateCitizen(
   id: string,
   values: CitizenFormValues,
 ): Promise<CitizenRecord> {
-  const response = await apiRequest<CitizenResponse>(
-    `/api/ciudadanos/${encodeURIComponent(id)}`,
-    {
-      method: 'PUT',
-      headers: authHeaders(token),
-      body: toApiPayload(values),
-    },
-  )
+  try {
+    const response = await apiRequest<CitizenResponse>(
+      `/api/ciudadanos/${encodeURIComponent(id)}`,
+      {
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: toApiPayload(values),
+      },
+    )
 
-  return toCitizenRecord(response.data)
+    return toCitizenRecord(response.data)
+  } catch (error) {
+    if (error instanceof OfflineQueueError) {
+      return createProvisionalCitizenRecord(values, id)
+    }
+
+    throw error
+  }
 }
 
 export async function deactivateCitizen(
   token: string,
   id: string,
 ): Promise<void> {
-  await apiRequest<CitizenResponse>(
-    `/api/ciudadanos/${encodeURIComponent(id)}/desactivar`,
-    {
-      method: 'PUT',
-      headers: authHeaders(token),
-    },
-  )
+  try {
+    await apiRequest<CitizenResponse>(
+      `/api/ciudadanos/${encodeURIComponent(id)}/desactivar`,
+      {
+        method: 'PUT',
+        headers: authHeaders(token),
+      },
+    )
+  } catch (error) {
+    if (error instanceof OfflineQueueError) {
+      return
+    }
+
+    throw error
+  }
 }
