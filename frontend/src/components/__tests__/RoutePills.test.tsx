@@ -13,13 +13,13 @@ describe('RoutePills', () => {
     render(<RoutePills />)
 
     const navigation = screen.getByRole('navigation', {
-      name: 'Navegacion de pantallas',
+      name: 'Navegación de pantallas',
     })
 
     expect(navigation).toHaveClass('hidden')
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Abrir menu de navegacion' }),
+      screen.getByRole('button', { name: 'Abrir menú de navegación' }),
     )
 
     expect(navigation).not.toHaveClass('hidden')
@@ -43,7 +43,7 @@ describe('RoutePills', () => {
     render(<RoutePills />)
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Abrir menu de navegacion' }),
+      screen.getByRole('button', { name: 'Abrir menú de navegación' }),
     )
 
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()

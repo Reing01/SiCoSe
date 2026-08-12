@@ -1,9 +1,23 @@
 import { RESOLVED_API_BASE_URL } from '../../lib/api'
 import { getCurrentPeriodKey } from '../../lib/water-billing'
-import { prefetchDashboardMetrics } from '../dashboard/dashboard.api'
 import type { AuthSession } from './auth.types'
 
 let loginWarmupStarted = false
+
+function queueIdleTask(task: () => void) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => {
+      task()
+    }, { timeout: 1500 })
+    return
+  }
+
+  window.setTimeout(task, 0)
+}
 
 function prefetchLandingChunk(session: AuthSession) {
   if (session.user.rol === 'secretaria') {
@@ -39,7 +53,9 @@ export function warmLoginExperience() {
 
   loginWarmupStarted = true
 
-  void warmBackendHealth()
+  queueIdleTask(() => {
+    void warmBackendHealth()
+  })
 }
 
 export function warmPostLoginExperience(session: AuthSession) {
@@ -53,5 +69,9 @@ export function warmPostLoginExperience(session: AuthSession) {
     return
   }
 
-  prefetchDashboardMetrics(session.token, getCurrentPeriodKey())
+  void import('../dashboard/dashboard.api')
+    .then(({ prefetchDashboardMetrics }) =>
+      prefetchDashboardMetrics(session.token, getCurrentPeriodKey()),
+    )
+    .catch(() => undefined)
 }

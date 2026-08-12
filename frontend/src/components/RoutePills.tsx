@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   APP_ROUTES,
   getVisibleProtectedRoutes,
@@ -66,7 +66,7 @@ const VARIANT_CLASSES = {
 export default function RoutePills({
   className,
   variant = "dark",
-  ariaLabel = "Navegacion de pantallas",
+  ariaLabel = "Navegación de pantallas",
 }: RoutePillsProps) {
   const currentPath = getCurrentPath();
   const routes = getVisibleRoutes();
@@ -78,8 +78,12 @@ export default function RoutePills({
       : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50";
   const menuClasses =
     variant === "light"
-      ? "border-white/10 bg-[#0a2535]"
-      : "border-slate-200 bg-white";
+      ? "border-white/10 bg-[#0a2535]/98 backdrop-blur-xl"
+      : "border-slate-200 bg-white/98 backdrop-blur-xl";
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [currentPath]);
 
   return (
     <div className={cn("relative", className)}>
@@ -91,11 +95,11 @@ export default function RoutePills({
         )}
         onClick={() => setIsOpen((current) => !current)}
         aria-label={
-          isOpen ? "Cerrar menu de navegacion" : "Abrir menu de navegacion"
+          isOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"
         }
         aria-expanded={isOpen}
       >
-        <span className="sr-only">Menu</span>
+        <span className="sr-only">Menú</span>
         <span className="flex flex-col gap-1">
           <span className="h-0.5 w-5 rounded-full bg-current" />
           <span className="h-0.5 w-5 rounded-full bg-current" />
@@ -103,13 +107,22 @@ export default function RoutePills({
         </span>
       </button>
 
+      {isOpen ? (
+        <button
+          type="button"
+          aria-label="Cerrar menú de navegación"
+          className="fixed inset-0 z-20 cursor-default bg-slate-950/35 sm:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      ) : null}
+
       <nav
         aria-label={ariaLabel}
         className={cn(
           "flex-wrap gap-2 sm:flex",
           isOpen
             ? cn(
-                "absolute right-0 top-12 z-30 flex min-w-48 flex-col rounded-2xl border p-2 shadow-xl sm:static sm:min-w-0 sm:flex-row sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none",
+                "fixed left-4 right-4 top-24 z-30 flex max-h-[calc(100vh-7rem)] flex-col gap-2 overflow-y-auto rounded-2xl border p-3 shadow-2xl sm:absolute sm:right-0 sm:top-12 sm:min-w-48 sm:flex-row sm:gap-2 sm:overflow-visible sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none",
                 menuClasses,
               )
             : "hidden",
@@ -127,7 +140,7 @@ export default function RoutePills({
               className={cn(
                 "inline-flex min-h-11 items-center rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
                 isActive ? styles.active : styles.idle,
-                isOpen && "justify-center",
+                isOpen && "justify-center sm:justify-start",
               )}
             >
               {ROUTE_LABELS[route as keyof typeof ROUTE_LABELS]}
