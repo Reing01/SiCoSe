@@ -23,7 +23,7 @@ describe('RoutePills', () => {
     )
 
     expect(navigation).not.toHaveClass('hidden')
-    expect(navigation).toHaveClass('flex')
+    expect(navigation).toHaveClass('grid')
     expect(
       screen.getByRole('link', { name: 'Login' }),
     ).toBeInTheDocument()
@@ -51,5 +51,6 @@ describe('RoutePills', () => {
     expect(screen.getByRole('link', { name: 'Pagos' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Reportes' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Usuarios' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Login' })).not.toBeInTheDocument()
   })
 })

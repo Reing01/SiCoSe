@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  APP_ROUTES,
   getVisibleProtectedRoutes,
 } from "../features/auth/authorization";
 import { readAuthSession } from "../features/auth/auth.session";
@@ -44,10 +43,10 @@ function getVisibleRoutes() {
   const session = readAuthSession();
 
   if (!session) {
-    return APP_ROUTES.filter((route) => route === "/" || route === "/login");
+    return ["/", "/login"];
   }
 
-  return ["/", "/login", ...getVisibleProtectedRoutes(session)];
+  return ["/", ...getVisibleProtectedRoutes(session)];
 }
 
 const VARIANT_CLASSES = {
@@ -122,7 +121,7 @@ export default function RoutePills({
           "gap-2 sm:flex sm:flex-wrap",
           isOpen
             ? cn(
-                "fixed inset-x-4 bottom-4 top-auto z-30 flex max-h-[min(60vh,28rem)] flex-col gap-2 overflow-y-auto rounded-3xl border p-4 shadow-2xl sm:absolute sm:right-0 sm:top-12 sm:min-w-48 sm:flex-row sm:flex-wrap sm:gap-2 sm:overflow-visible sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:max-h-none",
+                "fixed inset-x-3 bottom-3 z-30 grid max-h-[min(48vh,24rem)] grid-cols-2 gap-2 overflow-y-auto rounded-[1.75rem] border p-3 shadow-2xl sm:absolute sm:right-0 sm:top-12 sm:min-w-48 sm:flex sm:flex-wrap sm:gap-2 sm:overflow-visible sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:max-h-none",
                 menuClasses,
               )
             : "hidden",
@@ -138,9 +137,8 @@ export default function RoutePills({
               aria-current={isActive ? "page" : undefined}
               onClick={() => setIsOpen(false)}
               className={cn(
-                "inline-flex min-h-11 w-full items-center justify-start rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors sm:w-auto sm:justify-center sm:rounded-full sm:px-3 sm:py-2 sm:text-xs",
+                "inline-flex min-h-11 w-full items-center justify-center rounded-2xl border px-3 py-3 text-center text-sm font-semibold whitespace-nowrap transition-colors sm:w-auto sm:rounded-full sm:px-3 sm:py-2 sm:text-xs",
                 isActive ? styles.active : styles.idle,
-                isOpen && "justify-center sm:justify-start",
               )}
             >
               {ROUTE_LABELS[route as keyof typeof ROUTE_LABELS]}
