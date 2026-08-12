@@ -45,7 +45,7 @@ async function main() {
 
   const servicios = await prisma.servicio.createMany({
     data: [
-      { nombre: "Agua potable", descripcion: "Suministro de agua potable", tarifa: 45.5 },
+      { nombre: "Agua potable", descripcion: "Suministro de agua potable", tarifa: 30.0 },
       { nombre: "Alcantarillado", descripcion: "Manejo de aguas residuales", tarifa: 32.0 },
       { nombre: "Recoleccion de basura", descripcion: "Servicio de recoleccion semanal", tarifa: 25.0 },
     ],
@@ -118,7 +118,7 @@ async function main() {
       {
         ciudadanoId: ana.id,
         servicioId: aguaPotable.id,
-        monto: 45.5,
+        monto: 30,
         periodo: "2026-06",
         vencimiento: new Date("2026-06-30T00:00:00.000Z"),
         estado: "pendiente",
@@ -154,7 +154,7 @@ async function main() {
       {
         ciudadanoId: jose.id,
         servicioId: aguaPotable.id,
-        monto: 63.5,
+        monto: 30,
         periodo: "2026-05",
         vencimiento: new Date("2026-05-31T00:00:00.000Z"),
         estado: "vencido",

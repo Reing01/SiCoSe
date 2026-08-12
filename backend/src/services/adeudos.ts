@@ -1,6 +1,9 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 
+const WATER_SERVICE_NAME_PATTERN = /agua/i;
+export const WATER_MONTHLY_FEE_MXN = 30;
+
 type PrismaClientLike = Pick<
   typeof prisma,
   "ciudadano" | "servicio" | "adeudo" | "$transaction"
@@ -68,6 +71,7 @@ export async function generateMonthlyDebts(
       tx.servicio.findMany({
         select: {
           id: true,
+          nombre: true,
           tarifa: true,
         },
       }),
@@ -80,20 +84,27 @@ export async function generateMonthlyDebts(
       }),
     ]);
 
+    const waterServices = servicios.filter((service) =>
+      WATER_SERVICE_NAME_PATTERN.test(service.nombre),
+    );
+    const targetServices = waterServices.length > 0 ? waterServices : servicios;
+
     const existingKeys = new Set(
       existingDebts.map((debt) => `${debt.ciudadanoId}:${debt.servicioId}`),
     );
     const data: Prisma.AdeudoCreateManyInput[] = [];
 
     for (const ciudadano of ciudadanos) {
-      for (const servicio of servicios) {
+      for (const servicio of targetServices) {
         const key = `${ciudadano.id}:${servicio.id}`;
 
         if (!existingKeys.has(key)) {
           data.push({
             ciudadanoId: ciudadano.id,
             servicioId: servicio.id,
-            monto: servicio.tarifa,
+            monto: WATER_SERVICE_NAME_PATTERN.test(servicio.nombre)
+              ? WATER_MONTHLY_FEE_MXN
+              : servicio.tarifa,
             periodo,
             vencimiento,
             pagado: false,
@@ -114,8 +125,8 @@ export async function generateMonthlyDebts(
       periodo,
       vencimiento,
       ciudadanosActivos: ciudadanos.length,
-      serviciosActivos: servicios.length,
-      candidatos: ciudadanos.length * servicios.length,
+      serviciosActivos: targetServices.length,
+      candidatos: ciudadanos.length * targetServices.length,
       existentes: existingDebts.length,
       creados: data.length,
       omitidos: existingDebts.length,

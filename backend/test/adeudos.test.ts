@@ -27,7 +27,7 @@ function createDebtGenerationClient() {
     },
     servicio: {
       findMany: async () => [
-        { id: 'servicio-agua', tarifa: 45.5 },
+        { id: 'servicio-agua', nombre: 'Agua potable', tarifa: 45.5 },
         { id: 'servicio-basura', tarifa: 25 },
       ],
     },
@@ -66,10 +66,10 @@ describe('generateMonthlyDebts', () => {
 
     assert.equal(result.periodo, '2026-06')
     assert.equal(result.ciudadanosActivos, 2)
-    assert.equal(result.serviciosActivos, 2)
-    assert.equal(result.candidatos, 4)
+    assert.equal(result.serviciosActivos, 1)
+    assert.equal(result.candidatos, 2)
     assert.equal(result.existentes, 1)
-    assert.equal(result.creados, 3)
+    assert.equal(result.creados, 1)
 
     const createManyArgs = created.data as {
       data: Array<{ ciudadanoId: string; servicioId: string; periodo: string }>
@@ -79,7 +79,7 @@ describe('generateMonthlyDebts', () => {
     assert.equal(createManyArgs.skipDuplicates, true)
     assert.deepEqual(
       createManyArgs.data.map((item) => `${item.ciudadanoId}:${item.servicioId}`),
-      ['ciudadano-1:servicio-basura', 'ciudadano-2:servicio-agua', 'ciudadano-2:servicio-basura'],
+      ['ciudadano-2:servicio-agua'],
     )
     assert.equal(createManyArgs.data.every((item) => item.periodo === '2026-06'), true)
   })
