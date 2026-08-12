@@ -668,11 +668,11 @@ export default function DashboardPage() {
           : 'bg-[linear-gradient(180deg,#f8fafc_0%,#eef4f8_100%)] text-slate-900',
       )}
     >
-      <header className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+      <header className="mx-auto grid max-w-7xl gap-3 px-3 pt-3 sm:px-6 sm:pt-5 lg:flex lg:items-center lg:justify-between lg:px-8">
         <AppLink
           href="/"
           className={cn(
-            'inline-flex items-center gap-3 rounded-full px-4 py-2 shadow-sm backdrop-blur transition-colors',
+            'flex w-full items-center gap-3 rounded-2xl px-4 py-2 shadow-sm backdrop-blur transition-colors sm:rounded-full',
             theme === 'dark'
               ? 'border border-slate-700 bg-slate-900/90 hover:border-sky-500/30 hover:bg-slate-800'
               : 'border border-slate-200 bg-white/90 hover:border-[#0f3042]/20 hover:bg-white',
@@ -692,14 +692,14 @@ export default function DashboardPage() {
           </div>
         </AppLink>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="grid w-full grid-cols-[auto_auto_minmax(0,1fr)] gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
           <RoutePills variant={theme === 'dark' ? 'light' : 'dark'} />
           <ThemeToggle />
           <button
             type="button"
             onClick={handleLogout}
             className={cn(
-              'inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+              'inline-flex min-h-11 w-full items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-colors sm:w-auto',
               theme === 'dark'
                 ? 'border border-slate-700 bg-slate-900 text-slate-200 hover:border-rose-500/40 hover:text-rose-300'
                 : 'border border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:text-rose-700',
