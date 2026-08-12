@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict'
 import { before, describe, it } from 'node:test'
-import type { generateMonthlyDebts as generateMonthlyDebtsType } from '../src/services/adeudos.js'
+import type {
+  backfillCitizenWaterDebts as backfillCitizenWaterDebtsType,
+  buildMonthlyPeriods as buildMonthlyPeriodsType,
+  generateMonthlyDebts as generateMonthlyDebtsType,
+} from '../src/services/adeudos.js'
 
 let generateMonthlyDebts: typeof generateMonthlyDebtsType
+let backfillCitizenWaterDebts: typeof backfillCitizenWaterDebtsType
+let buildMonthlyPeriods: typeof buildMonthlyPeriodsType
 
 before(async () => {
   process.env.DATABASE_URL ??= 'postgresql://user:pass@localhost:5432/sicose_test'
@@ -10,7 +16,11 @@ before(async () => {
   process.env.REDIS_URL ??= 'redis://localhost:6379'
   process.env.JWT_SECRET ??= 'test-secret-with-at-least-sixteen-chars'
 
-  ;({ generateMonthlyDebts } = await import('../src/services/adeudos.js'))
+  ;({
+    generateMonthlyDebts,
+    backfillCitizenWaterDebts,
+    buildMonthlyPeriods,
+  } = await import('../src/services/adeudos.js'))
 })
 
 function createDebtGenerationClient() {
@@ -47,6 +57,39 @@ function createDebtGenerationClient() {
 
   const client = {
     $transaction: async <T>(callback: (transaction: typeof tx) => Promise<T>) => callback(tx),
+  }
+
+  return { client, created }
+}
+
+function createBackfillClient() {
+  const created = {
+    data: undefined as unknown,
+  }
+
+  const client = {
+    ciudadano: {
+      findUnique: async () => ({ id: 'ciudadano-1' }),
+    },
+    servicio: {
+      findMany: async () => [
+        { id: 'servicio-agua', nombre: 'Agua potable' },
+        { id: 'servicio-basura', nombre: 'Basura' },
+      ],
+    },
+    adeudo: {
+      findMany: async () => [
+        {
+          ciudadanoId: 'ciudadano-1',
+          servicioId: 'servicio-agua',
+          periodo: '2025-01',
+        },
+      ],
+      createMany: async (args: unknown) => {
+        created.data = args
+        return { count: 14 }
+      },
+    },
   }
 
   return { client, created }
@@ -94,5 +137,63 @@ describe('generateMonthlyDebts', () => {
         message: 'Invalid period format. Expected YYYY-MM',
       },
     )
+  })
+})
+
+describe('backfillCitizenWaterDebts', () => {
+  it('fills the monthly water history from 2025 for a new citizen', async () => {
+    const { client, created } = createBackfillClient()
+
+    const result = await backfillCitizenWaterDebts(
+      'ciudadano-1',
+      client as never,
+      {
+        startYear: 2025,
+        startMonth: 1,
+        endDate: new Date('2026-03-15T00:00:00.000Z'),
+      },
+    )
+
+    assert.equal(result.ciudadanoId, 'ciudadano-1')
+    assert.equal(result.periodos, 15)
+    assert.equal(result.serviciosActivos, 1)
+    assert.equal(result.candidatos, 15)
+    assert.equal(result.existentes, 1)
+    assert.equal(result.creados, 14)
+
+    const createManyArgs = created.data as {
+      data: Array<{ ciudadanoId: string; servicioId: string; periodo: string; monto: number }>
+      skipDuplicates: boolean
+    }
+
+    assert.equal(createManyArgs.skipDuplicates, true)
+    assert.equal(createManyArgs.data.length, 14)
+    assert.equal(createManyArgs.data.every((item) => item.monto === 30), true)
+    assert.equal(
+      createManyArgs.data.some((item) => item.periodo === '2025-01'),
+      false,
+    )
+    assert.equal(
+      createManyArgs.data.some((item) => item.periodo === '2026-03'),
+      true,
+    )
+  })
+})
+
+describe('buildMonthlyPeriods', () => {
+  it('builds a closed range of monthly periods', () => {
+    assert.deepEqual(
+      buildMonthlyPeriods(2025, 1, new Date('2025-03-10T00:00:00.000Z')),
+      ['2025-01', '2025-02', '2025-03'],
+    )
+  })
+
+  it('rejects invalid start coordinates', () => {
+    assert.throws(() => buildMonthlyPeriods(1999, 1), {
+      message: 'Invalid start year. Expected a year between 2000 and 2100',
+    })
+    assert.throws(() => buildMonthlyPeriods(2025, 0), {
+      message: 'Invalid start month. Expected a month between 1 and 12',
+    })
   })
 })

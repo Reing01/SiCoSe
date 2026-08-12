@@ -3,6 +3,8 @@ import { prisma } from "../lib/prisma.js";
 
 const WATER_SERVICE_NAME_PATTERN = /agua/i;
 export const WATER_MONTHLY_FEE_MXN = 30;
+export const WATER_BILLING_START_YEAR = 2025;
+export const WATER_BILLING_START_MONTH = 1;
 
 type PrismaClientLike = Pick<
   typeof prisma,
@@ -33,6 +35,12 @@ export type ListPendingDebtsInput = {
   estado?: string;
 };
 
+export type BackfillCitizenDebtsInput = {
+  startYear?: number;
+  startMonth?: number;
+  endDate?: Date;
+};
+
 function getCurrentPeriod(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
@@ -43,6 +51,38 @@ function getDefaultDueDate(periodo: string) {
   const month = Number(monthText);
 
   return new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+}
+
+export function buildMonthlyPeriods(
+  startYear: number,
+  startMonth: number,
+  endDate = new Date(),
+) {
+  if (!Number.isInteger(startYear) || startYear < 2000 || startYear > 2100) {
+    throw new Error("Invalid start year. Expected a year between 2000 and 2100");
+  }
+
+  if (!Number.isInteger(startMonth) || startMonth < 1 || startMonth > 12) {
+    throw new Error("Invalid start month. Expected a month between 1 and 12");
+  }
+
+  const periods: string[] = [];
+  const cursor = new Date(Date.UTC(startYear, startMonth - 1, 1));
+  const endCursor = new Date(
+    Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), 1),
+  );
+
+  while (cursor <= endCursor) {
+    periods.push(
+      `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(
+        2,
+        "0",
+      )}`,
+    );
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+
+  return periods;
 }
 
 function normalizePeriod(periodo?: string) {
@@ -132,6 +172,117 @@ export async function generateMonthlyDebts(
       omitidos: existingDebts.length,
     };
   });
+}
+
+function buildDebtKey(
+  ciudadanoId: string,
+  servicioId: string,
+  periodo: string,
+) {
+  return `${ciudadanoId}:${servicioId}:${periodo}`;
+}
+
+export async function backfillCitizenWaterDebts(
+  ciudadanoId: string,
+  client: Pick<typeof prisma, "ciudadano" | "servicio" | "adeudo"> = prisma,
+  input: BackfillCitizenDebtsInput = {},
+) {
+  const startYear = input.startYear ?? WATER_BILLING_START_YEAR;
+  const startMonth = input.startMonth ?? WATER_BILLING_START_MONTH;
+  const periods = buildMonthlyPeriods(startYear, startMonth, input.endDate);
+
+  const [ciudadano, servicios, existingDebts] = await Promise.all([
+    client.ciudadano.findUnique({
+      where: { id: ciudadanoId },
+      select: { id: true },
+    }),
+    client.servicio.findMany({
+      select: {
+        id: true,
+        nombre: true,
+      },
+    }),
+    client.adeudo.findMany({
+      where: {
+        ciudadanoId,
+        periodo: {
+          in: periods,
+        },
+      },
+      select: {
+        ciudadanoId: true,
+        servicioId: true,
+        periodo: true,
+      },
+    }),
+  ]);
+
+  if (!ciudadano) {
+    return {
+      ciudadanoId,
+      periodos: periods.length,
+      serviciosActivos: 0,
+      candidatos: 0,
+      existentes: existingDebts.length,
+      creados: 0,
+    };
+  }
+
+  const waterServices = servicios.filter((service) =>
+    WATER_SERVICE_NAME_PATTERN.test(service.nombre),
+  );
+
+  if (waterServices.length === 0) {
+    return {
+      ciudadanoId,
+      periodos: periods.length,
+      serviciosActivos: 0,
+      candidatos: 0,
+      existentes: existingDebts.length,
+      creados: 0,
+    };
+  }
+
+  const existingKeys = new Set(
+    existingDebts.map((debt) =>
+      buildDebtKey(debt.ciudadanoId, debt.servicioId, debt.periodo),
+    ),
+  );
+  const data: Prisma.AdeudoCreateManyInput[] = [];
+
+  for (const periodo of periods) {
+    for (const servicio of waterServices) {
+      const key = buildDebtKey(ciudadanoId, servicio.id, periodo);
+
+      if (!existingKeys.has(key)) {
+        data.push({
+          ciudadanoId,
+          servicioId: servicio.id,
+          monto: WATER_MONTHLY_FEE_MXN,
+          periodo,
+          vencimiento: getDefaultDueDate(periodo),
+          pagado: false,
+          estado: "pendiente",
+        });
+      }
+    }
+  }
+
+  if (data.length > 0) {
+    await client.adeudo.createMany({
+      data,
+      skipDuplicates: true,
+    });
+  }
+
+  return {
+    ciudadanoId,
+    periodos: periods.length,
+    serviciosActivos: waterServices.length,
+    candidatos: periods.length * waterServices.length,
+    existentes: existingDebts.length,
+    creados: data.length,
+  };
 }
 
 function buildPeriodFilter(year?: number, month?: number) {

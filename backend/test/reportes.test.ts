@@ -35,7 +35,7 @@ function createReportClient() {
 
   const currentPayments = [
     {
-      monto: 45.5,
+      monto: 30,
       fecha: new Date('2026-06-05T10:00:00.000Z'),
       adeudo: {
         servicio: {

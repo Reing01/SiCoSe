@@ -12,6 +12,7 @@
     "typecheck": "npm run prisma:generate && tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node scripts/run-tests.mjs",
     "seed": "tsx prisma/seed.ts",
+    "normalize:water-history": "tsx scripts/normalize-water-history.ts",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:status": "prisma migrate status",
     "prisma:generate": "prisma generate",

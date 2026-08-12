@@ -14,6 +14,7 @@
     "desktop:dev": "concurrently -c \"cyan,magenta,green\" \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run electron:dev\"",
     "desktop:build": "npm run build && electron-builder --config electron-builder.json --win nsis",
     "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "normalize:water-history": "npm run normalize:water-history --prefix backend",
     "deploy:cluster:4nodos": "node ./scripts/deploy-swarm-4nodos.mjs",
     "deploy:swarm:4nodos": "node ./scripts/deploy-swarm-4nodos.mjs",
     "lint": "eslint --config eslint.config.js .",

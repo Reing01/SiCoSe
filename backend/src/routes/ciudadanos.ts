@@ -4,6 +4,11 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { authenticate, requireResource } from '../middleware/require-role.js'
 import { auditLogger } from '../services/audit.js'
+import {
+  backfillCitizenWaterDebts,
+  WATER_BILLING_START_MONTH,
+  WATER_BILLING_START_YEAR,
+} from '../services/adeudos.js'
 import type { AuthenticatedRequest } from '../types/auth.js'
 
 const booleanQuerySchema = z.preprocess((value) => {
@@ -342,6 +347,15 @@ ciudadanosRouter.post(
           },
         })
 
+        const debtBackfill = await backfillCitizenWaterDebts(
+          created.id,
+          tx,
+          {
+            startYear: WATER_BILLING_START_YEAR,
+            startMonth: WATER_BILLING_START_MONTH,
+          },
+        )
+
         await auditLogger(tx, {
           usuarioId: request.user?.id ?? '',
           accion: 'ALTA_CIUDADANO',
@@ -352,10 +366,16 @@ ciudadanosRouter.post(
             email: created.email,
             claveCatastral: created.clave_catastral,
             zona: created.zona,
+            adeudosGenerados: debtBackfill.creados,
+            periodosCubiertos: debtBackfill.periodos,
           },
         })
 
-        return created
+        return {
+          ...created,
+          adeudosGenerados: debtBackfill.creados,
+          periodosCubiertos: debtBackfill.periodos,
+        }
       })
 
       return response.status(201).json({
