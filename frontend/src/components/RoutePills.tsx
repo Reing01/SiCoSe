@@ -118,7 +118,7 @@ export default function RoutePills({
       <nav
         aria-label={ariaLabel}
         className={cn(
-          "gap-2 sm:flex sm:flex-wrap",
+          "gap-2 sm:flex sm:flex-wrap lg:flex-nowrap",
           isOpen
             ? cn(
                 "fixed inset-x-3 bottom-3 z-30 grid max-h-[min(48vh,24rem)] grid-cols-2 gap-2 overflow-y-auto rounded-[1.75rem] border p-3 shadow-2xl sm:absolute sm:right-0 sm:top-12 sm:min-w-48 sm:flex sm:flex-wrap sm:gap-2 sm:overflow-visible sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:max-h-none",

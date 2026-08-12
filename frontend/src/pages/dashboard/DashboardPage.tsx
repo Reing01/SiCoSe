@@ -692,7 +692,7 @@ export default function DashboardPage() {
           </div>
         </AppLink>
 
-        <div className="grid w-full grid-cols-[auto_auto_minmax(0,1fr)] gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+        <div className="grid w-full grid-cols-[auto_auto_minmax(0,1fr)] gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center lg:flex-nowrap">
           <RoutePills variant={theme === 'dark' ? 'light' : 'dark'} />
           <ThemeToggle />
           <button
