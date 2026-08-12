@@ -177,7 +177,7 @@ describe("registerCashPayment", () => {
       ),
       {
         name: "Error",
-        message: "Payment amount cannot exceed the pending debt balance of 75",
+        message: "El monto no puede superar el saldo pendiente del adeudo seleccionado (75)",
         statusCode: 400,
       },
     );

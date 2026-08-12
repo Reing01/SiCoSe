@@ -132,7 +132,7 @@ export async function registerCashPayment(
     if (input.monto > pendingAmount) {
       throw new PaymentError(
         400,
-        `Payment amount cannot exceed the pending debt balance of ${pendingAmount}`,
+        `El monto no puede superar el saldo pendiente del adeudo seleccionado (${pendingAmount})`,
       );
     }
 
@@ -274,7 +274,7 @@ export async function registerTransferPayment(
     if (input.monto > pendingAmount) {
       throw new PaymentError(
         400,
-        `Payment amount cannot exceed the pending debt balance of ${pendingAmount}`,
+        `El monto no puede superar el saldo pendiente del adeudo seleccionado (${pendingAmount})`,
       );
     }
 

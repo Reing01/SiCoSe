@@ -168,22 +168,22 @@ function ReportArtifactPanel({ report }: { report: MonthlyReportRecord }) {
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <SummaryCard
-                label="Recaudado actual"
+                label="Recaudado del agua"
                 value={formatCurrency(summary.recaudadoActual)}
                 detail="Mes elegido"
               />
               <SummaryCard
-                label="Recaudado anterior"
+                label="Recaudado anterior del agua"
                 value={formatCurrency(summary.recaudadoAnterior)}
                 detail={`Periodo ${summary.periodoAnterior}`}
               />
               <SummaryCard
-                label="Cartera vencida"
+                label="Cartera vencida de agua"
                 value={formatCurrency(summary.carteraVencida)}
                 detail="Adeudos morosos"
               />
               <SummaryCard
-                label="Morosos"
+                label="Morosos de agua"
                 value={String(summary.morosos)}
                 detail="Top vencidos"
               />
@@ -192,7 +192,7 @@ function ReportArtifactPanel({ report }: { report: MonthlyReportRecord }) {
             <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
               <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                 <div className="border-b border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200">
-                  Recaudación por servicio
+                  Recaudación del agua
                 </div>
                 <div className="max-h-96 overflow-auto">
                   <table className="min-w-full text-left text-sm">
@@ -231,7 +231,7 @@ function ReportArtifactPanel({ report }: { report: MonthlyReportRecord }) {
                             colSpan={4}
                             className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400"
                           >
-                            No hay datos por servicio para este periodo.
+                            No hay datos de agua para este periodo.
                           </td>
                         </tr>
                       )}
@@ -479,7 +479,7 @@ export default function ReportsPage() {
                     : 'border-[#0f3042]/10 bg-[#0f3042]/5 text-[#0f3042]',
                 )}
               >
-                Reportes operativos
+                Reportes operativos del agua
               </p>
               <p
                 className={cn(
@@ -495,7 +495,7 @@ export default function ReportsPage() {
                   theme === 'dark' ? 'text-white' : 'text-slate-950',
                 )}
               >
-                Genera, exporta e imprime reportes operativos
+                Genera, exporta e imprime reportes operativos del agua
               </h1>
               <p
                 className={cn(
@@ -503,9 +503,8 @@ export default function ReportsPage() {
                   theme === 'dark' ? 'text-slate-300' : 'text-slate-600',
                 )}
               >
-                Centraliza el reporte mensual de recaudación, el comparativo
-                contra el mes anterior, la cartera vencida, la recaudación por
-                servicio y el top de morosos.
+                Centraliza el reporte mensual del agua, el comparativo contra el
+                mes anterior, la cartera vencida del agua y el top de morosos.
               </p>
               <div className="flex flex-wrap gap-3">
                 {reportSignals.map((signal) => (
@@ -619,7 +618,7 @@ export default function ReportsPage() {
               )}
             >
               Individual para abrir el comprobante de un ciudadano específico y
-              general para el resumen mensual consolidado.
+              general para el resumen mensual consolidado del agua.
             </p>
           </div>
 
@@ -649,7 +648,7 @@ export default function ReportsPage() {
         <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
             <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
-              <CardTitle>Resumen del corte</CardTitle>
+              <CardTitle>Resumen mensual del agua</CardTitle>
               <CardDescription>
                 Este bloque concentra el periodo activo, el tipo de exportación y
                 el estado del último cierre para que la revisión sea más rápida.
@@ -687,7 +686,7 @@ export default function ReportsPage() {
             <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
               <CardTitle>Uso rápido</CardTitle>
               <CardDescription>
-                Un vistazo rápido a lo que cubre la pantalla de reportes.
+                Un vistazo rápido a lo que cubre la pantalla de reportes del agua.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3 p-5">
@@ -762,7 +761,7 @@ export default function ReportsPage() {
             <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
               <CardTitle>Generación y exportación</CardTitle>
               <CardDescription>
-                Elige el periodo y ejecuta el reporte mensual que necesites.
+                Elige el periodo y ejecuta el reporte mensual del agua que necesites.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5 p-5">
@@ -811,7 +810,7 @@ export default function ReportsPage() {
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-                El reporte integra la recaudación del periodo, la cartera
+                El reporte integra la recaudación del agua del periodo, la cartera
                 vencida, el comparativo contra el mes anterior y los principales
                 morosos para facilitar la revisión operativa.
               </div>
@@ -825,12 +824,12 @@ export default function ReportsPage() {
               <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
                 <CardTitle>Vista previa del resumen</CardTitle>
                 <CardDescription>
-                  Cuando generes un reporte verás aquí el resumen operativo.
+                  Cuando generes un reporte verás aquí el resumen operativo del agua.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-5">
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
-                  Genera el reporte para revisar recaudación por servicio, cartera
+                  Genera el reporte para revisar la recaudación del agua, la cartera
                   vencida y los top morosos del periodo seleccionado.
                 </div>
               </CardContent>

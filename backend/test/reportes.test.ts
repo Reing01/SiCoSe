@@ -112,23 +112,60 @@ function createReportClient() {
     },
   ]
 
+  const isWaterServiceQuery = (serviceName?: {
+    contains?: string
+    is?: { nombre?: { contains?: string } }
+  }) =>
+    Boolean(
+      (serviceName?.contains && /agua/i.test(serviceName.contains)) ||
+        (serviceName?.is?.nombre?.contains &&
+          /agua/i.test(serviceName.is.nombre.contains)),
+    )
+
+  const waterPayments = currentPayments.filter((payment) =>
+    /agua/i.test(payment.adeudo.servicio.nombre),
+  )
+  const waterPreviousPayments = previousPayments.filter((payment) =>
+    /agua/i.test(payment.adeudo.servicio.nombre),
+  )
+  const waterOverdueDebts = overdueDebts.filter((debt) =>
+    /agua/i.test(debt.servicio.nombre),
+  )
+
   const tx = {
     pago: {
       findMany: async (args: {
-        where: { fecha: { gte: Date; lte: Date } }
+        where: {
+          fecha: { gte: Date; lte: Date }
+          adeudo?: { servicio?: { is?: { nombre?: { contains?: string } } } }
+        }
       }) => {
         const startMonth = args.where.fecha.gte.getUTCMonth()
+        const basePayments = startMonth === 5 ? waterPayments : waterPreviousPayments
+
+        if (isWaterServiceQuery(args.where.adeudo?.servicio)) {
+          return basePayments
+        }
+
         return startMonth === 5 ? currentPayments : previousPayments
       },
     },
     adeudo: {
-      count: async () => overdueDebts.length,
-      aggregate: async () => ({
+      count: async (args?: { where?: { servicio?: { is?: { nombre?: { contains?: string } } } } }) =>
+        isWaterServiceQuery(args?.where?.servicio)
+          ? waterOverdueDebts.length
+          : overdueDebts.length,
+      aggregate: async (args?: { where?: { servicio?: { is?: { nombre?: { contains?: string } } } } }) => ({
         _sum: {
-          monto: overdueDebts.reduce((sum, debt) => sum + debt.monto, 0),
+          monto: isWaterServiceQuery(args?.where?.servicio)
+            ? waterOverdueDebts.reduce((sum, debt) => sum + debt.monto, 0)
+            : overdueDebts.reduce((sum, debt) => sum + debt.monto, 0),
         },
       }),
-      findMany: async () => overdueDebts,
+      findMany: async (args?: { where?: { servicio?: { is?: { nombre?: { contains?: string } } } } }) =>
+        isWaterServiceQuery(args?.where?.servicio)
+          ? waterOverdueDebts
+          : overdueDebts,
     },
     reporte: {
       create: async (args: { data: { archivo_url: string } }) => {
@@ -190,9 +227,9 @@ describe('generateMonthlyReport', () => {
 
     assert.equal(result.periodo, '2026-06')
     assert.equal(result.previousPeriodo, '2026-05')
-    assert.equal(result.serviceRevenue.length, 2)
-    assert.equal(result.topMorosos.length, 2)
-    assert.equal(result.carteraVencida, 175)
+    assert.equal(result.serviceRevenue.length, 1)
+    assert.equal(result.topMorosos.length, 1)
+    assert.equal(result.carteraVencida, 95)
     assert.equal(result.report.periodo, '2026-06')
     assert.match(
       result.report.archivo_url,

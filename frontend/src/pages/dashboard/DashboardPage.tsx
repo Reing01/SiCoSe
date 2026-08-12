@@ -47,7 +47,7 @@ const dashboardWorkflow = [
     step: '01',
     title: 'Consulta métricas',
     description:
-      'Revisa recaudación, cobertura y morosidad del periodo seleccionado.',
+      'Revisa la recaudación del agua, cobertura y morosidad del periodo seleccionado.',
   },
   {
     step: '02',
@@ -64,7 +64,7 @@ const dashboardWorkflow = [
 ] as const
 
 const dashboardSignals = [
-  'Cobranza mensual',
+  'Cobranza de agua',
   'Cobertura',
   'Morosidad',
   'PDF / XLSX',
@@ -122,7 +122,7 @@ function getDebtorTone(value: number): KpiTone {
 function buildCards(metrics: DashboardMetrics): KpiCard[] {
   return [
     {
-      label: 'Recaudado este mes',
+      label: 'Recaudado del agua',
       value: formatCurrency(metrics.totalRecaudadoMes),
       detail: `${metrics.pagosRegistradosMes} pagos registrados`,
       tone: metrics.totalRecaudadoMes > 0 ? 'green' : 'yellow',
@@ -136,7 +136,7 @@ function buildCards(metrics: DashboardMetrics): KpiCard[] {
       icon: '%',
     },
     {
-      label: 'Pendiente del mes',
+      label: 'Pendiente del agua',
       value:
         metrics.totalPendienteMes === null
           ? 'No disponible'
@@ -156,7 +156,7 @@ function buildCards(metrics: DashboardMetrics): KpiCard[] {
     {
       label: 'Morosos',
       value: String(metrics.numeroMorosos),
-      detail: 'Ciudadanos con adeudo pendiente',
+      detail: 'Ciudadanos con adeudo de agua pendiente',
       tone: getDebtorTone(metrics.numeroMorosos),
       icon: '!',
     },
@@ -206,7 +206,7 @@ function RevenueLineChart({ metrics, theme }: { metrics: DashboardMetrics; theme
   return (
     <Card className={cn('shadow-sm', theme === 'dark' ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200/80 bg-white/95')}>
       <CardHeader className="space-y-2 p-4 sm:p-5">
-        <CardTitle>Recaudación histórica</CardTitle>
+        <CardTitle>Recaudación histórica del agua</CardTitle>
         <CardDescription>Últimos 6 meses registrados.</CardDescription>
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
@@ -734,10 +734,10 @@ export default function DashboardPage() {
                   theme === 'dark' ? 'text-white' : 'text-slate-950',
                 )}
               >
-                Situación financiera del mes
+                Situación financiera del cobro de agua
               </h1>
             <p className={cn('text-sm leading-6 sm:text-base sm:leading-7', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
-              KPIs de recaudación, cobertura y morosidad para la planeación de la junta auxiliar.
+              KPIs de recaudación, cobertura y morosidad del agua para la planeación de la junta auxiliar.
             </p>
           </div>
         </div>

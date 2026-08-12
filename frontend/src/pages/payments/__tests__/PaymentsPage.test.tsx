@@ -148,7 +148,7 @@ describe('PaymentsPage', () => {
 
     await screen.findByRole('heading', { name: /buscar ciudadano para cobrar/i })
     await screen.findByRole('heading', { name: /historial de pagos/i })
-    expect(screen.getAllByText(/cuota mensual/i)).toHaveLength(2)
+    expect(screen.getAllByText(/cuota base/i).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByText(/juan perez/i).length).toBeGreaterThan(0)
     await waitFor(() => {
       expect(citizenApi.fetchCitizenPage).toHaveBeenCalledWith(

@@ -2,6 +2,10 @@ import { prisma } from "../lib/prisma.js";
 import { withRedis } from "../lib/redis.js";
 
 const DASHBOARD_CACHE_TTL_SECONDS = 300;
+const WATER_SERVICE_NAME_FILTER = {
+  contains: "agua",
+  mode: "insensitive" as const,
+};
 
 type PrismaClientLike = Pick<typeof prisma, "pago" | "adeudo">;
 type RedisCache = {
@@ -121,6 +125,13 @@ async function calculateDashboardMetrics(
   const previousDate = new Date(date);
   previousDate.setMonth(previousDate.getMonth() - 1);
   const previousRange = getMonthRange(previousDate);
+  const waterDebtFilter = {
+    servicio: {
+      is: {
+        nombre: WATER_SERVICE_NAME_FILTER,
+      },
+    },
+  };
 
   const [
     currentPayments,
@@ -138,6 +149,7 @@ async function calculateDashboardMetrics(
           gte: start,
           lt: end,
         },
+        adeudo: waterDebtFilter,
       },
       _sum: { monto: true },
     }),
@@ -147,16 +159,21 @@ async function calculateDashboardMetrics(
           gte: previousRange.start,
           lt: previousRange.end,
         },
+        adeudo: waterDebtFilter,
       },
       _sum: { monto: true },
     }),
     client.adeudo.count({
-      where: { periodo },
+      where: {
+        periodo,
+        ...waterDebtFilter,
+      },
     }),
     client.adeudo.count({
       where: {
         periodo,
         OR: [{ pagado: true }, { estado: "pagado" }],
+        ...waterDebtFilter,
       },
     }),
     client.adeudo.aggregate({
@@ -166,6 +183,7 @@ async function calculateDashboardMetrics(
         NOT: {
           estado: "pagado",
         },
+        ...waterDebtFilter,
       },
       _sum: {
         monto: true,
@@ -179,6 +197,7 @@ async function calculateDashboardMetrics(
         NOT: {
           estado: "pagado",
         },
+        ...waterDebtFilter,
       },
     }),
     client.pago.count({
@@ -187,6 +206,7 @@ async function calculateDashboardMetrics(
           gte: start,
           lt: end,
         },
+        adeudo: waterDebtFilter,
       },
     }),
     Promise.all(
@@ -201,6 +221,7 @@ async function calculateDashboardMetrics(
               gte: range.start,
               lt: range.end,
             },
+            adeudo: waterDebtFilter,
           },
           _sum: { monto: true },
         });

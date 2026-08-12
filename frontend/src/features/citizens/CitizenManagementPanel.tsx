@@ -17,6 +17,7 @@ import { useMediaQuery } from '../../lib/use-media-query'
 import {
   MONTHLY_WATER_FEE_MXN,
   buildMonthlyPeriods,
+  isWaterServiceName,
   formatPeriodLabel,
 } from '../../lib/water-billing'
 import { readAuthSession } from '../auth/auth.session'
@@ -171,10 +172,6 @@ function formatCurrency(value: number) {
   }).format(value)
 }
 
-function isWaterService(serviceName: string) {
-  return /agua/i.test(serviceName)
-}
-
 function SummaryCard({ label, value, detail }: SummaryCardProps) {
   return (
     <Card className="border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
@@ -222,7 +219,7 @@ function CitizenMonthlyHistoryPanel({
     }
 
     const waterAdeudos = historyState.history.adeudos.filter((adeudo) =>
-      isWaterService(adeudo.servicio.nombre),
+      isWaterServiceName(adeudo.servicio.nombre),
     )
     const relevantAdeudos = waterAdeudos.length > 0 ? waterAdeudos : historyState.history.adeudos
 
@@ -230,7 +227,7 @@ function CitizenMonthlyHistoryPanel({
     const paymentCountByPeriod = new Map<string, number>()
 
     for (const payment of historyState.history.pagos) {
-      if (waterAdeudos.length > 0 && !isWaterService(payment.adeudo.servicio.nombre)) {
+      if (waterAdeudos.length > 0 && !isWaterServiceName(payment.adeudo.servicio.nombre)) {
         continue
       }
 

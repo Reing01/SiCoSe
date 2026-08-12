@@ -25,6 +25,7 @@ import { fetchGeneratedFile, openBlobInNewTab } from '../../lib/download'
 import {
   MONTHLY_WATER_FEE_MXN,
   buildMonthlyPeriods,
+  isWaterServiceName,
   formatPeriodLabel,
 } from '../../lib/water-billing'
 import { navigateTo } from '../../lib/navigation'
@@ -141,10 +142,6 @@ function formatDate(value: string) {
   return dateFormatter.format(new Date(value))
 }
 
-function isWaterService(serviceName: string) {
-  return /agua/i.test(serviceName)
-}
-
 function getCitizenFullName(citizen: CitizenRecord) {
   return `${citizen.nombre} ${citizen.apellido}`.trim()
 }
@@ -214,6 +211,7 @@ export default function PaymentsPage() {
   const selectedCitizenName = selectedCitizen ? getCitizenFullName(selectedCitizen) : ''
   const selectedCitizenLabel = selectedCitizenName || 'Busca un ciudadano para iniciar el cobro'
   const selectedCitizenKey = selectedCitizen?.claveCatastral ?? ''
+  const selectedDebtAmount = selectedDebt?.monto ?? MONTHLY_WATER_FEE_MXN
   const totalWaterDebts =
     debtState.kind === 'ready' ? debtState.debts.length : 0
   const totalWaterPending =
@@ -225,7 +223,7 @@ export default function PaymentsPage() {
     }
 
     const waterPayments = historyState.history.pagos.filter((payment) =>
-      isWaterService(payment.adeudo.servicio.nombre),
+      isWaterServiceName(payment.adeudo.servicio.nombre),
     )
 
     const basePayments = waterPayments.length > 0 ? waterPayments : historyState.history.pagos
@@ -243,7 +241,7 @@ export default function PaymentsPage() {
     }
 
     const waterAdeudos = historyState.history.adeudos.filter((adeudo) =>
-      isWaterService(adeudo.servicio.nombre),
+      isWaterServiceName(adeudo.servicio.nombre),
     )
     const relevantAdeudos = waterAdeudos.length > 0 ? waterAdeudos : historyState.history.adeudos
 
@@ -251,7 +249,7 @@ export default function PaymentsPage() {
     const paymentCountByPeriod = new Map<string, number>()
 
     for (const payment of historyState.history.pagos) {
-      if (waterAdeudos.length > 0 && !isWaterService(payment.adeudo.servicio.nombre)) {
+      if (waterAdeudos.length > 0 && !isWaterServiceName(payment.adeudo.servicio.nombre)) {
         continue
       }
 
@@ -394,7 +392,7 @@ export default function PaymentsPage() {
         }
 
         const waterDebts = response.data.filter((debt) =>
-          isWaterService(debt.servicio.nombre),
+          isWaterServiceName(debt.servicio.nombre),
         )
         const totalPending = waterDebts.reduce((sum, debt) => sum + debt.monto, 0)
 
@@ -878,7 +876,7 @@ export default function PaymentsPage() {
             <CardContent className="flex items-start justify-between gap-4 p-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-                  Cuota mensual
+                  Cuota base
                 </p>
                 <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
                   {formatCurrency(MONTHLY_WATER_FEE_MXN)}
@@ -1132,7 +1130,19 @@ export default function PaymentsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="amount">Monto</Label>
+                      <div className="flex items-center justify-between gap-3">
+                        <Label htmlFor="amount">Monto a registrar</Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setAmount(String(selectedDebtAmount))}
+                          disabled={!selectedDebt}
+                          className="h-8 px-3 text-xs"
+                        >
+                          Usar saldo exacto
+                        </Button>
+                      </div>
                       <Input
                         id="amount"
                         type="number"
@@ -1141,6 +1151,12 @@ export default function PaymentsPage() {
                         value={amount}
                         onChange={(event) => setAmount(event.target.value)}
                       />
+                      <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                        La cuota base del agua es de {formatCurrency(MONTHLY_WATER_FEE_MXN)}
+                        por mes. El saldo actual del adeudo seleccionado es{' '}
+                        {formatCurrency(selectedDebtAmount)}. Puedes registrar un
+                        parcial si lo necesitas, siempre que no supere ese saldo.
+                      </p>
                     </div>
 
                     {method === 'transferencia' ? (
@@ -1262,13 +1278,13 @@ export default function PaymentsPage() {
                         </div>
                         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
                           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-                            Cuota mensual
+                            Cuota base
                           </p>
                           <p className="mt-2 text-sm font-semibold">
                             {formatCurrency(MONTHLY_WATER_FEE_MXN)}
                           </p>
                           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            Cuota fija para el servicio de agua
+                            El sistema trabaja con cobro mensual de agua.
                           </p>
                         </div>
                       </div>

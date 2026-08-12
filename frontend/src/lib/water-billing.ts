@@ -15,6 +15,10 @@ const MONTH_NAMES = [
 
 export const MONTHLY_WATER_FEE_MXN = 30
 
+export function isWaterServiceName(serviceName: string) {
+  return /agua/i.test(serviceName)
+}
+
 export type MonthlyPeriod = {
   key: string
   year: number

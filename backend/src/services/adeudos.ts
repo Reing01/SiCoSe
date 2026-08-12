@@ -6,6 +6,11 @@ export const WATER_MONTHLY_FEE_MXN = 30;
 export const WATER_BILLING_START_YEAR = 2025;
 export const WATER_BILLING_START_MONTH = 1;
 
+const WATER_SERVICE_NAME_FILTER = {
+  contains: "agua",
+  mode: "insensitive" as const,
+};
+
 type PrismaClientLike = Pick<
   typeof prisma,
   "ciudadano" | "servicio" | "adeudo" | "$transaction"
@@ -331,6 +336,12 @@ export async function listPendingDebts(
     where.servicioId = input.servicioId;
   }
 
+  where.servicio = {
+    is: {
+      nombre: WATER_SERVICE_NAME_FILTER,
+    },
+  };
+
   if (periodFilter) {
     where.periodo = periodFilter;
   }
@@ -377,6 +388,11 @@ export async function listPendingDebts(
         NOT: {
           estado: "pagado",
         },
+        servicio: {
+          is: {
+            nombre: WATER_SERVICE_NAME_FILTER,
+          },
+        },
       },
     },
     _sum: {
@@ -384,10 +400,8 @@ export async function listPendingDebts(
     },
   });
 
-  const totalPendiente = Math.max(
-    0,
-    (cartera._sum.monto ?? 0) - (paidAggregate._sum.monto ?? 0),
-  );
+  const paidAggregateAmount = paidAggregate._sum?.monto ?? 0;
+  const totalPendiente = Math.max(0, (cartera._sum.monto ?? 0) - paidAggregateAmount);
 
   const adjustedAdeudos = adeudos.map((adeudo) => {
     const paid = adeudo.pagos.reduce((sum, p) => sum + p.monto, 0);

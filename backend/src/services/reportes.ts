@@ -16,6 +16,10 @@ const MUTED_TEXT = "#6B7280";
 const LIGHT_FILL = "#F3F7FA";
 const TABLE_HEADER_FILL = "#DCEAF5";
 const TABLE_BORDER = "#D8E3EC";
+const WATER_SERVICE_NAME_FILTER = {
+  contains: "agua",
+  mode: "insensitive" as const,
+};
 
 type PdfDocument = {
   fontSize(size: number): PdfDocument;
@@ -382,6 +386,16 @@ async function buildMonthlyReportSnapshot(
   const previousPeriodo = getPreviousPeriod(periodo);
   const currentRange = getPeriodRange(periodo);
   const previousRange = getPeriodRange(previousPeriodo);
+  const waterServiceWhere = {
+    nombre: WATER_SERVICE_NAME_FILTER,
+  };
+  const waterPaymentWhere = {
+    adeudo: {
+      servicio: {
+        is: waterServiceWhere,
+      },
+    },
+  };
 
   return client.$transaction(async (tx) => {
     const [currentPayments, previousPayments, topMorososResult] =
@@ -392,6 +406,7 @@ async function buildMonthlyReportSnapshot(
               gte: currentRange.start,
               lte: currentRange.end,
             },
+            ...waterPaymentWhere,
           },
           include: {
             adeudo: {
@@ -410,6 +425,7 @@ async function buildMonthlyReportSnapshot(
               gte: previousRange.start,
               lte: previousRange.end,
             },
+            ...waterPaymentWhere,
           },
           include: {
             adeudo: {
@@ -426,6 +442,9 @@ async function buildMonthlyReportSnapshot(
           const where: Prisma.AdeudoWhereInput = {
             periodo,
             pagado: false,
+            servicio: {
+              is: waterServiceWhere,
+            },
           };
 
           const [total, cartera] = await Promise.all([
@@ -549,7 +568,7 @@ async function buildReportArtifact(
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       tipo: "MENSUAL_EXCEL",
       descripcion:
-        "Exportacion Excel con resumen operativo, recaudacion por servicio y cartera vencida.",
+        "Exportacion Excel con resumen operativo del agua y cartera vencida.",
     };
   }
 
@@ -559,7 +578,7 @@ async function buildReportArtifact(
     contentType: "application/pdf",
     tipo: "MENSUAL_PDF",
     descripcion:
-      "PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.",
+      "PDF institucional con recaudacion del agua, top de morosos y comparativo frente al mes anterior.",
   };
 }
 
@@ -592,12 +611,12 @@ async function buildMonthlyReportPdf(input: {
     addHeader(doc, input.periodo);
     doc.y = 126;
 
-    doc
-      .fillColor(DARK_TEXT)
-      .font("Helvetica")
-      .fontSize(10.5)
-      .text(
-        "Este documento resume la recaudacion mensual, los principales adeudos vencidos y el comportamiento frente al mes anterior.",
+  doc
+    .fillColor(DARK_TEXT)
+    .font("Helvetica")
+    .fontSize(10.5)
+    .text(
+        "Este documento resume la recaudacion mensual del agua, los principales adeudos vencidos y el comportamiento frente al mes anterior.",
         doc.page.margins.left,
         doc.y,
         {
@@ -679,8 +698,8 @@ async function buildMonthlyReportPdf(input: {
       cardWidth,
       cardHeight,
       "Cobranza actual",
-      `${input.serviceRevenue.length} servicios`,
-      "Distribucion por servicio facturado",
+      `${input.serviceRevenue.length} servicio`,
+      "Distribucion del agua facturada",
     );
     addSummaryCard(
       doc,
@@ -695,7 +714,7 @@ async function buildMonthlyReportPdf(input: {
 
     doc.y += cardHeight + 18;
 
-    drawSectionTitle(doc, "Recaudacion por servicio");
+    drawSectionTitle(doc, "Recaudacion del agua");
     drawTable(
       doc,
       [
@@ -834,7 +853,7 @@ async function buildMonthlyReportFile(
     contentType: "application/pdf",
     tipo: "MENSUAL_PDF",
     descripcion:
-      "PDF institucional con recaudacion por servicio, top de morosos y comparativo frente al mes anterior.",
+      "PDF institucional con recaudacion del agua, top de morosos y comparativo frente al mes anterior.",
   };
 }
 
