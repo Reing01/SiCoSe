@@ -290,21 +290,12 @@ test.describe("E2E Integration Flows", () => {
 
     // Mock register payment endpoint
     let registerCount = 0;
-    let resolvePaymentRequestStarted: (() => void) | null = null;
-    let resolvePaymentResponse: (() => void) | null = null;
-    const paymentRequestStarted = new Promise<void>((resolve) => {
-      resolvePaymentRequestStarted = resolve
-    })
-    const paymentResponseReady = new Promise<void>((resolve) => {
-      resolvePaymentResponse = resolve
-    })
     await page.route("**/api/pagos", async (route) => {
       const isPost = route.request().method() === "POST";
       if (isPost) {
         registerCount++;
         paymentRegistered = true;
-        resolvePaymentRequestStarted?.()
-        await paymentResponseReady
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       }
       await route.fulfill({
         status: 201,
@@ -340,9 +331,8 @@ test.describe("E2E Integration Flows", () => {
     const submitBtn = page.getByRole("button", { name: /confirm/i });
 
     await submitBtn.click();
-    await paymentRequestStarted;
+    await page.waitForTimeout(100);
     await expect(submitBtn).toBeDisabled();
-    resolvePaymentResponse?.()
 
     // Wait for success confirmation
     await expect(page.getByText(/Pago confirmado con folio/i)).toBeVisible();
