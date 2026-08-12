@@ -45,6 +45,7 @@ type CachedJsonResponse = {
   key: string
   body: string
   createdAt: number
+  ttlMs: number
 }
 
 type PreparedBody = {
@@ -57,6 +58,7 @@ const DATABASE_NAME = 'sicose-offline-sync'
 const DATABASE_VERSION = 1
 const QUEUE_STORE_NAME = 'queued-requests'
 const CACHE_STORE_NAME = 'json-response-cache'
+const DEFAULT_JSON_CACHE_TTL_MS = 5 * 60 * 1000
 
 const queuedRequestsMemory: OfflineQueuedRequest[] = []
 const cachedResponsesMemory = new Map<string, CachedJsonResponse>()
@@ -161,6 +163,33 @@ function isJsonObjectBody(body: unknown) {
     !(body instanceof URLSearchParams) &&
     !(typeof ReadableStream !== 'undefined' && body instanceof ReadableStream)
   )
+}
+
+function isCachedResponseExpired(entry: CachedJsonResponse) {
+  const ttlMs =
+    Number.isFinite(entry.ttlMs) && entry.ttlMs > 0
+      ? entry.ttlMs
+      : DEFAULT_JSON_CACHE_TTL_MS
+
+  return Date.now() - entry.createdAt >= ttlMs
+}
+
+async function deleteCachedJsonResponse(key: string) {
+  const database = await openDatabase()
+
+  if (!database) {
+    cachedResponsesMemory.delete(key)
+    return
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(CACHE_STORE_NAME, 'readwrite')
+    transaction.objectStore(CACHE_STORE_NAME).delete(key)
+    transaction.oncomplete = () => resolve()
+    transaction.onerror = () => {
+      reject(transaction.error ?? new Error('No se pudo limpiar la caché de respuestas.'))
+    }
+  })
 }
 
 export async function prepareRequestBody(body: unknown): Promise<PreparedBody> {
@@ -395,11 +424,16 @@ export async function incrementQueuedRequestAttempts(id: string) {
   })
 }
 
-export async function storeCachedJsonResponse(key: string, body: string) {
+export async function storeCachedJsonResponse(
+  key: string,
+  body: string,
+  ttlMs = DEFAULT_JSON_CACHE_TTL_MS,
+) {
   const cachedResponse: CachedJsonResponse = {
     key,
     body,
     createdAt: Date.now(),
+    ttlMs,
   }
 
   const database = await openDatabase()
@@ -425,7 +459,14 @@ export async function readCachedJsonResponse(key: string) {
   const database = await openDatabase()
 
   if (!database) {
-    return cachedResponsesMemory.get(key) ?? null
+    const cachedResponse = cachedResponsesMemory.get(key) ?? null
+
+    if (cachedResponse && isCachedResponseExpired(cachedResponse)) {
+      cachedResponsesMemory.delete(key)
+      return null
+    }
+
+    return cachedResponse
   }
 
   return new Promise<CachedJsonResponse | null>((resolve, reject) => {
@@ -434,7 +475,21 @@ export async function readCachedJsonResponse(key: string) {
     const request = store.get(key)
 
     request.onsuccess = () => {
-      resolve((request.result as CachedJsonResponse | undefined) ?? null)
+      const cachedResponse = (request.result as CachedJsonResponse | undefined) ?? null
+
+      if (!cachedResponse) {
+        resolve(null)
+        return
+      }
+
+      if (isCachedResponseExpired(cachedResponse)) {
+        void deleteCachedJsonResponse(key).finally(() => {
+          resolve(null)
+        })
+        return
+      }
+
+      resolve(cachedResponse)
     }
 
     request.onerror = () => {
