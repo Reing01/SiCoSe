@@ -57,27 +57,6 @@ function buildFileName(report: MonthlyReportRecord, format: ReportExportFormat) 
   return report.archivo_path.split('/').pop() ?? `reporte-${report.periodo}.${format}`
 }
 
-const reportWorkflow = [
-  {
-    step: '01',
-    title: 'Selecciona el periodo',
-    description:
-      'Elige el mes que quieres cerrar y revisa el estado operativo del corte.',
-  },
-  {
-    step: '02',
-    title: 'Genera o exporta',
-    description:
-      'Crea el reporte mensual en PDF o XLSX según lo que necesites revisar.',
-  },
-  {
-    step: '03',
-    title: 'Abre y compara',
-    description:
-      'Visualiza el último resumen, compara contra pagos y abre el archivo cuando lo necesites.',
-  },
-] as const
-
 const reportSignals = [
   'PDF mensual',
   'Excel operativo',
@@ -468,8 +447,8 @@ export default function ReportsPage() {
           theme === 'dark' ? 'border-slate-800 bg-slate-950/75' : 'border-slate-200/80 bg-white/75',
         )}
       >
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+          <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
             <div className="max-w-3xl space-y-5">
               <p
                 className={cn(
@@ -549,46 +528,6 @@ export default function ReportsPage() {
               </ul>
             </div>
 
-            <div
-              className={cn(
-                'rounded-[2rem] border p-5 shadow-sm',
-                theme === 'dark'
-                  ? 'border-slate-800 bg-slate-900/90'
-                  : 'border-slate-200 bg-white',
-              )}
-            >
-              <p
-                className={cn(
-                  'text-sm font-semibold uppercase tracking-[0.3em]',
-                  theme === 'dark' ? 'text-sky-300' : 'text-[#0f3042]',
-                )}
-              >
-                Flujo guiado
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {reportWorkflow.map((step) => (
-                  <article
-                    key={step.step}
-                    className={cn(
-                      'rounded-2xl border p-4',
-                      theme === 'dark'
-                        ? 'border-slate-800 bg-slate-950/60'
-                        : 'border-slate-200 bg-slate-50',
-                    )}
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
-                      {step.step}
-                    </p>
-                    <h2 className="mt-3 text-sm font-semibold text-slate-950 dark:text-white">
-                      {step.title}
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                      {step.description}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </section>

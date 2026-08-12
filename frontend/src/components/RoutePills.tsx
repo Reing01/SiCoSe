@@ -39,11 +39,11 @@ function getCurrentPath() {
     : "/";
 }
 
-function getVisibleRoutes() {
+function getVisibleRoutes(currentPath: string) {
   const session = readAuthSession();
 
   if (!session) {
-    return ["/", "/login"];
+    return currentPath === "/login" ? ["/"] : ["/", "/login"];
   }
 
   return [...getVisibleProtectedRoutes(session)];
@@ -68,7 +68,7 @@ export default function RoutePills({
   ariaLabel = "Navegación de pantallas",
 }: RoutePillsProps) {
   const currentPath = getCurrentPath();
-  const routes = getVisibleRoutes();
+  const routes = getVisibleRoutes(currentPath);
   const styles = VARIANT_CLASSES[variant];
   const [isOpen, setIsOpen] = useState(false);
   const buttonClasses =

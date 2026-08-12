@@ -54,4 +54,17 @@ describe('RoutePills', () => {
     expect(screen.getByRole('link', { name: 'Usuarios' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Login' })).not.toBeInTheDocument()
   })
+
+  it('oculta el acceso Login cuando ya estas en la pantalla de login', () => {
+    window.history.replaceState({}, '', '/login')
+
+    render(<RoutePills />)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /abrir menú de navegación/i }),
+    )
+
+    expect(screen.getByRole('link', { name: 'Inicio' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Login' })).not.toBeInTheDocument()
+  })
 })

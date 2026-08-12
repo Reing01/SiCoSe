@@ -17,24 +17,6 @@ import {
 import type { LoginRequest } from '../../features/auth/auth.types'
 import { navigateTo } from '../../lib/navigation'
 
-const highlights = [
-  {
-    title: 'Cobro de agua',
-    description:
-      'Entra al flujo de cobranza y consulta solo lo necesario para registrar pagos.',
-  },
-  {
-    title: 'Búsqueda directa',
-    description:
-      'Localiza al ciudadano por nombre o clave catastral sin navegar por módulos ajenos.',
-  },
-  {
-    title: 'Comprobante listo',
-    description:
-      'Abre, imprime y conserva el comprobante del pago sin pasos intermedios.',
-  },
-] as const
-
 const loginSteps = [
   {
     step: '01',
@@ -51,13 +33,6 @@ const loginSteps = [
     title: 'Registra y entrega',
     description: 'Guarda el pago y genera el comprobante sin salir del flujo.',
   },
-] as const
-
-const signals = [
-  'Cobro de agua',
-  'Búsqueda paginada',
-  'Comprobante PDF',
-  'Modo claro/oscuro',
 ] as const
 
 export default function LoginPage() {
@@ -112,8 +87,8 @@ export default function LoginPage() {
         </div>
       </header>
 
-      <div className="relative mx-auto grid min-h-screen max-w-7xl gap-8 px-4 pb-10 pt-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-12">
-        <section className="order-2 flex flex-col justify-center gap-8 animate-fade-up lg:order-1">
+      <div className="relative mx-auto grid min-h-screen max-w-7xl gap-8 px-4 pb-10 pt-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-10">
+        <section className="order-2 flex flex-col gap-8 animate-fade-up lg:order-1 lg:justify-start lg:pt-8">
           <div className="max-w-2xl space-y-5">
             <div className="space-y-4">
               <p className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-sky-200/80">
@@ -132,22 +107,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="hidden gap-4 sm:grid sm:grid-cols-3">
-            {highlights.map((item) => (
-              <article
-                key={item.title}
-                className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10 backdrop-blur transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white/10"
-              >
-                <h2 className="text-sm font-semibold text-white">
-                  {item.title}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
-                  {item.description}
-                </p>
-              </article>
-            ))}
-          </div>
-
           <div className="hidden rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-lg shadow-black/10 backdrop-blur sm:block sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-2">
@@ -158,9 +117,6 @@ export default function LoginPage() {
                   Todo el acceso, en tres pasos
                 </h2>
               </div>
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200">
-                Optimizado para móvil y escritorio
-              </span>
             </div>
 
             <ol className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -183,16 +139,6 @@ export default function LoginPage() {
             </ol>
           </div>
 
-          <div className="hidden flex-wrap gap-3 sm:flex">
-            {signals.map((signal) => (
-              <span
-                key={signal}
-                className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-200"
-              >
-                {signal}
-              </span>
-            ))}
-          </div>
         </section>
 
         <section className="order-1 flex items-center justify-center animate-scale-in lg:order-2">
