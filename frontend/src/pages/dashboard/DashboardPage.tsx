@@ -205,12 +205,12 @@ function RevenueLineChart({ metrics, theme }: { metrics: DashboardMetrics; theme
 
   return (
     <Card className={cn('shadow-sm', theme === 'dark' ? 'border-slate-800 bg-slate-900/90' : 'border-slate-200/80 bg-white/95')}>
-      <CardHeader>
+      <CardHeader className="space-y-2 p-4 sm:p-5">
         <CardTitle>Recaudación histórica</CardTitle>
         <CardDescription>Últimos 6 meses registrados.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <svg viewBox="0 0 100 100" className="h-64 w-full overflow-visible" role="img" aria-label="Gráfica de recaudación de los últimos 6 meses">
+      <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
+        <svg viewBox="0 0 100 100" className="h-52 w-full overflow-visible sm:h-64" role="img" aria-label="Gráfica de recaudación de los últimos 6 meses">
           <polyline points={polyline} fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           {points.map((point) => (
             <g key={point.periodo}>
@@ -248,7 +248,7 @@ function MetricCard({ card, theme }: { card: KpiCard; theme: 'light' | 'dark' })
         theme === 'dark' ? 'border-slate-800 bg-slate-900/90 text-slate-100' : 'border-slate-200/80 bg-white/95',
       )}
     >
-      <CardContent className="flex min-h-40 items-start justify-between gap-4 p-5">
+      <CardContent className="flex min-h-32 items-start justify-between gap-3 p-4 sm:min-h-40 sm:gap-4 sm:p-5">
         <div>
           <p
             className={cn(
@@ -260,19 +260,19 @@ function MetricCard({ card, theme }: { card: KpiCard; theme: 'light' | 'dark' })
           </p>
           <p
             className={cn(
-              'mt-3 text-3xl font-semibold tracking-tight',
+              'mt-2.5 text-2xl font-semibold tracking-tight sm:mt-3 sm:text-3xl',
               theme === 'dark' ? 'text-white' : 'text-slate-950',
             )}
           >
             {card.value}
           </p>
-          <p className={cn('mt-3 text-sm leading-6', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
+          <p className={cn('mt-2.5 text-sm leading-6 sm:mt-3', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
             {card.detail}
           </p>
         </div>
         <span
           className={cn(
-            'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-base font-bold',
+            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-sm font-bold sm:h-11 sm:w-11 sm:text-base',
             toneClasses[card.tone],
           )}
           aria-hidden="true"
@@ -306,8 +306,8 @@ function DashboardContent({
   const cards = useMemo(() => buildCards(metrics), [metrics])
 
   return (
-    <section className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
+    <section className="space-y-4 sm:space-y-6">
+      <div className="grid gap-3 lg:grid-cols-[1.08fr_0.92fr]">
         <Card
           className={cn(
             'shadow-sm',
@@ -316,43 +316,43 @@ function DashboardContent({
               : 'border-slate-200/80 bg-white/95',
           )}
         >
-          <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+          <CardHeader className="space-y-2 border-b border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/60 sm:p-5">
             <CardTitle>Resumen del periodo</CardTitle>
             <CardDescription>
               Una vista corta para entender el comportamiento del mes antes de
               exportar o revisar el detalle.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-3 p-5 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+          <CardContent className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/60 sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
                 Periodo
               </p>
-              <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+              <p className="mt-1.5 text-base font-semibold text-slate-950 dark:text-white sm:mt-2 sm:text-lg">
                 {metrics.periodo}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/60 sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
                 Cobertura
               </p>
-              <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+              <p className="mt-1.5 text-base font-semibold text-slate-950 dark:text-white sm:mt-2 sm:text-lg">
                 {formatPercent(metrics.porcentajeCobertura)}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/60 sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
                 Recaudado
               </p>
-              <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+              <p className="mt-1.5 text-base font-semibold text-slate-950 dark:text-white sm:mt-2 sm:text-lg">
                 {formatCurrency(metrics.totalRecaudadoMes)}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/60 sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
                 Morosos
               </p>
-              <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+              <p className="mt-1.5 text-base font-semibold text-slate-950 dark:text-white sm:mt-2 sm:text-lg">
                 {metrics.numeroMorosos}
               </p>
             </div>
@@ -367,20 +367,20 @@ function DashboardContent({
               : 'border-slate-200/80 bg-white/95',
           )}
         >
-          <CardHeader className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/60">
+          <CardHeader className="space-y-2 border-b border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/60 sm:p-5">
             <CardTitle>Flujo guiado</CardTitle>
             <CardDescription>
               El panel te lleva de la lectura de métricas a la exportación en
               tres pasos.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 p-5">
-            <div className="flex flex-wrap gap-2">
+          <CardContent className="space-y-3 p-4 sm:p-5">
+            <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
               {dashboardSignals.map((signal) => (
                 <span
                   key={signal}
                   className={cn(
-                    'inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.25em]',
+                    'inline-flex min-w-max snap-start items-center rounded-full border px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.22em] sm:text-xs sm:tracking-[0.25em]',
                     theme === 'dark'
                       ? 'border-white/10 bg-white/5 text-slate-200'
                       : 'border-slate-200 bg-white text-slate-600',
@@ -390,24 +390,24 @@ function DashboardContent({
                 </span>
               ))}
             </div>
-            <div className="grid gap-3">
+            <div className="grid gap-2 sm:gap-3">
               {dashboardWorkflow.map((step) => (
                 <article
                   key={step.step}
                   className={cn(
-                    'rounded-2xl border p-4',
+                    'rounded-2xl border p-3.5 sm:p-4',
                     theme === 'dark'
                       ? 'border-slate-800 bg-slate-950/60'
                       : 'border-slate-200 bg-slate-50',
                   )}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#f97316]">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[#f97316] sm:text-xs sm:tracking-[0.35em]">
                     {step.step}
                   </p>
-                  <h2 className="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
+                  <h2 className="mt-1.5 text-sm font-semibold text-slate-950 dark:text-white">
                     {step.title}
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  <p className="mt-1.5 text-sm leading-5 text-slate-600 dark:text-slate-300 sm:leading-6">
                     {step.description}
                   </p>
                 </article>
@@ -423,11 +423,11 @@ function DashboardContent({
           theme === 'dark' ? 'border-slate-800 bg-slate-900/90 text-slate-100' : 'border-slate-200/80 bg-white/95',
         )}
       >
-        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <CardContent className="flex flex-col gap-3 p-4 sm:gap-4 sm:p-5 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             <p
               className={cn(
-                'text-sm font-semibold uppercase tracking-[0.25em]',
+                'text-xs font-semibold uppercase tracking-[0.22em] sm:text-sm sm:tracking-[0.25em]',
                 theme === 'dark' ? 'text-sky-300' : 'text-[#0f3042]',
               )}
             >
@@ -453,26 +453,26 @@ function DashboardContent({
             ) : null}
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
             <Input
               type="month"
               value={period}
               onChange={(event) => onPeriodChange(event.target.value)}
               max={currentPeriod}
-              className="w-full sm:w-44"
+              className="h-11 w-full sm:w-44"
               aria-label="Filtrar periodo"
             />
-            <Button type="button" variant="outline" onClick={() => onExport('pdf')} disabled={exportFormat !== null}>
+            <Button type="button" variant="outline" onClick={() => onExport('pdf')} disabled={exportFormat !== null} className="w-full sm:w-auto">
               {exportFormat === 'pdf' ? 'Generando documento...' : 'Exportar PDF'}
             </Button>
-            <Button type="button" variant="secondary" onClick={() => onExport('xlsx')} disabled={exportFormat !== null}>
+            <Button type="button" variant="secondary" onClick={() => onExport('xlsx')} disabled={exportFormat !== null} className="w-full sm:w-auto">
               {exportFormat === 'xlsx' ? 'Generando documento...' : 'Exportar Excel'}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
           <MetricCard key={card.label} card={card} theme={theme} />
         ))}
@@ -486,7 +486,7 @@ function DashboardContent({
           theme === 'dark' ? 'border-slate-800 bg-slate-900/90 text-slate-100' : 'border-slate-200/80 bg-white/95',
         )}
       >
-        <CardHeader>
+        <CardHeader className="space-y-2 p-4 sm:p-5">
           <CardTitle className={cn('text-xl', theme === 'dark' ? 'text-white' : 'text-slate-950')}>
             Comparativo mensual
           </CardTitle>
@@ -494,7 +494,7 @@ function DashboardContent({
             Periodo {metrics.periodo} actualizado para este panel.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
+        <CardContent className="grid gap-4 p-4 sm:p-5 md:grid-cols-[1fr_auto] md:items-center">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <span
@@ -519,7 +519,7 @@ function DashboardContent({
 
           <div
             className={cn(
-              'rounded-xl border px-4 py-3 text-right',
+              'rounded-xl border px-4 py-3 text-left md:text-right',
               theme === 'dark' ? 'border-slate-700 bg-slate-950/60' : 'border-slate-200 bg-slate-50',
             )}
           >
@@ -716,7 +716,7 @@ export default function DashboardPage() {
           theme === 'dark' ? 'border-slate-800 bg-slate-950/75' : 'border-slate-200/80 bg-white/75',
         )}
       >
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
           <span
             className={cn(
               'inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em]',
@@ -727,23 +727,23 @@ export default function DashboardPage() {
           >
             Dashboard
           </span>
-          <div className="mt-5 max-w-3xl space-y-3">
+          <div className="mt-4 max-w-3xl space-y-2 sm:mt-5 sm:space-y-3">
               <h1
                 className={cn(
-                  'text-3xl font-semibold tracking-tight sm:text-5xl',
+                  'text-2xl font-semibold tracking-tight sm:text-5xl',
                   theme === 'dark' ? 'text-white' : 'text-slate-950',
                 )}
               >
                 Situación financiera del mes
               </h1>
-            <p className={cn('text-base leading-7', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
+            <p className={cn('text-sm leading-6 sm:text-base sm:leading-7', theme === 'dark' ? 'text-slate-300' : 'text-slate-600')}>
               KPIs de recaudación, cobertura y morosidad para la planeación de la junta auxiliar.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-up">
+      <section className="mx-auto max-w-7xl animate-fade-up px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {state.kind === 'loading' ? (
           <Card
             className={cn(
