@@ -238,11 +238,6 @@ export default function LoginForm({
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-sky-900/40 dark:bg-sky-950/40 dark:text-slate-200">
-            El acceso está optimizado para escritorio y teléfono, con
-            navegación rápida y comprobante inmediato.
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor={emailId}>Correo institucional</Label>
             <Input

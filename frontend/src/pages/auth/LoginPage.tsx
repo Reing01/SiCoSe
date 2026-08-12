@@ -12,7 +12,6 @@ import {
   readAuthSession,
 } from '../../features/auth/auth.session'
 import {
-  warmLoginExperience,
   warmPostLoginExperience,
 } from '../../features/auth/auth.prefetch'
 import type { LoginRequest } from '../../features/auth/auth.types'
@@ -69,15 +68,17 @@ export default function LoginPage() {
       navigateTo(getHomeRouteForRole(session.user.rol), true)
       return
     }
-
-    warmLoginExperience()
   }, [])
 
   const handleLogin = async (credentials: LoginRequest) => {
     const response = await login(credentials)
 
     persistAuthSession(response.data)
-    warmPostLoginExperience(response.data)
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => warmPostLoginExperience(response.data), 0)
+    } else {
+      warmPostLoginExperience(response.data)
+    }
 
     return {
       message: LOGIN_COPY.success,
