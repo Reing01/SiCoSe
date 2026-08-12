@@ -174,7 +174,7 @@ usuariosRouter.post('/', async (request: AuthenticatedRequest, response, next) =
       error.code === 'P2002'
     ) {
       return response.status(409).json({
-        error: 'User already exists',
+        error: 'Ya existe un usuario con ese correo',
         code: 409,
         details: error.meta,
       })
@@ -242,7 +242,7 @@ usuariosRouter.put('/:id', async (request: AuthenticatedRequest, response, next)
       error.code === 'P2002'
     ) {
       return response.status(409).json({
-        error: 'User already exists',
+        error: 'Ya existe un usuario con ese correo',
         code: 409,
         details: error.meta,
       })

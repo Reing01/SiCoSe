@@ -300,6 +300,7 @@ export default function UsersPage() {
   }, [users])
 
   const currentUserEmail = session?.user.email ?? null
+  const normalizedFormEmail = values.email.trim().toLowerCase()
 
   const handleLogout = async () => {
     try {
@@ -427,6 +428,21 @@ export default function UsersPage() {
       setSubmissionState({
         kind: 'error',
         message: 'Revisa los campos marcados antes de guardar.',
+      })
+      return
+    }
+
+    const duplicateEmail = users.some((record) => {
+      const recordEmail = record.email.trim().toLowerCase()
+      const isSameRecord = selectedUserId === record.id
+
+      return recordEmail === normalizedFormEmail && !isSameRecord
+    })
+
+    if (duplicateEmail) {
+      setSubmissionState({
+        kind: 'error',
+        message: 'Ya existe un usuario con ese correo. Usa uno diferente para crear la cuenta.',
       })
       return
     }
