@@ -46,7 +46,7 @@ function getVisibleRoutes() {
     return ["/", "/login"];
   }
 
-  return ["/", ...getVisibleProtectedRoutes(session)];
+  return [...getVisibleProtectedRoutes(session)];
 }
 
 const VARIANT_CLASSES = {

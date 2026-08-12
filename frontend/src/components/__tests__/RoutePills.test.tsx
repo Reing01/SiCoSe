@@ -47,6 +47,7 @@ describe('RoutePills', () => {
     )
 
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Inicio' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ciudadanos' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Pagos' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Reportes' })).toBeInTheDocument()
