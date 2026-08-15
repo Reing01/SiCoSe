@@ -1,4 +1,4 @@
-FROM node:24-alpine AS frontend-builder
+FROM node:26-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -11,7 +11,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM node:24-alpine AS backend-builder
+FROM node:26-alpine AS backend-builder
 
 WORKDIR /app/backend
 
@@ -30,7 +30,7 @@ RUN DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
   CORS_ORIGIN=https://example.com \
   npm run build
 
-FROM node:24-alpine AS backend-production-dependencies
+FROM node:26-alpine AS backend-production-dependencies
 
 WORKDIR /app/backend
 
@@ -44,7 +44,7 @@ RUN npm ci --omit=dev \
   && npm run prisma:generate \
   && npm cache clean --force
 
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 
 WORKDIR /app
 
